@@ -262,19 +262,16 @@ public class MainActivity extends Activity {
         }
     }
 
-    private static final int BG_LIGHT = 0xFFEEF0F3, BG_DARK = 0xFF0F1012;
+    private static final int BG_LIGHT = 0xFFEEF2F2, BG_DARK = 0xFF0D1514, BAR_LIGHT = 0xFF1B625D, BAR_DARK = 0xFF102E2B;
 
     /** Status bar and navigation bar follow the app theme (light or dark). */
     @SuppressWarnings("deprecation")
     private void applyBars(boolean dark) {
         int bg = dark ? BG_DARK : BG_LIGHT;
-        getWindow().setStatusBarColor(bg);
-        getWindow().setNavigationBarColor(bg);
+        getWindow().setStatusBarColor(dark ? BAR_DARK : BAR_LIGHT);          // teal top bar, white icons
+        getWindow().setNavigationBarColor(dark ? 0xFF15201F : 0xFFFFFFFF);    // matches the bottom menu
         int flags = 0;
-        if (!dark) {
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-            if (Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        }
+        if (!dark && Build.VERSION.SDK_INT >= 26) flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
         getWindow().getDecorView().setSystemUiVisibility(flags);
         if (web != null) web.setBackgroundColor(bg);
         getWindow().getDecorView().setBackgroundColor(bg);

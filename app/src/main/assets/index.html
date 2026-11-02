@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#eef0f3">
+<meta name="theme-color" content="#1b625d">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Wing Tasks">
@@ -533,6 +533,97 @@ body.paged{overflow:hidden}
 @keyframes rise{from{opacity:0;transform:translateY(8px)}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:360px){.stat b{font-size:24px}header h2{font-size:21px}nav .bar button .nic{width:46px}}
+
+/* =====================================================================
+   TEAL THEME (health-app style): teal header, orange accents, white cards
+   ===================================================================== */
+:root{color-scheme:light;
+  --bg:#eef2f2; --surface:#ffffff; --surface2:#f1f5f5; --line:#e3e9e9; --line2:#d2dbda;
+  --text:#1c2b2a; --muted:#61706e; --faint:#98a5a3;
+  --primary:#1f6f6a; --primary2:#175954; --primary-soft:#e2f1ef; --on-primary:#ffffff;
+  --orange:#f5a524; --hdr1:#1b625d; --hdr2:#2c8b83;
+  --shadow:0 1px 3px rgba(20,50,48,.08),0 4px 14px rgba(20,50,48,.05);
+  --shadow-lg:0 18px 50px rgba(10,30,28,.25); --r:14px;
+}
+:root[data-theme="dark"]{color-scheme:dark;
+  --bg:#0d1514; --surface:#15201f; --surface2:#1c2928; --line:#24332f; --line2:#33443f;
+  --text:#e5eeec; --muted:#9db0ac; --faint:#6d807c;
+  --primary:#40b3a7; --primary2:#58c4b8; --primary-soft:rgba(64,179,167,.15); --on-primary:#06201d;
+  --hdr1:#102e2b; --hdr2:#17433f;
+  --shadow:0 1px 3px rgba(0,0,0,.4); --shadow-lg:0 18px 50px rgba(0,0,0,.6);
+}
+/* header */
+header{background:linear-gradient(120deg,var(--hdr1),var(--hdr2));color:#fff;margin-bottom:12px;padding-bottom:14px}
+header h2{color:#fff;font-size:22px}
+header .hi{color:rgba(255,255,255,.82)}
+header.scrolled{box-shadow:0 3px 12px rgba(10,40,36,.22)}
+body.home header{margin-bottom:0;padding-bottom:6px}
+body.home #updBanner{display:none!important}
+#notifBtn{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
+#notifDot{border-color:var(--hdr1)}
+#avatar{background:#fff;color:var(--hdr1);box-shadow:0 0 0 2px var(--orange)}
+/* home hero */
+.hero{margin:0 -16px 16px;padding:8px 18px 20px;background:linear-gradient(120deg,var(--hdr1),var(--hdr2));color:#fff;box-shadow:0 6px 16px rgba(14,60,55,.18)}
+.prof{display:flex;align-items:center;gap:16px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,.18)}
+.prof .pav{width:66px;height:66px;border-radius:50%;border:3px solid var(--orange);display:grid;place-items:center;font-size:22px;font-weight:700;background:rgba(255,255,255,.14);flex:none}
+.prof b{display:block;font-size:20px;font-weight:700;color:#fff}
+.prof small{display:block;font-size:14px;color:rgba(255,255,255,.85);margin-top:2px}
+.qa-h{display:flex;align-items:center;gap:10px;margin:16px 0 12px;font-size:17px;font-weight:700;color:#fff}
+.qa-h::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--orange)}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.qa button{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:0;color:#fff;font-size:12.5px;font-weight:600;padding:0;min-width:0}
+.qa button span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.qa .qi{width:58px;height:58px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 4px 10px rgba(0,0,0,.12)}
+.qa .qi.t{color:#1f8f84}.qa .qi.o{color:#e8860c}.qa .qi.b{color:#2f6fd6}.qa .qi.p{color:#9b4fd0}
+:root[data-theme="dark"] .qa .qi{background:#22312f}
+/* section titles with an orange bar */
+.sec{color:var(--primary);font-size:16px;font-weight:700;letter-spacing:0;margin:24px 2px 12px}
+.sec::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--orange);flex:none}
+.grp .gt b{color:var(--primary);display:flex;align-items:center;gap:10px;font-size:17px}
+.grp .gt b::before{content:"";width:4px;height:18px;border-radius:2px;background:var(--orange);flex:none}
+.grp .gt small{margin-left:14px}
+.digest{border-left:0}
+/* cards and buttons */
+.glass{border-radius:var(--r);box-shadow:var(--shadow)}
+.btn{border-radius:10px;min-height:46px}
+.btn.ghost{background:var(--surface);color:var(--primary);border:1.5px solid var(--primary)}
+.btn.danger{background:var(--bad-soft);color:var(--bad);border:0}
+.sh-close{background:var(--surface2)}
+.fchip{border-radius:10px;box-shadow:none;border:1px solid var(--line2);background:var(--surface);color:var(--muted)}
+.fchip.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.segc{background:var(--surface2)}
+.segc button.on{color:var(--primary)}
+.toggle input[type=checkbox]:checked{background:var(--primary)}
+.link{color:var(--primary)}
+.tbar .link{color:var(--primary)}
+.stat b{color:var(--primary)}
+.avt{background:var(--primary-soft)!important;color:var(--primary)!important}
+.cav{background:var(--primary-soft);color:var(--primary)}
+.cav.grp{background:var(--primary);color:var(--on-primary)}
+.chatlink.has{color:var(--primary)}
+.cm.me .cb{background:var(--primary);color:var(--on-primary)}
+.chat-bar .send{background:var(--primary);color:var(--on-primary)}
+.cell.sel{background:var(--primary);color:var(--on-primary)}
+.cell.today{border-color:var(--primary);color:var(--primary)}
+.lrow .ic{color:var(--primary)}
+.drbadge.ready{background:var(--primary-soft);color:var(--primary)}
+.tag.new{background:var(--orange);color:#fff}
+/* bottom menu: full width, white */
+nav#nav{left:0;right:0;bottom:0;border-radius:0;max-width:none;padding:0 4px var(--safe-b);box-shadow:0 -1px 0 var(--line),0 -6px 18px rgba(20,50,48,.06)}
+nav .bar button{color:var(--faint);font-weight:500}
+nav .bar button .nic{width:auto;height:30px;background:none!important}
+nav .bar button.on{color:var(--primary);font-weight:700}
+nav .bar button.on .nic{color:var(--primary)}
+#app{padding-bottom:calc(var(--nav-h) + 96px + var(--safe-b))}
+.fab{bottom:calc(var(--nav-h) + 16px + var(--safe-b));border-radius:14px;background:var(--primary);color:var(--on-primary);box-shadow:0 8px 22px rgba(20,90,84,.35)}
+/* full pages (task details, chat) get the teal bar too */
+.pg-head{background:linear-gradient(120deg,var(--hdr1),var(--hdr2));color:#fff;padding-bottom:12px}
+.pg-ht small{color:rgba(255,255,255,.8)}
+.pg-back,.pg-icon{background:rgba(255,255,255,.16);color:#fff;box-shadow:none}
+.chatpage .cav.sm{background:rgba(255,255,255,.2);color:#fff}
+/* login */
+.brandmark{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));color:#fff;box-shadow:0 0 0 4px var(--orange),0 14px 30px rgba(20,90,84,.3);border-radius:50%}
+.logo{color:var(--primary)}
 </style>
 </head>
 <body>
@@ -1268,9 +1359,10 @@ function render() {
   const h = new Date().getHours();
   const greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 20 ? "Good evening" : "Good night";
   const pending = myTasks().filter(t => t.status !== "done");
-  $("#greet").textContent = `${greet}, ${myName().split(" ")[0]} · ${pending.length} pending`;
+  $("#greet").textContent = tab === "home" ? `${greet} · ${pending.length} pending` : `${greet}, ${myName().split(" ")[0]} · ${pending.length} pending`;
+  document.body.classList.toggle("home", tab === "home");
   $("#avatar").textContent = (myName().trim().charAt(0) || "?").toUpperCase();
-  $("#pageTitle").textContent = {home:"Home",tasks:"Tasks",cal:"Tasks",chats:"Chats",reports:"Reports",daily:"Daily Reports",admin:"Admin",more:"More"}[tab];
+  $("#pageTitle").textContent = {home:"Wing Tasks",tasks:"Tasks",cal:"Tasks",chats:"Chats",reports:"Reports",daily:"Daily Reports",admin:"Admin",more:"More"}[tab];
   $("#fab span").textContent = tab === "admin" ? "Add member" : (tab === "tasks" && tf.scope === "out") ? "Give a task" : "New task";
   $("#fab").classList.toggle("hidden", tab === "more" || tab === "chats" || tab === "reports" || tab === "daily" || (tab === "admin" && adminSub !== "members"));
   const unreadN = notifs.filter(n => !n.read).length;
@@ -1314,7 +1406,7 @@ window.__appBack = function () {
     if (tab === "admin" && adminSub !== "members") { adminSub = "members"; render(); return 1; }
     if (tab === "tasks" && searchQ && !statFilter) { searchQ = ""; render(); return 1; }
     if (tab !== "home" && tab !== "more" && tab !== "cal" && !prim.includes(tab)) { tab = "more"; render(); return 1; }
-    if (tab !== "home") { tab = "home"; statFilter = null; render(); return 1; }
+    if (tab !== "home") { tab = "home"; if (statFilter) tf = tfDefault(); statFilter = null; render(); return 1; }
   } catch (e) {}
   return 0;
 };
@@ -1651,6 +1743,17 @@ function digestHtml() {
 }
 
 /* ---------- VIEWS ---------- */
+function heroHtml() {
+  const m = myMember || {};
+  const tiles = [["newtask", "", "plus", "t", "New task"]];
+  tiles.push(drHasAccess() ? ["gotab", "daily", "doc", "o", "Daily report"] : ["gotab", "reports", "chart", "o", "Reports"]);
+  tiles.push(["gotab", "chats", "msg", "b", "Chats"], ["tview", "cal", "calendar", "p", "Calendar"]);
+  return `<div class="hero">
+    <div class="prof"><span class="pav">${esc(initials(myName()))}</span><div><b>${esc(myName())}</b><small>${esc(isAdmin ? "Admin" : (m.designation || "Member"))} · ID: ${esc(idOf(me))}</small></div></div>
+    <div class="qa-h">Quick Access</div>
+    <div class="qa">${tiles.map(([a, v, i, c, l]) => `<button data-act="${a}" ${v ? `data-v="${v}"` : ""}><span class="qi ${c}">${ic(i, 26, 2)}</span><span>${l}</span></button>`).join("")}</div>
+  </div>`;
+}
 function viewHome() {
   const now = Date.now();
   const mine = myTasks();
@@ -1682,7 +1785,8 @@ function viewHome() {
   const body = grp("g-in", "inbox", "Assigned to me", "Given to you by others", toMe)
     + grp("g-own", "user", "My own tasks", "Made by you for you", own)
     + grp("g-out", "send", "Assigned by me", "You gave to others", out);
-  return digestHtml() + `<div class="stats">
+  const upd = updInfo ? `<div class="upd"><div><b>New version ${esc(updInfo)} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" data-act="updgo">Update</button></div>` : "";
+  return heroHtml() + upd + digestHtml() + `<div class="stats">
       <div class="stat glass" role="button" data-act="statgo" data-v="today"><b>${dueToday}</b><span>Due today</span></div>
       <div class="stat glass" role="button" data-act="statgo" data-v="overdue"><b style="color:var(--bad)">${overdueAll}</b><span>Overdue</span></div>
       <div class="stat glass" role="button" data-act="statgo" data-v="done"><b style="color:var(--ok)">${doneWeek}</b><span>Done this week</span></div>
@@ -1895,7 +1999,7 @@ applyTheme();
 
 /* ---------- INSTALL ON ANOTHER PHONE + UPDATES ---------- */
 const apkUrl = () => BUILD.repo ? `https://github.com/${BUILD.repo}/releases/latest/download/WingTasks.apk` : "";
-let qrCache = "";
+let qrCache = "", updInfo = "";
 function installCardHtml() {
   const u = apkUrl(); if (!u) return "";
   if (!qrCache) setTimeout(drawQr, 30);
@@ -1922,6 +2026,8 @@ async function checkUpdate(manual) {
     const j = await r.json();
     const latest = Number(String(j.tag_name || "").split(".").pop()) || 0;
     const b = $("#updBanner");
+    updInfo = latest > BUILD.versionCode ? String(j.tag_name).replace(/^v/, "") : "";
+    if (tab === "home") render();
     if (latest > BUILD.versionCode) {
       b.className = "upd";
       b.innerHTML = `<div><b>New version ${esc(String(j.tag_name).replace(/^v/, ""))} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" id="updGo">Update</button>`;
@@ -3380,6 +3486,7 @@ $("#view").addEventListener("click", e => run(async () => {
     }
   }
   else if (act === "pushcheck") { await runPushCheck(); }
+  else if (act === "updgo") window.open(apkUrl(), "_blank");
   else if (act === "theme") { try { localStorage.setItem("wt_theme", v); } catch (e) {} applyTheme(); render(); }
   else if (act === "sharelink") shareLink();
   else if (act === "checkupd") { el.disabled = true; await checkUpdate(true); el.disabled = false; }

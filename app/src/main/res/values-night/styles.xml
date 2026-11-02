@@ -3,7 +3,7 @@
     <!-- Used when the phone is in dark mode (the app's "Auto" appearance follows this) -->
     <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/bg_dark</item>
-        <item name="android:statusBarColor">@color/bg_dark</item>
+        <item name="android:statusBarColor">#102e2b</item>
         <item name="android:navigationBarColor">@color/bg_dark</item>
     </style>
 </resources>

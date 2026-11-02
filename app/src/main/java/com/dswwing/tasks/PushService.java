@@ -59,7 +59,7 @@ public class PushService extends FirebaseMessagingService {
 
         NotificationCompat.Builder b = new NotificationCompat.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_stat)
-                .setColor(0xFF17181C)
+                .setColor(0xFF1F6F6A)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
