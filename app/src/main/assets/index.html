@@ -624,6 +624,34 @@ nav .bar button.on .nic{color:var(--primary)}
 /* login */
 .brandmark{background:linear-gradient(135deg,var(--hdr1),var(--hdr2));color:#fff;box-shadow:0 0 0 4px var(--orange),0 14px 30px rgba(20,90,84,.3);border-radius:50%}
 .logo{color:var(--primary)}
+
+/* ---------- side menu instead of the bottom bar ---------- */
+nav#nav{display:none!important}
+#app{padding-bottom:calc(96px + var(--safe-b))}
+.fab{bottom:calc(20px + var(--safe-b))}
+#menuBtn{position:relative;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;flex:none;padding:0}
+#menuDot{position:absolute;top:9px;right:9px;width:10px;height:10px;border-radius:50%;background:var(--orange);border:2px solid var(--hdr1)}
+#drawer{position:fixed;inset:0;z-index:40}
+.dr-scrim{position:absolute;inset:0;background:rgba(5,20,18,.45);opacity:0;transition:opacity .25s}
+.dr-panel{position:absolute;left:0;top:0;bottom:0;width:min(300px,84vw);background:var(--surface);transform:translateX(-102%);transition:transform .28s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;box-shadow:var(--shadow-lg);border-radius:0 22px 22px 0;overflow:hidden}
+body.drawer-open .dr-scrim{opacity:1}
+body.drawer-open .dr-panel{transform:none}
+.dr-top{background:linear-gradient(120deg,var(--hdr1),var(--hdr2));color:#fff;padding:calc(30px + var(--safe-t)) 20px 22px;display:flex;align-items:center;gap:14px}
+.dr-top .pav{width:56px;height:56px;border-radius:50%;border:3px solid var(--orange);display:grid;place-items:center;font-size:19px;font-weight:700;background:rgba(255,255,255,.14);flex:none}
+.dr-top b{display:block;font-size:17px;font-weight:700}
+.dr-top small{display:block;font-size:13px;color:rgba(255,255,255,.85);margin-top:2px}
+.dr-top div{min-width:0}
+.dr-list{flex:1;overflow-y:auto;padding:10px}
+.dr-list button{display:flex;align-items:center;gap:16px;width:100%;padding:13px 14px;border:0;background:none;border-radius:12px;color:var(--text);font-size:15.5px;font-weight:600;text-align:left;margin-bottom:2px}
+.dr-list button .ic{color:var(--muted)}
+.dr-list button.on{background:var(--primary-soft);color:var(--primary)}
+.dr-list button.on .ic{color:var(--primary)}
+.dr-list button:active{transform:none;background:var(--surface2)}
+.dr-list .db{margin-left:auto;background:var(--bad);color:#fff;font-style:normal;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
+.dr-foot{padding:14px 20px calc(16px + var(--safe-b));font-size:12px;color:var(--faint);border-top:1px solid var(--line)}
+.qa{row-gap:16px}
+.qa .qi{position:relative;overflow:visible!important;max-width:none!important}
+.qa .qb{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:var(--bad);color:#fff;font-style:normal;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px;border:2px solid var(--hdr2)}
 </style>
 </head>
 <body>
@@ -657,6 +685,7 @@ nav .bar button.on .nic{color:var(--primary)}
   <!-- MAIN -->
   <div id="main" class="hidden">
     <header id="topbar">
+      <button id="menuBtn" aria-label="Menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><i id="menuDot" class="hidden"></i></button>
       <div class="hcol"><div class="hi" id="greet"></div><h2 id="pageTitle">Home</h2></div>
       <button id="notifBtn" aria-label="Notifications"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 16v-5a6 6 0 10-12 0v5l-2 2.2h16L18 16z"/><path d="M9.5 20.8a2.5 2.5 0 005 0"/></svg><span id="notifDot" class="hidden">0</span></button>
       <button id="avatar" aria-label="My account">?</button>
@@ -670,6 +699,7 @@ nav .bar button.on .nic{color:var(--primary)}
 <button class="fab hidden" id="fab" aria-label="New task"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New task</span></button>
 <nav class="hidden" id="nav"><div class="bar" id="navBar"></div></nav>
 
+<div id="drawer" class="hidden"><div class="dr-scrim" data-dclose="1"></div><aside class="dr-panel" id="drPanel"></aside></div>
 <div id="pageHost"></div>
 <div id="sheetHost"></div>
 <div id="callHost"></div>
@@ -788,7 +818,7 @@ const showBanner = m => { const b = $("#banner"); b.textContent = m; b.classList
 const onErr = e => {
   console.error(e);
   showBanner(e.code === "permission-denied"
-    ? "Permission denied: the Firestore Rules are missing or outdated. Please publish the latest rules."
+    ? "Some information could not load: the database rules on Firebase are older than this app. On the computer, run: npm run rules"
     : "Error: " + (e.message || e.code));
 };
 let toastT;
@@ -1355,14 +1385,15 @@ function render() {
   const prim = primaryTabs(items);
   const activeK = tab === "cal" ? "tasks" : prim.some(p => p[0] === tab) ? tab : "more";
   const unreadTaskChats = tasks.reduce((n, t) => n + (canChat(t) ? unreadOf(t) : 0), 0), unreadC = unreadChats();
-  $("#navBar").innerHTML = prim.map(([k,i,l]) => `<button data-tab="${k}" class="${activeK===k?"on":""}" aria-label="${l}"><span class="nicw"><span class="nic">${ic(i,22)}</span>${k==="home" && unreadTaskChats ? `<i class="nb">${unreadTaskChats > 9 ? "9+" : unreadTaskChats}</i>` : k==="chats" && unreadC ? `<i class="nb">${unreadC > 9 ? "9+" : unreadC}</i>` : ""}</span><span>${l}</span></button>`).join("");
+  renderDrawerState(unreadTaskChats, unreadC);
+  if (false) $("#navBar").innerHTML = prim.map(([k,i,l]) => `<button data-tab="${k}" class="${activeK===k?"on":""}" aria-label="${l}"><span class="nicw"><span class="nic">${ic(i,22)}</span>${k==="home" && unreadTaskChats ? `<i class="nb">${unreadTaskChats > 9 ? "9+" : unreadTaskChats}</i>` : k==="chats" && unreadC ? `<i class="nb">${unreadC > 9 ? "9+" : unreadC}</i>` : ""}</span><span>${l}</span></button>`).join("");
   const h = new Date().getHours();
   const greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 20 ? "Good evening" : "Good night";
   const pending = myTasks().filter(t => t.status !== "done");
   $("#greet").textContent = tab === "home" ? `${greet} · ${pending.length} pending` : `${greet}, ${myName().split(" ")[0]} · ${pending.length} pending`;
   document.body.classList.toggle("home", tab === "home");
   $("#avatar").textContent = (myName().trim().charAt(0) || "?").toUpperCase();
-  $("#pageTitle").textContent = {home:"Wing Tasks",tasks:"Tasks",cal:"Tasks",chats:"Chats",reports:"Reports",daily:"Daily Reports",admin:"Admin",more:"More"}[tab];
+  $("#pageTitle").textContent = {home:"Wing Tasks",tasks:"Tasks",cal:"Tasks",chats:"Chats",reports:"Reports",daily:"Daily Reports",admin:"Admin",more:"Settings"}[tab];
   $("#fab span").textContent = tab === "admin" ? "Add member" : (tab === "tasks" && tf.scope === "out") ? "Give a task" : "New task";
   $("#fab").classList.toggle("hidden", tab === "more" || tab === "chats" || tab === "reports" || tab === "daily" || (tab === "admin" && adminSub !== "members"));
   const unreadN = notifs.filter(n => !n.read).length;
@@ -1398,6 +1429,7 @@ function navPush() { const top = navStack[navStack.length - 1]; if (top && top.t
 window.__appBack = function () {
   try {
     if (call || incoming) return 1;
+    if (document.body.classList.contains("drawer-open")) { closeDrawer(); return 1; }
     if (chatId) { closeChat(); return 1; }
     if (detailId || threadId) { closePage(); return 1; }
     if (tab === "tasks" && tf.open) { tf.open = false; render(); return 1; }
@@ -1405,7 +1437,6 @@ window.__appBack = function () {
     if (tab === "daily" && drSub !== "entry") { drSub = "entry"; drEditText = false; drTplDraft = null; render(); return 1; }
     if (tab === "admin" && adminSub !== "members") { adminSub = "members"; render(); return 1; }
     if (tab === "tasks" && searchQ && !statFilter) { searchQ = ""; render(); return 1; }
-    if (tab !== "home" && tab !== "more" && tab !== "cal" && !prim.includes(tab)) { tab = "more"; render(); return 1; }
     if (tab !== "home") { tab = "home"; if (statFilter) tf = tfDefault(); statFilter = null; render(); return 1; }
   } catch (e) {}
   return 0;
@@ -1743,15 +1774,48 @@ function digestHtml() {
 }
 
 /* ---------- VIEWS ---------- */
+/* ---------- side menu (top-left button) ---------- */
+function drawerItems() {
+  const a = [["home","home","Home"],["tasks","tasks","Tasks"],["cal","calendar","Calendar"],["chats","msg","Chats"]];
+  if (drHasAccess()) a.push(["daily","doc","Daily Reports"]);
+  a.push(["reports","chart","Reports"]);
+  if (isAdmin) a.push(["admin","shield","Admin"]);
+  a.push(["more","settings","Settings"]);
+  return a;
+}
+let drawerBadges = [0, 0];
+function renderDrawerState(unreadTask, unreadChat) {
+  drawerBadges = [unreadTask, unreadChat];
+  $("#menuDot").classList.toggle("hidden", !(unreadTask || unreadChat));
+  if (document.body.classList.contains("drawer-open")) renderDrawer();
+}
+function renderDrawer() {
+  const m = myMember || {}, [ut, uc] = drawerBadges;
+  const badge = k => { const n = k === "chats" ? uc : k === "home" ? ut : 0; return n ? `<i class="db">${n > 9 ? "9+" : n}</i>` : ""; };
+  $("#drPanel").innerHTML = `<div class="dr-top"><span class="pav">${esc(initials(myName()))}</span><div><b>${esc(myName())}</b><small>${esc(isAdmin ? "Admin" : (m.designation || "Member"))} · ID: ${esc(idOf(me))}</small></div></div>
+    <div class="dr-list">${drawerItems().map(([k, i, l]) => `<button data-go="${k}" class="${tab === k ? "on" : ""}">${ic(i, 21)}<span>${l}</span>${badge(k)}</button>`).join("")}</div>
+    <div class="dr-foot">Wing Tasks · DSW Wing · version ${esc(BUILD.versionName)}</div>`;
+}
+function openDrawer() {
+  renderDrawer(); $("#drawer").classList.remove("hidden");
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add("drawer-open")));
+}
+function closeDrawer() {
+  document.body.classList.remove("drawer-open");
+  setTimeout(() => { if (!document.body.classList.contains("drawer-open")) $("#drawer").classList.add("hidden"); }, 280);
+}
 function heroHtml() {
   const m = myMember || {};
-  const tiles = [["newtask", "", "plus", "t", "New task"]];
-  tiles.push(drHasAccess() ? ["gotab", "daily", "doc", "o", "Daily report"] : ["gotab", "reports", "chart", "o", "Reports"]);
-  tiles.push(["gotab", "chats", "msg", "b", "Chats"], ["tview", "cal", "calendar", "p", "Calendar"]);
+  const uc = unreadChats();
+  const tiles = [["newtask", "", "plus", "t", "New task"], ["gotab", "tasks", "tasks", "t", "Tasks"], ["gotab", "chats", "msg", "b", "Chats", uc], ["tview", "cal", "calendar", "p", "Calendar"]];
+  if (drHasAccess()) tiles.push(["gotab", "daily", "doc", "o", "Daily report"]);
+  tiles.push(["gotab", "reports", "chart", "o", "Reports"]);
+  if (isAdmin) tiles.push(["gotab", "admin", "shield", "b", "Admin"]);
+  tiles.push(["gotab", "more", "settings", "p", "Settings"]);
   return `<div class="hero">
     <div class="prof"><span class="pav">${esc(initials(myName()))}</span><div><b>${esc(myName())}</b><small>${esc(isAdmin ? "Admin" : (m.designation || "Member"))} · ID: ${esc(idOf(me))}</small></div></div>
     <div class="qa-h">Quick Access</div>
-    <div class="qa">${tiles.map(([a, v, i, c, l]) => `<button data-act="${a}" ${v ? `data-v="${v}"` : ""}><span class="qi ${c}">${ic(i, 26, 2)}</span><span>${l}</span></button>`).join("")}</div>
+    <div class="qa">${tiles.map(([a, v, i, c, l, n]) => `<button data-act="${a}" ${v ? `data-v="${v}"` : ""}><span class="qi ${c}">${ic(i, 26, 2)}${n ? `<i class="qb">${n > 9 ? "9+" : n}</i>` : ""}</span><span>${l}</span></button>`).join("")}</div>
   </div>`;
 }
 function viewHome() {
@@ -1948,7 +2012,7 @@ function viewMore() {
   const desc = { deleg: "Tasks you gave to others", reports: "Performance report and PDF", admin: "Members, categories, settings", daily: "Daily report entry and history" };
   const menu = extra.length ? `<div class="list glass">${extra.map(([k,i,l]) => `<button class="lrow mtile" data-act="gotab" data-v="${k}"><span class="lt"><b>${l}</b><small>${desc[k] || ""}</small></span>${ic("chev",16,2.2)}</button>`).join("")}</div>` : "";
   const th = themePref();
-  return menu + `<div class="sec">My account</div>
+  return `<div class="sec">My account</div>
     <div class="crow glass"><span class="avt">${esc(myName().charAt(0).toUpperCase())}</span>
       <div class="nm"><div style="font-weight:600">${esc(myName())}</div>
       <div class="muted" style="font-size:12px">${esc((myMember&&myMember.designation)||"")}${myMember&&myMember.designation?" · ":""}ID: ${esc(idOf(me))}</div>
@@ -3400,6 +3464,22 @@ $("#navBar").addEventListener("click", e => {
   render();
 });
 $("#notifBtn").onclick = openNotifications;
+$("#menuBtn").onclick = openDrawer;
+$("#drawer").addEventListener("click", e => {
+  if (e.target.closest("[data-dclose]")) { closeDrawer(); return; }
+  const b = e.target.closest("[data-go]"); if (!b) return;
+  const k = b.dataset.go; closeDrawer();
+  if (tab === k) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+  tab = k; if (tab === "daily") drEnsureSub(); render();
+});
+{ let sx = null, sy = 0;   // swipe from the left edge opens the menu, swipe left closes it
+  document.addEventListener("touchstart", e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; }, { passive: true });
+  document.addEventListener("touchend", e => {
+    if (sx === null || !ready || !user) return; const t = e.changedTouches[0], dx = t.clientX - sx, dy = Math.abs(t.clientY - sy);
+    const open = document.body.classList.contains("drawer-open");
+    if (!open && sx < 24 && dx > 70 && dy < 60 && !detailId && !threadId && !call && !$("#sheetHost").innerHTML) openDrawer();
+    else if (open && dx < -60 && dy < 60) closeDrawer();
+    sx = null; }, { passive: true }); }
 
 $("#view").addEventListener("click", e => run(async () => {
   const el = e.target.closest("[data-act]"); if (!el) return;
