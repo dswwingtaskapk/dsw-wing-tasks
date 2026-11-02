@@ -408,6 +408,17 @@ nav .bar .nicw{position:relative}
 .qrbox .qt b{color:var(--text);display:block;font-size:15px;margin-bottom:4px}
 .verline{text-align:center;color:var(--faint);font-size:12px;margin:22px 0 0}
 .pclist{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.su-intro{font-size:14px;color:var(--muted);line-height:1.5;margin:2px 0 14px}
+.su-prog{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:14px}
+.su-prog i{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .3s}
+.su-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--surface2);margin-bottom:8px}
+.su-item .su-n{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;background:var(--surface);color:var(--primary);border:1.5px solid var(--line)}
+.su-item.ok .su-n{background:var(--ok);border-color:var(--ok);color:#fff}
+.su-item .su-t{flex:1;min-width:0}
+.su-item .su-t b{display:block;font-size:14.5px}
+.su-item .su-t small{display:block;font-size:12.5px;color:var(--muted);line-height:1.4;margin-top:2px}
+.su-item .btn{flex:none;padding:8px 16px;min-height:0;font-size:13.5px}
+.su-item .su-ok{flex:none;font-size:13px;font-weight:700;color:var(--ok)}
 .pcs{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:var(--surface2)}
 .pcs .pci{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;margin-top:1px}
 .pcs.ok .pci{background:var(--ok)}
@@ -1010,8 +1021,8 @@ function pushCardHtml() {
     <div style="font-size:13.5px;line-height:1.5">${pushStatusLine()}</div>
     ${A ? `<button class="btn" data-act="pushcheck" style="margin-top:12px;width:100%" ${run ? "disabled" : ""}>${run ? "Checking..." : "Run notification checkup + test"}</button>` : ""}
     ${list ? `<div class="pclist">${list}</div>` : ""}
-    ${A && A.canFullScreenCalls && !A.canFullScreenCalls() ? `<div class="drwarn" style="margin-top:12px">Calls cannot ring full screen yet. Tap below and turn on "Allow full screen notifications" (or "Full-screen intents") for Wing Tasks.</div>
-      <button class="btn" data-act="fullscreenset" style="margin-top:8px;width:100%">Allow full-screen calls</button>` : ""}
+    ${A && A.permState ? (() => { const m = setupMissing().length; return `${m ? `<div class="drwarn" style="margin-top:12px">${m} phone setting${m > 1 ? "s are" : " is"} still off, so some alerts or calls may not arrive.</div>` : ""}
+      <button class="btn ${m ? "" : "ghost"}" data-act="phonesetup" style="margin-top:12px;width:100%">${m ? "Finish phone setup" : "Phone setup (all allowed)"}</button>`; })() : ""}
     ${A ? `<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="pushnotifset">Phone notification settings</button><button class="btn ghost" data-act="pushbattery">Allow background running</button></div>
       <p class="pcnote">If the test says it was sent but nothing appears on the phone: on Oppo, Realme, Vivo, Xiaomi, Infinix or Tecno phones open App info, then Battery (or Auto-start), and allow background activity. Also keep the app locked in the recent-apps list.</p>` : ""}
     ${isAdmin ? `<label>Push server address (Admin)</label><input id="pushUrlIn" value="${esc(pushUrl())}" placeholder="https://wing-push.yourname.workers.dev" autocapitalize="none" spellcheck="false">
@@ -1057,6 +1068,70 @@ async function runPushCheck() {
 }
 
 
+/* ---------- PHONE SETUP: the app asks for everything it needs, one tap each ---------- */
+const MAKER_STEPS = [
+  [/xiaomi|redmi|poco/, "Turn on Show on lock screen, Display pop-up windows while running in background and Autostart."],
+  [/oppo|realme|oneplus/, "Turn on Auto launch (Allow auto-start) for Wing Tasks."],
+  [/vivo|iqoo/, "Turn on Background start (Auto-start) for Wing Tasks."],
+  [/huawei|honor/, "Turn off Manage automatically and turn on Auto-launch, Secondary launch and Run in background."],
+  [/infinix|tecno|itel/, "Turn on Auto-start for Wing Tasks."],
+];
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function permState() { try { return JSON.parse(window.Android.permState()); } catch (e) { return null; } }
+function setupItems() {
+  const A = window.Android, st = permState(); if (!A || !st) return [];
+  const items = [
+    { k: "notif", title: "Notifications", sub: "New tasks, messages, reminders and calls", ok: st.notif, act: () => A.askNotifications() },
+    { k: "mic", title: "Microphone", sub: "Needed to talk in in-app calls", ok: st.mic, act: () => A.askMic() },
+    { k: "battery", title: "Run in background", sub: "So alerts and calls arrive on time. Tap Allow on the next screen.", ok: st.battery, act: () => A.openBatterySettings() },
+  ];
+  if (st.sdk >= 34) items.push({ k: "fullscreen", title: "Full-screen calls", sub: "Calls ring on the full screen, even when the phone is locked. Turn the switch on.", ok: st.fullscreen, act: () => A.openFullScreenSettings() });
+  if (st.callChannel === false) items.push({ k: "callch", title: "Call sound", sub: "Calls are set to silent. Turn on Sound / Pop on screen.", ok: false, act: () => A.openCallChannel() });
+  const mk = MAKER_STEPS.find(([re]) => re.test(st.brand || ""));
+  if (mk && A.openMaker) items.push({ k: "maker", title: "Lock screen & auto-start", sub: mk[1] + " Then come back here.", ok: lsGet("su_maker") === "1", act: () => { lsSet("su_maker_opened", "1"); A.openMaker(); }, manual: true });
+  return items;
+}
+function setupMissing() { return setupItems().filter(i => !i.ok); }
+let setupOpen = false;
+function openSetup(auto) {
+  if (!window.Android || !window.Android.permState) return;
+  setupOpen = true; renderSetup(auto);
+}
+function renderSetup(auto) {
+  if (!setupOpen) return;
+  const items = setupItems(), done = items.filter(i => i.ok).length, all = items.length && done === items.length;
+  const host = $("#sheetHost");
+  const row = (it, n) => `<div class="su-item ${it.ok ? "ok" : ""}"><span class="su-n">${it.ok ? ic("check", 16, 3) : n}</span>
+      <span class="su-t"><b>${esc(it.title)}</b><small>${esc(it.sub)}</small></span>
+      ${it.ok ? `<span class="su-ok">Allowed</span>` : it.manual && lsGet("su_maker_opened") === "1"
+        ? `<button class="btn" data-su="${it.k}:done">Done</button>` : `<button class="btn" data-su="${it.k}">Allow</button>`}</div>`;
+  host.innerHTML = `<div class="overlay" id="ov"><div class="sheet" id="setupSheet">
+      <h3>${all ? "All set" : "Phone setup"}</h3>
+      <p class="su-intro">${all ? "Everything is allowed. Alerts and calls will reach this phone on time." : "Tap Allow on each item. Your phone opens the right switch, then brings you back here."}</p>
+      <div class="su-prog"><i style="width:${items.length ? Math.round(done * 100 / items.length) : 100}%"></i></div>
+      ${items.map((it, i) => row(it, i + 1)).join("")}
+      <div class="row"><button class="btn ${all ? "" : "ghost"}" id="suClose" style="width:100%">${all ? "Done" : "Later"}</button></div>
+    </div></div>`;
+  const close = () => { setupOpen = false; host.innerHTML = ""; if (!all) lsSet("su_later", String(Date.now())); render(); };
+  $("#suClose").onclick = close;
+  $("#ov").onclick = e => {
+    if (e.target.id === "ov") { close(); return; }
+    const b = e.target.closest("[data-su]"); if (!b) return;
+    const [k, d] = b.dataset.su.split(":");
+    if (d === "done") { lsSet("su_maker", "1"); renderSetup(); return; }
+    const it = items.find(x => x.k === k); if (it) { try { it.act(); } catch (er) { toast("Open the phone Settings > Apps > Wing Tasks", "err"); } }
+    if (it && it.manual) setTimeout(() => renderSetup(), 800);
+  };
+}
+window.addEventListener("permchange", () => { if (setupOpen) setTimeout(() => renderSetup(), 250); else if (tab === "more") renderSoon(); });
+function maybeAutoSetup() {
+  if (!window.Android || !window.Android.permState || setupOpen) return;
+  if (call || incoming || window.__pendingOpen || $("#sheetHost").innerHTML.trim()) return;
+  const later = Number(lsGet("su_later") || 0);
+  if (setupMissing().length && Date.now() - later > 24 * 3600000) openSetup(true);
+}
+
 function start() {
   ready = true;
   screens("main");
@@ -1066,6 +1141,7 @@ function start() {
   saveFcmToken();
   startTokenPoll();
   setTimeout(() => checkUpdate(false), 4000);
+  setTimeout(maybeAutoSetup, 1500);
 }
 
 function listen() {
@@ -3675,6 +3751,7 @@ $("#view").addEventListener("click", e => run(async () => {
     toast(u ? "Server address saved" : "Server address cleared");
   }
   else if (act === "pushnotifset") { try { window.Android.openNotifSettings(); } catch (e) { toast("Open the phone Settings > Apps > Wing Tasks > Notifications", "err"); } }
+  else if (act === "phonesetup") openSetup(false);
   else if (act === "fullscreenset") { try { window.Android.openFullScreenSettings(); } catch (e) { toast("Open the phone Settings > Apps > Wing Tasks > Notifications", "err"); } }
   else if (act === "pushbattery") { try { window.Android.openBatterySettings(); } catch (e) { toast("Open the phone Settings > Apps > Wing Tasks > Battery", "err"); } }
   else if (act === "logout") {

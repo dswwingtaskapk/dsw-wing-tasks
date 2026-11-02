@@ -109,10 +109,6 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         instance = this;
         PushService.ensureChannel(this);
-        if (Build.VERSION.SDK_INT >= 33
-                && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 77);
-        }
         try {
             FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult() != null) {
@@ -295,6 +291,58 @@ public class MainActivity extends Activity {
         getSharedPreferences("ui", MODE_PRIVATE).edit().putBoolean("dark", dark).apply();
     }
 
+    /* ---------- phone setup: everything the app needs, asked from inside the app ---------- */
+    private static final int REQ_NOTIF = 77, REQ_MIC_SETUP = 79;
+
+    private boolean hasPerm(String p) { return checkSelfPermission(p) == PackageManager.PERMISSION_GRANTED; }
+
+    private String brand() { return (Build.MANUFACTURER == null ? "" : Build.MANUFACTURER).toLowerCase(Locale.ROOT); }
+
+    /** first time: Android's own "Allow" popup. If the person said no before and Android will not ask again: open the settings page. */
+    private void askRuntime(String perm, int code, Runnable fallback) {
+        android.content.SharedPreferences sp = getSharedPreferences("perm", MODE_PRIVATE);
+        boolean askedBefore = sp.getBoolean(perm, false);
+        if (hasPerm(perm)) { notifyPermChange(); return; }
+        if (!askedBefore || shouldShowRequestPermissionRationale(perm)) {
+            sp.edit().putBoolean(perm, true).apply();
+            requestPermissions(new String[]{perm}, code);
+        } else fallback.run();
+    }
+
+    private boolean tryStart(Intent i) {
+        try { i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(i); return true; } catch (Exception e) { return false; }
+    }
+
+    /** Xiaomi / Oppo / Vivo... hide "show on lock screen", "pop-up in background" and "auto-start" in their own pages */
+    private void openMakerSettings() {
+        String b = brand(), pkg = getPackageName();
+        java.util.List<Intent> list = new java.util.ArrayList<>();
+        if (b.contains("xiaomi") || b.contains("redmi") || b.contains("poco")) {
+            list.add(new Intent("miui.intent.action.APP_PERM_EDITOR").setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity").putExtra("extra_pkgname", pkg));
+            list.add(new Intent("miui.intent.action.APP_PERM_EDITOR").putExtra("extra_pkgname", pkg));
+            list.add(new Intent().setClassName("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"));
+        } else if (b.contains("oppo") || b.contains("realme") || b.contains("oneplus")) {
+            list.add(new Intent().setClassName("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"));
+            list.add(new Intent().setClassName("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"));
+            list.add(new Intent().setClassName("com.oppo.safe", "com.oppo.safe.permission.startup.StartupAppListActivity"));
+        } else if (b.contains("vivo") || b.contains("iqoo")) {
+            list.add(new Intent().setClassName("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"));
+            list.add(new Intent().setClassName("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager"));
+        } else if (b.contains("huawei") || b.contains("honor")) {
+            list.add(new Intent().setClassName("com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"));
+        } else if (b.contains("infinix") || b.contains("tecno") || b.contains("itel")) {
+            list.add(new Intent().setClassName("com.transsion.phonemaster", "com.cyin.himgr.autostart.AutoStartActivity"));
+        } else if (b.contains("samsung")) {
+            list.add(new Intent().setClassName("com.samsung.android.lool", "com.samsung.android.sm.battery.ui.BatteryActivity"));
+        }
+        for (Intent i : list) if (tryStart(i)) return;
+        openAppDetails();
+    }
+
+    private void notifyPermChange() {
+        if (web != null) runOnUiThread(() -> web.evaluateJavascript("window.dispatchEvent(new Event('permchange'))", null));
+    }
+
     private void openAppDetails() {
         try { startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()))); }
         catch (Exception ignored) {}
@@ -363,6 +411,58 @@ public class MainActivity extends Activity {
                 openAppDetails();
             });
         }
+
+        /** what is allowed right now, for the in-app "Phone setup" checklist */
+        @JavascriptInterface
+        public String permState() {
+            boolean notif = notificationsEnabled() && (Build.VERSION.SDK_INT < 33 || hasPerm(Manifest.permission.POST_NOTIFICATIONS));
+            boolean mic = hasPerm(Manifest.permission.RECORD_AUDIO);
+            boolean battery = true;
+            try {
+                android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+                if (pm != null) battery = pm.isIgnoringBatteryOptimizations(getPackageName());
+            } catch (Throwable ignored) {}
+            boolean callsOn = true;
+            try {
+                if (Build.VERSION.SDK_INT >= 26) {
+                    android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    PushService.ensureChannel(MainActivity.this);
+                    android.app.NotificationChannel ch = nm == null ? null : nm.getNotificationChannel(PushService.CALL_CHANNEL);
+                    callsOn = ch == null || ch.getImportance() >= android.app.NotificationManager.IMPORTANCE_HIGH;
+                }
+            } catch (Throwable ignored) {}
+            return "{\"notif\":" + notif + ",\"mic\":" + mic + ",\"battery\":" + battery + ",\"fullscreen\":" + canFullScreenCalls()
+                    + ",\"callChannel\":" + callsOn + ",\"sdk\":" + Build.VERSION.SDK_INT + ",\"brand\":\"" + clean(brand()) + "\"}";
+        }
+
+        @JavascriptInterface
+        public void askNotifications() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 33 && !hasPerm(Manifest.permission.POST_NOTIFICATIONS))
+                    askRuntime(Manifest.permission.POST_NOTIFICATIONS, REQ_NOTIF, () -> openNotifSettings());
+                else openNotifSettings();
+            });
+        }
+
+        @JavascriptInterface
+        public void askMic() {
+            runOnUiThread(() -> askRuntime(Manifest.permission.RECORD_AUDIO, REQ_MIC_SETUP, () -> openAppDetails()));
+        }
+
+        @JavascriptInterface
+        public void openCallChannel() {
+            runOnUiThread(() -> {
+                if (Build.VERSION.SDK_INT >= 26 && tryStart(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                        .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName()).putExtra(Settings.EXTRA_CHANNEL_ID, PushService.CALL_CHANNEL))) return;
+                openNotifSettings();
+            });
+        }
+
+        @JavascriptInterface
+        public void openMaker() { runOnUiThread(() -> openMakerSettings()); }
+
+        @JavascriptInterface
+        public void openAppInfo() { runOnUiThread(() -> openAppDetails()); }
 
         @JavascriptInterface
         public void setDarkBars(boolean dark) {
@@ -473,6 +573,7 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_NOTIF || requestCode == REQ_MIC_SETUP) { notifyPermChange(); return; }
         if (requestCode == REQ_MIC && pendingMic != null) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
                 pendingMic.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
@@ -499,6 +600,7 @@ public class MainActivity extends Activity {
         super.onResume();
         visible = true;
         try { NotificationManagerCompat.from(this).cancelAll(); } catch (Throwable ignored) {}
+        notifyPermChange();   // back from a settings page: refresh the setup checklist
         web.onResume();
     }
 }
