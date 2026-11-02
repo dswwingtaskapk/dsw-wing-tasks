@@ -1,0 +1,16 @@
+# build output
+build/
+.gradle/
+local.properties
+*.apk
+
+# tools
+node_modules/
+push-worker/.wrangler/
+
+# SECRETS - never upload these
+*.keystore
+*.jks
+signing-key-KEEP-SAFE/
+*service-account*.json
+*-firebase-adminsdk-*.json

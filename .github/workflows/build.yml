@@ -1,0 +1,79 @@
+name: Build Wing Tasks APK
+on:
+  push:
+    paths-ignore:
+      - 'push-worker/**'
+      - 'tools/**'
+      - 'firestore.rules'
+      - 'firebase.json'
+      - '.firebaserc'
+      - 'package.json'
+      - 'package-lock.json'
+      - '**.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Accept Android licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Check setup
+        env:
+          KS: ${{ secrets.KEYSTORE_BASE64 }}
+          KP: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KS" ] || [ -z "$KP" ]; then
+            echo "::error::The signing key is missing. Add KEYSTORE_BASE64 and KEYSTORE_PASSWORD in GitHub > Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          if grep -q PASTE_HERE app/src/main/assets/config.js; then
+            echo "::error::config.js still has PASTE_HERE. Paste your Firebase web settings into app/src/main/assets/config.js."
+            exit 1
+          fi
+          if [ ! -f app/google-services.json ]; then
+            echo "::warning::app/google-services.json is missing, so phone push notifications will not work."
+          fi
+          echo "$KS" | base64 -d > app/release.keystore
+
+      - name: Write version info
+        run: |
+          echo "/* Filled in automatically by GitHub when the APK is built. Do not edit. */" > app/src/main/assets/build-info.js
+          echo "export const BUILD = { versionCode: ${{ github.run_number }}, versionName: \"1.${{ github.run_number }}\", repo: \"${{ github.repository }}\" };" >> app/src/main/assets/build-info.js
+
+      - name: Build APK
+        env:
+          VERSION_CODE: ${{ github.run_number }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          gradle assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk WingTasks.apk
+
+      - name: Publish download (GitHub Release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.${{ github.run_number }}
+          name: Wing Tasks 1.${{ github.run_number }}
+          body: ${{ github.event.head_commit.message }}
+          files: WingTasks.apk
+          make_latest: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WingTasks-APK
+          path: WingTasks.apk

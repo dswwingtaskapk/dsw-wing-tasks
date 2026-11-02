@@ -1,0 +1,17 @@
+{
+  "name": "dsw-wing-tasks",
+  "private": true,
+  "description": "Wing Tasks (DSW Wing) - helper commands",
+  "scripts": {
+    "apk": "node tools/apk-qr.js",
+    "qr": "node tools/apk-qr.js --now",
+    "rules": "firebase deploy --only firestore:rules",
+    "push:login": "wrangler login",
+    "push:deploy": "wrangler deploy -c push-worker/wrangler.toml",
+    "push:secret": "node tools/set-push-secret.js"
+  },
+  "devDependencies": {
+    "qrcode-terminal": "^0.12.0",
+    "wrangler": "^3.80.0"
+  }
+}

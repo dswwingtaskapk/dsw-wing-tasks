@@ -1,0 +1,89 @@
+rules_version = '2';
+// Wing Tasks - who can read and write what.
+// Send to Firebase with:  firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ----
+    function signedIn() { return request.auth != null && request.auth.token.email != null; }
+    function me() { return request.auth.token.email.lower(); }
+    function isAdmin() { return signedIn() && me() == 'dswwingtaskapk@gmail.com'; }
+    function memberPath() { return /databases/$(database)/documents/members/$(me()); }
+    function isMember() {
+      return isAdmin() || (signedIn() && exists(memberPath()) && get(memberPath()).data.get('active', true) != false);
+    }
+    function reportRole() { return get(memberPath()).data.get('reportRole', 'none'); }
+    function canReport() { return isAdmin() || (isMember() && reportRole() != 'none'); }
+    function fullReport() { return isAdmin() || (isMember() && reportRole() == 'full'); }
+    function involved(d) { return d.assigneeEmail == me() || d.creatorEmail == me() || d.giverEmail == me(); }
+
+    // ---- members (only the Admin adds / edits people) ----
+    match /members/{email} {
+      allow get: if signedIn() && (email == me() || isMember());
+      allow list: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // ---- tasks + chat files ----
+    match /tasks/{taskId} {
+      allow read: if isAdmin() || (isMember() && involved(resource.data));
+      allow create: if isAdmin() || (isMember() && request.resource.data.creatorEmail == me());
+      allow update: if isAdmin() || (isMember() && involved(resource.data));
+      allow delete: if isAdmin() || (isMember() && resource.data.creatorEmail == me());
+
+      match /files/{fileId} {
+        allow read, write: if isAdmin() ||
+          (isMember() && involved(get(/databases/$(database)/documents/tasks/$(taskId)).data));
+      }
+    }
+
+    // ---- task categories set by the Admin ----
+    match /categories/{id} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // ---- each person's own settings and personal categories ----
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /{rest=**} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+
+    // ---- app settings (report defaults, report format, push server address) ----
+    match /config/{name} {
+      allow read: if isMember();
+      allow write: if isAdmin() || (name == 'dailyReport' && fullReport());
+    }
+
+    // ---- daily reports ----
+    match /dailyReports/{date} {
+      allow read: if canReport();
+      allow create, update: if canReport();
+      allow delete: if isAdmin();
+      match /sections/{section} {
+        allow read: if canReport();
+        allow create, update: if canReport();
+        allow delete: if isAdmin();
+      }
+    }
+
+    // ---- in-app notifications (bell icon) ----
+    match /notifications/{email}/items/{id} {
+      allow read, update, delete: if signedIn() && email == me();
+      allow create: if isMember();
+    }
+
+    // ---- phone push: which phone belongs to whom ----
+    match /fcmTokens/{token} {
+      allow read, delete: if signedIn() && resource.data.email == me();
+      allow create, update: if signedIn() && request.resource.data.email == me();
+    }
+
+    // ---- push messages waiting for the push server ----
+    match /pushQueue/{id} {
+      allow create: if isMember() && request.resource.data.email is string;
+    }
+  }
+}

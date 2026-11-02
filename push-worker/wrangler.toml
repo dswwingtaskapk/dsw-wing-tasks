@@ -1,0 +1,7 @@
+name = "wing-push"
+main = "worker.js"
+compatibility_date = "2024-09-23"
+
+# check the queue and the daily-report deadline every minute
+[triggers]
+crons = ["* * * * *"]

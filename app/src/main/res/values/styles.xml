@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="notif_color">#2f56d6</color>
+    <color name="bg">#f4f6fb</color>
+    <color name="bg_dark">#0e131d</color>
+    <color name="navy">#1f2d82</color>
+    <color name="icon_bg">#5f54e8</color>
+    <style name="AppTheme" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">#ffffff</item>
+    </style>
+</resources>
