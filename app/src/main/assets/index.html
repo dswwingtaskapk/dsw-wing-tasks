@@ -38,11 +38,11 @@
 
 /* ---------- base ---------- */
 *,*::before,*::after{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);max-width:100%;overflow-x:hidden}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}
 html{scrollbar-width:none}
 ::-webkit-scrollbar{display:none}
 body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Bengali",sans-serif;font-size:15px;line-height:1.45;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overscroll-behavior-y:none}
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 h1,h2,h3,h4{margin:0;font-weight:700;letter-spacing:-.01em}
 b{font-weight:650}
 img,svg,video,canvas{max-width:100%}
@@ -52,7 +52,7 @@ img,svg,video,canvas{max-width:100%}
 button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 button:disabled{opacity:.5;cursor:default}
 button:active:not(:disabled){transform:scale(.97)}
-#app{max-width:680px;margin:0 auto;padding:0 16px calc(var(--nav-h) + 96px + var(--safe-b))}
+#app{max-width:680px;margin:0 auto;padding:0 16px calc(var(--nav-h) + 96px + var(--safe-b));overflow-x:clip}
 #view{max-width:100%}
 
 /* ---------- inputs ---------- */
@@ -148,81 +148,83 @@ nav .bar .nicw{position:relative}
 /* ---------- home ---------- */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:6px 0 4px}
 .stat{padding:14px 12px;text-align:left}
-.stat b{display:block;font-size:28px;line-height:1.1;font-weight:750;color:var(--text)}
+.stat b{display:block;font-size:26px;line-height:1.1;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
 .stat span{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin-top:3px}
 .stat[data-act]{cursor:pointer;-webkit-user-select:none;user-select:none;transition:transform .15s}
 .stat[data-act]:active{transform:scale(.96)}
-.digest{padding:13px 15px;margin-bottom:14px;background:var(--primary-soft);border-color:transparent;box-shadow:none}
+.digest{padding:13px 15px;margin-bottom:14px}
 .dg-line{font-weight:650;margin-bottom:4px;display:flex;align-items:center;gap:6px}
 .dg-h{font-size:12.5px;color:var(--muted);margin:8px 0 3px;font-weight:600}
 .dg-row{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0}
 .dg-row span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.grp{display:flex;align-items:center;gap:12px;margin:24px 2px 10px}
-.grp .gico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none}
+.grp{display:flex;align-items:flex-end;gap:12px;margin:26px 2px 10px}
 .grp .gt{flex:1;min-width:0}
 .grp .gt b{display:block;font-size:16px;font-weight:700;color:var(--text)}
-.grp .gt small{display:block;font-size:12.5px;color:var(--muted)}
-.grp .gcount{font-weight:750;font-size:16px;text-align:right;color:var(--text)}
-.grp .gcount em{display:block;font-style:normal;font-size:11.5px;font-weight:700;color:var(--bad)}
-.g-in .gico{background:var(--primary-soft);color:var(--primary)}
-.g-own .gico{background:var(--ok-soft);color:var(--ok)}
-.g-out .gico{background:var(--warn-soft);color:var(--warn)}
+.grp .gt small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.grp .gcount{font-weight:700;font-size:13px;color:var(--muted);text-align:right;background:var(--surface2);border-radius:99px;padding:3px 10px}
+.grp .gcount em{display:block;font-style:normal;font-size:11px;font-weight:700;color:var(--bad)}
+.grp .gcount:has(em){background:none;padding:0}
 
 /* ---------- task card ---------- */
-.task{position:relative;display:flex;gap:12px;align-items:flex-start;padding:14px 12px 14px 14px;margin-bottom:10px;border-left:4px solid var(--c,var(--primary));
-  content-visibility:auto;contain-intrinsic-size:auto 150px}
-.task.urgent{box-shadow:0 0 0 1px color-mix(in srgb,var(--bad) 45%,transparent),var(--shadow)}
-.task.done .ttl{text-decoration:line-through;opacity:.55}
-.check{width:26px;height:26px;border-radius:50%;border:2px solid var(--line2);background:var(--surface);flex:none;margin-top:1px;display:grid;place-items:center;padding:0;color:#fff;transition:background .15s,border-color .15s}
+.task{position:relative;display:flex;gap:12px;align-items:flex-start;padding:14px 10px 14px 14px;margin-bottom:10px;
+  content-visibility:auto;contain-intrinsic-size:auto 130px}
+.task.urgent{border-color:color-mix(in srgb,var(--bad) 35%,var(--line))}
+.task.done .ttl{text-decoration:line-through;opacity:.5}
+.check{width:24px;height:24px;border-radius:50%;border:2px solid var(--line2);background:var(--surface);flex:none;margin-top:1px;display:grid;place-items:center;padding:0;color:#fff;transition:background .15s,border-color .15s}
 .check .ic{display:block}
+.check:hover{border-color:var(--primary)}
 .task.done .check{background:var(--ok);border-color:var(--ok)}
-.check.ro{cursor:default;opacity:.65}
+.check.ro{cursor:default;opacity:.6}
 .tcol{flex:1;min-width:0}
-.tbody{min-width:0;cursor:pointer}
-.ttl{font-weight:650;font-size:15.5px;overflow-wrap:anywhere}
-.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;font-size:12.5px;color:var(--muted);align-items:center}
-.chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:999px;background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
-.chip .ic{margin-right:1px}
-.chip.cat{background:color-mix(in srgb,var(--c) 15%,var(--surface));color:color-mix(in srgb,var(--c) 70%,var(--text))}
+.tbody{min-width:0}
+.tbody[data-act]{cursor:pointer}
+.tbody[data-act]:active{opacity:.6}
+.ttl{font-weight:600;font-size:15.5px;line-height:1.35;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-block;font-size:11.5px;font-weight:650;padding:2px 8px;border-radius:6px;background:var(--surface2);color:var(--muted);vertical-align:2px}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.new{background:var(--primary);color:var(--on-primary);margin-left:8px;font-size:10.5px;padding:1px 7px}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:2px 0;margin-top:6px;font-size:13px;color:var(--muted)}
+.meta .sep{margin:0 7px;color:var(--faint)}
+.mcat{display:inline-flex;align-items:center;gap:6px}
+.mcat i{width:8px;height:8px;border-radius:50%;flex:none}
+.due{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-top:4px;font-size:13px;color:var(--muted)}
+.cd{font-weight:650;font-size:12.5px}
+.cd.ok{color:var(--ok)}.cd.warn{color:var(--warn)}.cd.bad{color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:6px;background:var(--surface2);color:var(--muted);font-size:12px;font-weight:600;white-space:nowrap}
+.chip.cat{background:color-mix(in srgb,var(--c) 14%,var(--surface));color:color-mix(in srgb,var(--c) 70%,var(--text))}
 .chip.from,.chip.rep{background:var(--primary-soft);color:var(--primary)}
 .chip.to,.chip.perm{background:var(--warn-soft);color:var(--warn)}
 .chip.doing{background:var(--warn-soft);color:var(--warn)}
 .chip.okc{background:var(--ok-soft);color:var(--ok)}
 .chip.bad{background:var(--bad-soft);color:var(--bad)}
-.chip.new{background:var(--bad);color:#fff;font-size:10.5px;padding:1px 7px;vertical-align:middle;margin-left:4px}
+.chip.new{background:var(--primary);color:var(--on-primary);font-size:10.5px;padding:1px 7px}
 .chip.perm{display:inline-flex;margin-top:6px}
-.cd{display:inline-flex;align-items:center;gap:3px;font-weight:700}
-.cd.ok{color:var(--ok)}.cd.warn{color:var(--warn)}.cd.bad{color:var(--bad)}
-.calb{display:inline-grid;place-items:center;background:var(--surface2);border:0;border-radius:999px;padding:4px 9px;color:var(--muted)}
-.pinb{background:none;border:0;padding:4px;color:var(--faint);display:grid;place-items:center;align-self:flex-start}
+.pinb{background:none;border:0;padding:4px;color:var(--line2);display:grid;place-items:center;align-self:flex-start;min-width:32px;min-height:32px}
 .pinb.on{color:var(--gold)}
 .pinb.on .ic{fill:currentColor}
-.prog{height:6px;border-radius:99px;background:var(--surface2);margin-top:10px;overflow:hidden}
+.prog{height:4px;border-radius:99px;background:var(--surface2);margin-top:10px;overflow:hidden}
 .prog i{display:block;height:100%;border-radius:99px;background:var(--primary);transition:width .4s ease}
-.stoggle{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:8px 0 0;font-size:13px;font-weight:600;color:var(--primary)}
-.stoggle .ic{transition:transform .2s}
-.stoggle.open .ic{transform:rotate(90deg)}
-.steps{margin-top:4px}
+.stoggle{background:none;border:0;padding:8px 0 0;font-size:13px;font-weight:600;color:var(--primary)}
+.steps{margin-top:4px;border-top:1px solid var(--line);padding-top:4px}
 .step{display:flex;align-items:center;gap:10px;padding:8px 2px;font-size:14.5px;cursor:pointer}
-.step b{width:20px;height:20px;border-radius:6px;border:2px solid var(--line2);flex:none;display:grid;place-items:center;color:#fff}
+.step b{width:18px;height:18px;border-radius:5px;border:2px solid var(--line2);flex:none;display:grid;place-items:center;color:#fff}
 .step b .ic{display:block}
 .step.on b{background:var(--ok);border-color:var(--ok)}
 .step.on span{text-decoration:line-through;opacity:.55}
-.trow{display:flex;gap:8px;margin-top:12px;align-items:stretch}
-.chatb{display:flex;align-items:center;gap:8px;flex:1;min-width:0;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--muted);text-align:left;font-size:13px}
-.chatb .pv{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chatb .pv b{color:var(--text)}
-.chatb.has{background:var(--primary-soft);border-color:color-mix(in srgb,var(--primary) 35%,transparent);color:var(--primary)}
-.chatb .badge{background:var(--bad);color:#fff;font-style:normal;font-weight:800;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 6px}
-.chatb .cnt{font-style:normal;font-size:11.5px;font-weight:700;color:var(--faint)}
-.editb{flex:none;display:flex;align-items:center;gap:6px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:650;font-size:13.5px}
+.tfoot{display:flex;justify-content:flex-start;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)}
+.chatlink{background:none;border:0;padding:2px 0;font-size:13px;font-weight:600;color:var(--muted)}
+.chatlink.has{color:var(--primary)}
+.chatlink.has::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--bad);margin-right:7px;vertical-align:1px}
 .pop{animation:pop .45s ease}
-@keyframes pop{50%{transform:scale(1.025)}}
+@keyframes pop{50%{transform:scale(1.02)}}
 
 /* ---------- filters ---------- */
 .filters{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin:0 -16px 8px;padding-left:16px;padding-right:16px;scrollbar-width:none}
 .fchip{flex:none;min-height:36px;padding:7px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line2);color:var(--text);font-size:13.5px;font-weight:600}
-.fchip.on{background:var(--text);border-color:var(--text);color:var(--bg)}
+.fchip.on{background:var(--primary-soft);border-color:var(--primary);color:var(--primary)}
 .statbar{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:0 0 12px;padding:11px 14px;border-radius:14px;background:var(--primary-soft);color:var(--primary);font-weight:700}
 .statbar button{border:0;background:var(--surface);color:var(--primary);border-radius:99px;padding:7px 14px;font-weight:700;font-size:13px}
 .statbar ~ .filters{display:none}
@@ -328,11 +330,11 @@ nav .bar .nicw{position:relative}
 .drcard{padding:16px;margin-bottom:12px}
 .drcard h4{font-size:15.5px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
 .drcard h4 .ic{color:var(--primary)}
-.drcard > .btn{width:100%}
+.drcard > .btn{width:100%;margin-top:14px;background:var(--primary-soft);color:var(--primary);box-shadow:none}
 .dract{display:flex;align-items:center;gap:6px;padding:8px 10px;margin-bottom:6px;background:var(--surface2);border-radius:10px}
 .dract span{flex:1;font-size:14.5px;min-width:0;overflow-wrap:anywhere}
 .dract button{background:none;border:0;padding:4px;color:var(--muted);display:grid;place-items:center}
-.drwho{font-size:12.5px;color:var(--ok);margin-top:10px;font-weight:600}
+.drwho{font-size:12.5px;color:var(--muted);margin-top:10px}
 .drwarn{background:var(--warn-soft);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:10px;font-weight:500}
 .drpaper{white-space:pre-wrap;font-family:ui-monospace,"Roboto Mono",Menlo,Consolas,monospace;font-size:13px;line-height:1.55;background:var(--surface);color:var(--text);
   border:1px solid var(--line);border-radius:14px;padding:16px;overflow-wrap:anywhere}
@@ -360,9 +362,14 @@ nav .bar .nicw{position:relative}
 .ntitem span{font-size:12px;color:var(--faint)}
 
 /* ---------- more / settings ---------- */
-.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-.mtile{display:flex;align-items:center;gap:12px;padding:14px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);color:var(--text);font-weight:650;font-size:14.5px}
-.mtile .mi{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);flex:none}
+.list{padding:0;overflow:hidden;margin-top:4px}
+.lrow{display:flex;align-items:center;gap:12px;width:100%;padding:14px 14px 14px 16px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;color:var(--text)}
+.lrow:last-child{border-bottom:0}
+.lrow:active{background:var(--surface2);transform:none}
+.lrow .lt{flex:1;min-width:0}
+.lrow .lt b{display:block;font-size:15px;font-weight:600}
+.lrow .lt small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.lrow .ic{color:var(--faint)}
 .segc{display:flex;background:var(--surface2);border-radius:12px;padding:4px;gap:4px}
 .segc button{flex:1;border:0;background:none;border-radius:9px;padding:9px 6px;font-weight:650;font-size:14px;color:var(--muted)}
 .segc button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
@@ -744,7 +751,7 @@ window.addEventListener("nativeopen", () => {
 });
 function pushStatusLine() {
   if (!window.Android) return "Phone alerts work in the Android app.";
-  const reg = fcmSaved ? `${ic("check",14,3)} This phone is registered for alerts.` : `This phone is not registered for alerts yet.`;
+  const reg = fcmSaved ? `This phone is registered for alerts.` : `This phone is not registered for alerts yet.`;
   const srv = pushUrl() ? "" : " The Admin still has to save the push server address below.";
   return reg + srv;
 }
@@ -1193,7 +1200,7 @@ function stepsHtml(t) {
   const st = stepStats(t);
   if (!st.total) return "";
   const open = expanded.has(t.id), canTick = t.assigneeEmail === me;
-  return `<button class="stoggle ${open?"open":""}" data-act="expand" data-id="${t.id}">${ic("chev",13,2.6)} ${st.done}/${st.total} steps · ${st.pct}%</button>` +
+  return `<button class="stoggle ${open?"open":""}" data-act="expand" data-id="${t.id}">${st.done} of ${st.total} steps done${open ? " · Hide" : " · Show"}</button>` +
     (open ? `<div class="steps">${t.steps.map((s,i)=>`<div class="step ${s.done?"on":""}" ${canTick?`data-act="togglestep" data-id="${t.id}" data-i="${i}"`:""}><b>${s.done?ic("check",12,3):""}</b><span>${esc(s.text)}</span></div>`).join("")}</div>` : "");
 }
 function statusFromSteps(steps, current) {
@@ -1296,7 +1303,7 @@ function chatFileHtml(u) {
 }
 function chatMsgsHtml(t) {
   const ups = t.updates || [];
-  if (!ups.length) return `<div class="chat-empty">${ic("msg",36,1.5)}<br>No messages yet.<br>Write an update, ask a question or attach a file.</div>`;
+  if (!ups.length) return `<div class="chat-empty"><b>No messages yet</b><br>Write an update, ask a question or attach a file.</div>`;
   let lastDay = "";
   return ups.map(u => {
     const d = new Date(u.at), day = d.toDateString();
@@ -1333,7 +1340,7 @@ function renderChatPending() {
   const box = $("#chatPending"); if (!box) return;
   if (!chatFile) { box.classList.add("hidden"); box.innerHTML = ""; return; }
   box.classList.remove("hidden");
-  box.innerHTML = `<span class="pf">${ic("clip",15)} <b>${esc(chatFile.name)}</b> <small>${fmtSize(chatFile.size)}</small></span><button type="button" id="chatPendX" aria-label="Remove">${ic("x",16)}</button>`;
+  box.innerHTML = `<span class="pf">Attached: <b>${esc(chatFile.name)}</b> <small>${fmtSize(chatFile.size)}</small></span><button type="button" id="chatPendX" aria-label="Remove">${ic("x",16)}</button>`;
   $("#chatPendX").onclick = () => { chatFile = null; renderChatPending(); };
 }
 function openImageViewer(fid) {
@@ -1402,39 +1409,40 @@ function openChat(id) {
 }
 
 function chatBtn(t) {
-  const msgs = (t.updates || []).filter(isMsg), last = msgs[msgs.length - 1], un = unreadOf(t);
-  const lastTxt = last ? (last.text || (last.file ? "Attachment: " + last.file.name : "")) : "";
-  const pv = last ? `<span class="pv"><b>${esc(last.byEmail === me ? "You" : last.by)}:</b> ${esc(lastTxt)}</span>` : `<span class="pv muted">Chat · updates · files</span>`;
-  return `<button class="chatb ${un ? "has" : ""}" data-act="chat" data-id="${t.id}">${ic("msg",16)}${pv}${un ? `<i class="badge">${un}</i>` : (msgs.length ? `<i class="cnt">${msgs.length}</i>` : "")}</button>`;
+  const msgs = (t.updates || []).filter(isMsg), un = unreadOf(t);
+  const label = un ? `${un} new message${un > 1 ? "s" : ""}` : msgs.length ? `${msgs.length} message${msgs.length > 1 ? "s" : ""}` : "Chat";
+  return `<button class="chatlink ${un ? "has" : ""}" data-act="chat" data-id="${t.id}">${label}</button>`;
 }
-const editBtn = t => `<button class="editb" data-act="edit" data-id="${t.id}" aria-label="Edit task">${ic("edit",16)}<span>Edit</span></button>`;
-
 function taskCard(t) {
-  const c = catInfo(t), color = c ? c.color : "#b4aef7";
+  const c = catInfo(t);
   const mine = t.assigneeEmail === me;
   const cd = t.deadline && t.status !== "done" ? countdown(t.deadline) : null;
-  const from = mine && t.creatorEmail !== me ? `<span class="chip from">${ic("inbox",13)} From: ${esc(t.creatorName || nameOf(t.creatorEmail))}</span>` : "";
-  const to = !mine ? `<span class="chip to">${ic("send",13)} To: ${esc(t.assigneeName || nameOf(t.assigneeEmail))}</span>` : "";
-  const giver = t.giverName && !(mine && t.creatorEmail !== me) && (mine || t.giverEmail !== me) ? `<span class="chip">${ic("user",13)} ${esc(t.giverName)}</span>` : "";
-  return `<div class="task glass ${t.urgent?"urgent":""} ${t.status==="done"?"done":""}" style="--c:${esc(color)}">
-    ${mine ? `<button class="check" data-act="toggle" data-id="${t.id}">${t.status==="done"?ic("check",14,3):""}</button>` : `<span class="check ro">${t.status==="done"?ic("check",14,3):""}</span>`}
-    <div class="tcol"><div class="tbody">
-      <div class="ttl">${t.urgent?ic("flame",15)+" ":""}${esc(t.title)} ${isNewForMe(t)?`<span class="chip new">NEW</span>`:""}</div>
-      <div class="meta">
-        ${c?`<span class="chip cat">${esc(c.name)}</span>`:""}
-        ${t.customCategory?`<span class="chip">${ic("tag",13)} ${esc(t.customCategory)}</span>`:""}
-        ${t.type && t.type!=="Task"?`<span class="chip">${esc(t.type)}</span>`:""}
-        ${t.status!=="todo"?`<span class="chip ${t.status==="doing"?"doing":"okc"}">${STATUS[t.status]||""}</span>`:(!mine?`<span class="chip">Pending</span>`:"")}
-        ${t.repeat && t.repeat!=="none"?`<span class="chip rep">${ic("repeat",13)} ${esc(t.repeat)}</span>`:""}
-        ${from}${to}${giver}
-        ${cd?`<span class="cd ${cd.cls}">${ic("clock",13)} ${cd.txt}</span>`:""}
-        ${t.deadline && t.status!=="done" && mine?`<button class="calb" data-act="gcal" data-id="${t.id}">${ic("calendar",14)}</button>`:""}
-      </div>
-      ${t.deadline?`<div class="meta">Due: ${fmtDate(t.deadline)}</div>`:""}
+  const who = mine && t.creatorEmail !== me ? `From ${esc(t.creatorName || nameOf(t.creatorEmail))}`
+    : !mine ? `To ${esc(t.assigneeName || nameOf(t.assigneeEmail))}`
+    : t.giverName ? `Given by ${esc(t.giverName)}` : "";
+  const bits = [];
+  if (c) bits.push(`<span class="mcat"><i style="background:${esc(c.color)}"></i>${esc(c.name)}</span>`);
+  if (t.customCategory) bits.push(esc(t.customCategory));
+  if (t.type && t.type !== "Task") bits.push(esc(t.type));
+  if (who) bits.push(who);
+  if (t.repeat && t.repeat !== "none") bits.push("Repeats " + esc(t.repeat));
+  const flags = [];
+  if (t.urgent && t.status !== "done") flags.push(`<span class="tag bad">Urgent</span>`);
+  if (t.status === "doing") flags.push(`<span class="tag warn">In progress</span>`);
+  if (t.status === "done") flags.push(`<span class="tag ok">Done</span>`);
+  const due = t.deadline ? `<div class="due"><span>Due ${fmtDate(t.deadline)}</span>${cd ? `<b class="cd ${cd.cls}">${cd.txt}</b>` : ""}</div>` : "";
+  const hasMsgs = (t.updates || []).some(isMsg);
+  const foot = canChat(t) && (hasMsgs || isAssigned(t)) ? `<div class="tfoot">${chatBtn(t)}</div>` : "";
+  return `<div class="task glass ${t.urgent && t.status !== "done" ? "urgent" : ""} ${t.status==="done"?"done":""}">
+    ${mine ? `<button class="check" data-act="toggle" data-id="${t.id}" aria-label="Mark done">${t.status==="done"?ic("check",14,3):""}</button>` : `<span class="check ro">${t.status==="done"?ic("check",14,3):""}</span>`}
+    <div class="tcol"><div class="tbody" ${canEdit(t) ? `data-act="edit" data-id="${t.id}"` : ""}>
+      <div class="ttl">${esc(t.title)}${isNewForMe(t) ? `<span class="tag new">New</span>` : ""}</div>
+      ${flags.length ? `<div class="tags">${flags.join("")}</div>` : ""}
+      ${bits.length ? `<div class="meta">${bits.join('<span class="sep">·</span>')}</div>` : ""}
+      ${due}
       ${progressHtml(t)}
-    </div>${stepsHtml(t)}
-    ${(canChat(t) || canEdit(t)) ? `<div class="trow">${canChat(t) ? chatBtn(t) : ""}${canEdit(t) ? editBtn(t) : ""}</div>` : ""}</div>
-    ${mine?`<button class="pinb ${t.pinned?"on":""}" data-act="pin" data-id="${t.id}" aria-label="Pin">${ic("pin",17)}</button>`:""}</div>`;
+    </div>${stepsHtml(t)}${foot}</div>
+    ${mine ? `<button class="pinb ${t.pinned?"on":""}" data-act="pin" data-id="${t.id}" aria-label="${t.pinned ? "Unpin" : "Pin to top"}">${ic("pin",17)}</button>` : ""}</div>`;
 }
 
 /* ---------- REPEAT (only for my own tasks) ---------- */
@@ -1495,16 +1503,16 @@ function digestHtml() {
     const n = pend.filter(t => inRange(t.deadline, now, et)).length;
     const u = pend.filter(t => t.urgent).length;
     const o = pend.filter(t => t.deadline && t.deadline < now).length;
-    line = `${ic("sun",16)} Today: ${n} due · ${u} urgent · ${o} overdue`;
+    line = `Today: ${n} due · ${u} urgent · ${o} overdue`;
   } else if (h >= 18) {
     const n = pend.filter(t => inRange(t.deadline, et + 1, tomEnd)).length;
-    line = `${ic("moon",16)} Tomorrow: ${n} deadline${n === 1 ? "" : "s"}`;
+    line = `Tomorrow: ${n} deadline${n === 1 ? "" : "s"}`;
   }
   const win = now + (Number(settings.leadHours) || 24) * 3600000;
   const soon = pend.filter(t => inRange(t.deadline, now, win)).sort((a,b) => a.deadline - b.deadline).slice(0, 5);
   if (!line && !soon.length) return "";
   return `<div class="digest glass">${line ? `<div class="dg-line">${line}</div>` : ""}${soon.length
-    ? `<div class="dg-h">${ic("clock",13)} Due within ${settings.leadHours} hours</div>` + soon.map(t => { const c = countdown(t.deadline);
+    ? `<div class="dg-h">Due within ${settings.leadHours} hours</div>` + soon.map(t => { const c = countdown(t.deadline);
         return `<div class="dg-row"><span>${esc(t.title)}</span><span class="cd ${c.cls}">${c.txt}</span></div>`; }).join("")
     : ""}</div>`;
 }
@@ -1532,7 +1540,7 @@ function viewHome() {
   const grp = (cls, icon, title, hint, list) => {
     if (!list.length) return "";
     const od = list.filter(t => t.deadline && t.deadline < now).length;
-    return `<div class="grp ${cls}"><span class="gico">${ic(icon,20)}</span><div class="gt"><b>${title}</b><small>${hint}</small></div>
+    return `<div class="grp ${cls}"><div class="gt"><b>${title}</b><small>${hint}</small></div>
       <span class="gcount">${list.length}${od ? `<em>${od} overdue</em>` : ""}</span></div>${list.map(taskCard).join("")}`;
   };
   const toMe = pending.filter(t => t.creatorEmail !== me).sort(cmp);
@@ -1545,7 +1553,7 @@ function viewHome() {
       <div class="stat glass" role="button" data-act="statgo" data-v="today"><b>${dueToday}</b><span>Due today</span></div>
       <div class="stat glass" role="button" data-act="statgo" data-v="overdue"><b style="color:var(--bad)">${overdueAll}</b><span>Overdue</span></div>
       <div class="stat glass" role="button" data-act="statgo" data-v="done"><b style="color:var(--ok)">${doneWeek}</b><span>Done this week</span></div>
-    </div>` + (body || `<div class="empty">${ic("sparkle",46,1.5)}<h4>You're all caught up</h4><p>No pending tasks right now.</p><button class="btn" data-act="newtask">New task</button></div>`);
+    </div>` + (body || `<div class="empty"><h4>You're all caught up</h4><p>No pending tasks right now.</p><button class="btn" data-act="newtask">New task</button></div>`);
 }
 
 function taskListHtml() {
@@ -1614,7 +1622,7 @@ function viewCal() {
     </div>
     <div class="cal">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(w => `<div class="wk">${w}</div>`).join("")}${cells}</div>
     <div class="sec">${dayTitle} (${sel.length})</div>
-    ${sel.length >= 3 ? `<div class="busy-note">${ic("alert",14)} Busy day: ${sel.length} deadlines. Plan ahead.</div>` : ""}
+    ${sel.length >= 3 ? `<div class="busy-note">Busy day: ${sel.length} deadlines. Plan ahead.</div>` : ""}
     ${sel.length ? sel.map(taskCard).join("") : `<div class="empty">Nothing due on this day</div>`}`;
 }
 
@@ -1635,7 +1643,7 @@ function viewDeleg() {
   return `<div class="filters">
       <button class="fchip ${filterAssignee==="all"?"on":""}" data-act="fassignee" data-v="all">Everyone (${all.filter(x=>x.status!=="done").length})</button>
       ${people.map(([e,n]) => `<button class="fchip ${filterAssignee===e?"on":""}" data-act="fassignee" data-v="${esc(e)}">${esc(n)} (${cnt(e)})</button>`).join("")}
-    </div>` + (body || `<div class="empty">${ic("send",40,1.6)}<br>No tasks assigned yet<br>${canAdd ? "Tap + to give a task" : "Tasks you assign will be tracked here once the Admin gives you permission"}</div>`);
+    </div>` + (body || `<div class="empty"><h4>No tasks assigned yet</h4><p>${canAdd ? "Tap + to give a task" : "Tasks you assign will be tracked here once the Admin gives you permission"}</p></div>`);
 }
 
 /* ---------- ADMIN ---------- */
@@ -1651,7 +1659,7 @@ function viewAdmin() {
   if (adminSub === "cats") return bar + viewCats();
   if (adminSub === "over") return bar + viewOverview();
   if (adminSub === "daily") return bar + viewAdminDaily();
-  return bar + `<div class="muted" style="font-size:12.5px;margin:0 2px 12px">Only the members added here can sign in. Tap + to create an ID and password for a new member.</div>` +
+  return bar + `<div class="muted" style="font-size:12.5px;margin:0 2px 12px">Only the members added here can sign in. Tap "Add member" to create an ID and password.</div>` +
     (members.length ? members.map(m => `<div class="crow glass">
       <span class="avt">${esc((m.name||"?").trim().charAt(0).toUpperCase())}</span>
       <div class="nm"><div style="font-weight:600">${esc(m.name)} ${m.active===false?`<span class="chip bad">Suspended</span>`:""}</div>
@@ -1736,7 +1744,8 @@ function viewMore() {
       <button class="icon-btn" data-act="delpcat" data-id="${c.id}">${ic("trash",17)}</button></div>`).join("")}`;
   const prim = primaryTabs(navItems()).map(p => p[0]);
   const extra = navItems().filter(([k]) => !prim.includes(k) && k !== "more");
-  const menu = extra.length ? `<div class="mgrid" style="margin-top:4px">${extra.map(([k,i,l]) => `<button class="mtile" data-act="gotab" data-v="${k}"><span class="mi">${ic(i,20)}</span><span>${l}</span></button>`).join("")}</div>` : "";
+  const desc = { deleg: "Tasks you gave to others", reports: "Performance report and PDF", admin: "Members, categories, settings", daily: "Daily report entry and history" };
+  const menu = extra.length ? `<div class="list glass">${extra.map(([k,i,l]) => `<button class="lrow mtile" data-act="gotab" data-v="${k}"><span class="lt"><b>${l}</b><small>${desc[k] || ""}</small></span>${ic("chev",16,2.2)}</button>`).join("")}</div>` : "";
   const th = themePref();
   return menu + `<div class="sec">My account</div>
     <div class="crow glass"><span class="avt">${esc(myName().charAt(0).toUpperCase())}</span>
@@ -1756,8 +1765,8 @@ function viewMore() {
         <div><label>Evening summary time</label><input type="time" data-set="evening" value="${esc(settings.evening)}"></div>
       </div>
       <div class="row">
-        <button class="btn ghost" data-act="gcalmorning">${ic("calendar",15)} Morning to Calendar</button>
-        <button class="btn ghost" data-act="gcalevening">${ic("calendar",15)} Evening to Calendar</button>
+        <button class="btn ghost" data-act="gcalmorning">Morning to Calendar</button>
+        <button class="btn ghost" data-act="gcalevening">Evening to Calendar</button>
       </div>
       <p style="font-size:12px;color:var(--muted);margin:10px 0 0">Phone alerts come from Google Calendar. Use the calendar button on any task to send it there.</p>
     </div>
@@ -1797,7 +1806,7 @@ function installCardHtml() {
     <div class="glass" style="padding:14px">
       <div class="qrbox"><div class="qrimg" id="qrBox">${qrCache ? `<img src="${qrCache}" alt="QR code">` : ""}</div>
         <div class="qt"><b>Scan to download</b>Open the phone camera, scan this code, download the file and tap Install. It always gives the newest version.</div></div>
-      <div class="row"><button class="btn ghost" data-act="sharelink">${ic("send",15)} Share link</button><button class="btn ghost" data-act="checkupd">${ic("download",15)} Check for update</button></div>
+      <div class="row"><button class="btn ghost" data-act="sharelink">Share link</button><button class="btn ghost" data-act="checkupd">Check for update</button></div>
     </div>`;
 }
 async function drawQr() {
@@ -1818,7 +1827,7 @@ async function checkUpdate(manual) {
     const b = $("#updBanner");
     if (latest > BUILD.versionCode) {
       b.className = "upd";
-      b.innerHTML = `${ic("download",22)}<div><b>New version ${esc(String(j.tag_name).replace(/^v/, ""))} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" id="updGo">Update</button>`;
+      b.innerHTML = `<div><b>New version ${esc(String(j.tag_name).replace(/^v/, ""))} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" id="updGo">Update</button>`;
       $("#updGo").onclick = () => window.open(apkUrl(), "_blank");
       if (manual) window.scrollTo({ top: 0, behavior: "smooth" });
     } else { b.className = "hidden"; if (manual) toast("You have the newest version (" + BUILD.versionName + ")."); }
@@ -2057,7 +2066,7 @@ function viewReports() {
       <div><label>Category</label><select data-rep="cat">${opt("all", "All categories", rep.cat)}${catNames.map(c => opt(c, c, rep.cat)).join("")}</select></div>
     </div>
     ${rep.scope !== "mine" ? `<label>Team member</label><select data-rep="person">${opt("all", "Everyone", rep.person)}${ppl.map(([e, n]) => opt(e, n, rep.person)).join("")}</select>` : ""}
-    <button class="btn" style="width:100%;margin-top:14px" data-act="reppdf" ${repHtml ? "" : "disabled"}>${ic("download",15)} Download PDF report</button>
+    <button class="btn" style="width:100%;margin-top:14px" data-act="reppdf" ${repHtml ? "" : "disabled"}>Download PDF report</button>
   </div>` + (repHtml ? `<div class="paper">${repHtml}</div>` : `<div class="empty">Select a start and end date to build the report.</div>`);
 }
 
@@ -2104,7 +2113,7 @@ async function downloadPdf() {
    ====================================================================== */
 function drPersonLine(section) {
   const d = drSections[section]; if (!d || !d.updatedBy) return "";
-  return `<div class="drwho">${ic("check",12,3)} Saved by ${esc(d.updatedBy)}${d.updatedAt ? " · " + fmtDate(d.updatedAt) : ""}</div>`;
+  return `<div class="drwho">Saved by ${esc(d.updatedBy)}${d.updatedAt ? " · " + fmtDate(d.updatedAt) : ""}</div>`;
 }
 function drSaveBtn(section) { return `<button class="btn" style="margin-top:12px" data-act="drsave" data-sec="${section}">Save</button>`; }
 
@@ -2118,7 +2127,7 @@ function drActivityCard(section, title, hint) {
       <button type="button" data-act="dractmove" data-sec="${section}" data-i="${i}" data-dir="1" ${i===items.length-1?"disabled":""}>${ic("down",16)}</button>
       <button type="button" data-act="dractdel" data-sec="${section}" data-i="${i}">${ic("x",16)}</button>
     </div>`).join("") : `<div class="muted" style="font-size:13px">No activities added yet${items.length?"":" — leave empty for NSTR"}</div>`;
-  return `<div class="glass drcard"><h4>${ic("doc",16)} ${title}</h4>
+  return `<div class="glass drcard"><h4>${title}</h4>
     <div class="muted" style="font-size:12px;margin-bottom:6px">${hint}</div>
     ${rows}
     <div class="addrow" style="margin-top:8px"><input id="dr_new_${section}" placeholder="Add an activity"><button class="btn ghost" type="button" data-act="dractadd" data-sec="${section}">Add</button></div>
@@ -2132,7 +2141,7 @@ function drWingCard(section, label, parts) {
   const pp = drPresentParts(d, parts), present = pp.reduce((a, b) => a + b, 0);
   const onLeave = wingOnLeave(d, parts);
   const inputs = pp.map((v, i) => `<div><label style="margin-top:0">${parts.length > 1 ? `Present · room ${i + 1} (of ${Number(parts[i]) || 0})` : "Present"}</label><input type="number" inputmode="numeric" min="0" data-drsec="${section}" data-drpart="${i}" value="${v}"></div>`).join("");
-  return `<div class="glass drcard"><h4>${ic("users",16)} ${label}</h4>
+  return `<div class="glass drcard"><h4>${label}</h4>
     <div class="info" style="padding:10px;margin:0 0 10px">Allocation: <b>${alotTxt}</b></div>
     <div class="grid2">${inputs}</div>
     <div class="muted" style="font-size:12.5px;margin:10px 0 2px">Present total: <b id="drpt_${section}">${present}</b></div>
@@ -2155,7 +2164,7 @@ function drPeopleCard(section, label) {
       <div class="grid2" style="margin-top:8px">${fields.slice(0,4).map(f => `<div><label style="margin-top:0">${labels[f]}</label><input data-drsec="${section}" data-dridx="${i}" data-drfield="${f}" value="${esc((s[f]||""))}"></div>`).join("")}</div>
       <label>${labels.details}</label><input data-drsec="${section}" data-dridx="${i}" data-drfield="details" value="${esc(s.details||"")}">
     </div>`).join("") : "";
-  return `<div class="glass drcard"><h4>${ic("alert",16)} ${label}</h4>
+  return `<div class="glass drcard"><h4>${label}</h4>
     <label style="margin-top:0">Number of students</label>
     <select data-drmode="${section}">${opts}</select>
     ${section === "counselling" ? `<div class="muted" style="font-size:12.5px;margin-top:8px">Report will show: <b>${n ? n + " x " + (n === 1 ? "Student" : "Students") : "Nil"}</b> (no student details needed)</div>` : ""}
@@ -2269,13 +2278,13 @@ function viewDailyPreview() {
        <div class="row"><button class="btn" data-act="drtextsave">Save text</button><button class="btn ghost" data-act="drtextcancel">Cancel</button></div>`
     : `<div class="drpaper">${esc(text)}</div>`;
   return `<div class="sec">Status <span class="drbadge ${drStatusCls(status)}" style="margin-left:4px">${status}</span></div>
-    ${warnings.map(w => `<div class="drwarn">${ic("alert",14)} ${esc(w)}</div>`).join("")}
-    ${edited ? `<div class="drwarn">${ic("edit",14)} This text was edited by hand, so changes in the sections will not update it. ${canFinal ? `<button class="link" data-act="drtextreset">Reset to automatic</button>` : ""}</div>` : ""}
+    ${warnings.map(w => `<div class="drwarn">${esc(w)}</div>`).join("")}
+    ${edited ? `<div class="drwarn">This text was edited by hand, so changes in the sections will not update it. ${canFinal ? `<button class="link" data-act="drtextreset">Reset to automatic</button>` : ""}</div>` : ""}
     ${paper}
     ${drEditText ? "" : `<div class="row">
-      <button class="btn ghost" data-act="drcopy">${ic("download",15)} Copy report</button>
-      ${canFinal ? `<button class="btn ghost" data-act="drtextedit">${ic("edit",15)} Edit text</button>` : ""}
-      ${canFinal ? (fin ? `<button class="btn danger" data-act="drunfinal">Reopen for editing</button>` : `<button class="btn" data-act="drfinal">Finalize report</button>`) : ""}
+      <button class="btn" data-act="drcopy">Copy report</button>
+      ${canFinal ? `<button class="btn ghost" data-act="drtextedit">Edit text</button>` : ""}
+      ${canFinal ? (fin ? `<button class="btn danger" data-act="drunfinal">Reopen</button>` : `<button class="btn ghost" data-act="drfinal">Finalize</button>`) : ""}
     </div>
     <div class="muted" style="font-size:12px;margin-top:10px">The copied text keeps the asterisks WhatsApp uses for bold, so paste it directly into the chat.</div>`}`;
 }
@@ -2370,15 +2379,15 @@ function openSheet(task, opts = {}) {
       ${t.details ? `<p style="margin:8px 0;white-space:pre-wrap">${esc(t.details)}</p>` : ""}
       <div class="meta">
         ${c ? `<span class="chip cat" style="--c:${esc(c.color)}">${esc(c.name)}</span>` : ""}
-        ${t.customCategory ? `<span class="chip">${ic("tag",13)} ${esc(t.customCategory)}</span>` : ""}
+        ${t.customCategory ? `<span class="chip">${esc(t.customCategory)}</span>` : ""}
         ${t.type && t.type !== "Task" ? `<span class="chip">${esc(t.type)}</span>` : ""}
-        ${t.urgent ? `<span class="chip" style="color:var(--bad)">${ic("flame",13)} Urgent</span>` : ""}
-        <span class="chip from">${ic("inbox",13)} From: ${esc(t.creatorName || nameOf(t.creatorEmail))}</span>
+        ${t.urgent ? `<span class="chip bad">Urgent</span>` : ""}
+        <span class="chip from">From ${esc(t.creatorName || nameOf(t.creatorEmail))}</span>
       </div>
       <div class="meta">${t.givenAt ? `Given: ${fmtDate(t.givenAt)}` : ""} ${t.deadline ? ` · Deadline: <b>${fmtDate(t.deadline)}</b>` : ""}</div>
-      ${t.deadline && t.status !== "done" ? `<button class="btn ghost" style="margin-top:10px;padding:8px 12px" id="sGcal">${ic("calendar",15)} Add to Google Calendar</button>` : ""}
+      ${t.deadline && t.status !== "done" ? `<button class="btn ghost" style="margin-top:10px;padding:8px 12px" id="sGcal">Add to Google Calendar</button>` : ""}
     </div>`;
-  const timeline = isEdit ? `<button type="button" class="btn ghost" id="sChat" style="width:100%;margin-top:14px">${ic("msg",15)} Open task chat${(t.updates || []).filter(isMsg).length ? " (" + (t.updates || []).filter(isMsg).length + ")" : ""}</button>` : "";
+  const timeline = isEdit ? `<div class="row" style="margin-top:14px"><button type="button" class="btn ghost" id="sChat">Open chat${(t.updates || []).filter(isMsg).length ? " (" + (t.updates || []).filter(isMsg).length + ")" : ""}</button>${full && t.deadline && t.status !== "done" ? `<button type="button" class="btn ghost" id="sGcal2">Add to Calendar</button>` : ""}</div>` : "";
 
   $("#sheetHost").innerHTML = `<div class="overlay" id="ov"><div class="sheet">
     <h3>${isEdit ? (full ? "Edit task" : "Task details") : (opts.assign ? "Give a task" : "Quick capture")}</h3>
@@ -2387,12 +2396,12 @@ function openSheet(task, opts = {}) {
     <button class="link ${showMore?"hidden":""}" id="moreBtn">+ Add details</button>
     <div id="moreBox" class="${showMore?"":"hidden"}">
       ${canPickAssignee ? `<label>Assign to</label><select id="fAssign">${assignOpts.map(o => `<option value="${esc(o.email)}" ${o.email===defAssign?"selected":""}>${esc(o.name)}</option>`).join("")}</select>` :
-        (isEdit && t.assigneeEmail !== me ? `<label>Assigned to</label><div class="info" style="padding:10px">${ic("send",14)} ${esc(t.assigneeName || nameOf(t.assigneeEmail))}</div>` : "")}
+        (isEdit && t.assigneeEmail !== me ? `<label>Assigned to</label><div class="info" style="padding:10px">${esc(t.assigneeName || nameOf(t.assigneeEmail))}</div>` : "")}
       <label>Details</label><textarea id="fDetails" rows="2">${esc(t.details||"")}</textarea>
       <div id="catSelf" class="${selfT?"":"hidden"}"><label>Category (your personal categories)</label>
         <select id="fCatSelf"><option value="">None</option>
           ${myCats.map(c=>`<option value="${c.id}" ${selfT&&t.categoryId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
-          <option value="__new__">＋ Add new category…</option></select>
+          <option value="__new__">Add new category…</option></select>
         <input id="fNewCat" class="hidden" placeholder="New category name" style="margin-top:6px"></div>
       <div id="catOther" class="${selfT?"hidden":""}"><label>Category (set by Admin)</label>
         <select id="fCatOther"><option value="">None</option>
@@ -2409,7 +2418,7 @@ function openSheet(task, opts = {}) {
         <div><label>Given at</label><input type="datetime-local" id="fGiven" value="${toLocalInput(t.givenAt || Date.now())}"></div>
         <div><label>Deadline</label><input type="datetime-local" id="fDue" value="${toLocalInput(t.deadline)}"></div>
       </div>
-      <label class="toggle"><input type="checkbox" id="fUrgent" ${t.urgent?"checked":""}> ${ic("flame",14)} Urgent</label>
+      <label class="toggle"><input type="checkbox" id="fUrgent" ${t.urgent?"checked":""}> Mark as urgent</label>
       <div id="repBox" class="${defAssign!==me?"hidden":""}"><label>Repeat</label>
       <select id="fRepeat">${[["none","Does not repeat"],["daily","Every day"],["weekly","Every week"],["monthly","Every month"]]
         .map(([k,l]) => `<option value="${k}" ${(t.repeat||"none")===k?"selected":""}>${l}</option>`).join("")}</select></div>
@@ -2431,6 +2440,7 @@ function openSheet(task, opts = {}) {
   $("#ov").onclick = e => { if (e.target.id === "ov") close(); };
   $("#sCancel").onclick = close;
   $("#sGcal")?.addEventListener("click", () => window.open(taskCalUrl(t), "_blank", "noopener"));
+  $("#sGcal2")?.addEventListener("click", () => window.open(taskCalUrl(t), "_blank", "noopener"));
   $("#sChat")?.addEventListener("click", () => openChat(t.id));
   const drawSteps = () => {
     $("#stepList").innerHTML = sheetSteps.length ? sheetSteps.map((s,i) => `<div class="srow">
@@ -2548,7 +2558,7 @@ function openMemberSheet(m) {
     <label>Full name</label><input id="mName" value="${esc(d.name||"")}" placeholder="e.g. Rahim Uddin">
     <label>Login ID (letters, numbers, . _ - only)</label>
     <input id="mEmail" value="${esc(isEdit ? idOf(d.email) : "")}" ${isEdit?"disabled":""} autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="e.g. rahim">
-    ${isEdit ? `<div class="muted" style="font-size:12px;margin-top:6px">The ID cannot be changed. Members can change their own password from More &gt; Change my password. If someone forgets it, see the note given by your developer.</div>`
+    ${isEdit ? `<div class="muted" style="font-size:12.5px;margin-top:6px">The ID cannot be changed. Members can change their own password from More &gt; Change my password. If someone forgets it, see the note given by your developer.</div>`
       : `<label>Password (at least 6 characters)</label>
     <input id="mPass" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Give this to the member">`}
     <label>Designation</label>
