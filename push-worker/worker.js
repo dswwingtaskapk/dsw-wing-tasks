@@ -442,12 +442,15 @@ async function dailyFlow(env) {
   const legacy = wa.number ? null : await getDoc(env, "/config/dailyReport");
   if (!wa.number && legacy && legacy.waNumber) wa.number = legacy.waNumber;
   const now = Date.now(), today = dhakaDate(now);
+  // Auto-send only starts from the moment it is first switched on: old, still-pending days are never sent by themselves.
+  if (!wa.autoSince) { wa.autoSince = now; await patchPaths(env, "/config/whatsapp", { autoSince: now }).catch(() => {}); }
   for (const date of [prevDate(today), today]) {
     const sendAt = atTime(date, wa.sendTime, "22:25");
     const rep = await getDoc(env, `/dailyReports/${date}`);
     const w = (rep && rep.wa) || {};
     const manual = rep && rep.sendNowAt && (!w.sentAt || rep.sendNowAt > w.sentAt);
     if (!manual) {
+      if (sendAt < Number(wa.autoSince)) continue;
       if (w.sentAt || w.status === "sending") continue;
       if (now < sendAt || now > sendAt + 20 * 3600000) continue;
     }
