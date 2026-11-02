@@ -241,14 +241,14 @@ public class MainActivity extends Activity {
         }
     }
 
-    private static final int BG_LIGHT = 0xFFF4F6FB, BG_DARK = 0xFF0E131D;
+    private static final int BG_LIGHT = 0xFFEEF0F3, BG_DARK = 0xFF0F1012;
 
     /** Status bar and navigation bar follow the app theme (light or dark). */
     @SuppressWarnings("deprecation")
     private void applyBars(boolean dark) {
         int bg = dark ? BG_DARK : BG_LIGHT;
         getWindow().setStatusBarColor(bg);
-        getWindow().setNavigationBarColor(dark ? 0xFF171E2C : 0xFFFFFFFF);
+        getWindow().setNavigationBarColor(bg);
         int flags = 0;
         if (!dark) {
             flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
@@ -360,13 +360,12 @@ public class MainActivity extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
-        // 1) if a popup sheet is open, close it  2) otherwise go back / leave the app
+        // 1) close an open popup  2) let the app go to Home / the parent screen  3) on Home: leave the app
         web.evaluateJavascript(
                 "(function(){var d=document.querySelector('.dlg-wrap,.imgview');if(d){d.click();return 1;}var o=document.getElementById('ov');if(o){o.click();return 1;}if(document.body.classList.contains('navopen')){document.body.classList.remove('navopen');return 1;}if(window.__appBack&&window.__appBack())return 1;return 0;})()",
                 value -> {
                     if ("1".equals(value)) return;
-                    if (web.canGoBack()) web.goBack();
-                    else finish();
+                    finish();
                 });
     }
 
