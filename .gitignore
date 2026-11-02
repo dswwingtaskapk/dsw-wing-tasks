@@ -14,3 +14,4 @@ push-worker/.wrangler/
 signing-key-KEEP-SAFE/
 *service-account*.json
 *-firebase-adminsdk-*.json
+tools/.wa-verify.txt

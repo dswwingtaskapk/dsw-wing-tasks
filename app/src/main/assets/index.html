@@ -408,6 +408,24 @@ nav .bar .nicw{position:relative}
 .qrbox .qt b{color:var(--text);display:block;font-size:15px;margin-bottom:4px}
 .verline{text-align:center;color:var(--faint);font-size:12px;margin:22px 0 0}
 .pclist{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+.wa-st .wa-h{display:flex;gap:12px;align-items:flex-start}
+.wa-st .wa-dot{flex:none;width:12px;height:12px;border-radius:50%;background:var(--muted);margin-top:5px}
+.wa-st.ok .wa-dot{background:var(--ok)} .wa-st.warn .wa-dot{background:var(--warn)} .wa-st.bad .wa-dot{background:var(--bad)}
+.wa-st b{display:block;font-size:16px;line-height:1.35}
+.wa-st small{display:block;font-size:13px;color:var(--muted);line-height:1.45;margin-top:3px}
+.wa-steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.wa-steps span{display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 6px;border-radius:99px;background:var(--surface2);color:var(--muted);font-size:12.5px;font-weight:600}
+.wa-steps span i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center}
+.wa-steps span.on{background:var(--ok-soft);color:var(--ok)}
+.wa-steps span.on i{background:var(--ok);border-color:var(--ok);color:#fff}
+.wa-set .wa-sw{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;cursor:pointer}
+.wa-set .wa-sw b{display:block;font-size:14.5px;color:var(--text)}
+.wa-set .wa-sw small{display:block;font-size:12px;color:var(--muted);font-weight:400;line-height:1.4;margin-top:2px}
+.wa-set .wa-sw input{flex:none;width:46px;height:26px;appearance:none;-webkit-appearance:none;border-radius:99px;background:var(--line);position:relative;transition:background .2s;margin:0}
+.wa-set .wa-sw input::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.wa-set .wa-sw input:checked{background:var(--primary)}
+.wa-set .wa-sw input:checked::after{transform:translateX(20px)}
+.wa-times{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .su-intro{font-size:14px;color:var(--muted);line-height:1.5;margin:2px 0 14px}
 .su-prog{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-bottom:14px}
 .su-prog i{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .3s}
@@ -729,6 +747,7 @@ body.drawer-open .dr-panel{transform:none}
 import * as CFG from "./config.js";
 const { firebaseConfig, ADMIN_EMAIL } = CFG;
 import { BUILD } from "./build-info.js";
+import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport } from "./report.js";
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, reauthenticateWithCredential, EmailAuthProvider, updatePassword, onAuthStateChanged, signOut }
@@ -778,6 +797,7 @@ let drConfig = { maleParts: [286, 95], femaleParts: [285], hostelParts: [95], de
 let drEditText = false;
 let drDate = null;                       // selected date "YYYY-MM-DD" (Asia/Dhaka)
 let drReport = null;                     // report meta doc for drDate
+let waCfg = {}, waState = {}, waSrv = null, waSrvAt = 0, waDraft = null;   // WhatsApp auto-send settings / server status
 let drSections = {};                     // sectionId -> saved data for drDate
 let drDraft = {};                        // sectionId -> in-progress edits (not yet saved)
 let drSub = "entry";                     // entry | preview | history
@@ -985,7 +1005,7 @@ function consumeOpen() {
     if (!tasks.find(t => t.id === p.id)) return false;
     window.__pendingOpen = null; tab = "home"; render(); openChat(p.id); return true;
   }
-  if (p.tab === "daily") { window.__pendingOpen = null; tab = "daily"; drEnsureSubFor(p.date); drSub = "preview"; render(); return true; }
+  if (p.tab === "daily") { window.__pendingOpen = null; tab = "daily"; drEnsureSubFor(p.date); drSub = p.act === "alarm" ? "entry" : "preview"; render(); return true; }
   if (p.tab === "dm" && p.id) { if (!members.length) return false; window.__pendingOpen = null; tab = "chats"; render(); openThread(p.id); return true; }
   if (p.tab === "call" && p.id) {
     window.__pendingOpen = null;
@@ -1160,6 +1180,8 @@ function listen() {
   }
   sub(userDoc(), s => { settings = { ...settings, ...((s.data() || {}).settings || {}) }; renderSoon(); });
   sub(doc(db, "config", "dailyReport"), s => { if (s.exists()) drConfig = { ...drConfig, ...s.data() }; renderSoon(); });
+  sub(doc(db, "config", "whatsapp"), s => { waCfg = s.exists() ? s.data() : {}; renderSoon(); });
+  sub(doc(db, "config", "waState"), s => { waState = s.exists() ? s.data() : {}; renderSoon(); });
   sub(doc(db, "config", "push"), s => { pushCfg = s.exists() ? s.data() : {}; renderSoon(); });
   // chats: one small listener per person (the chat name says who may read it), so nothing needs a list query
   unsubs.push(onSnapshot(doc(db, "chats", "wing"), s => { wingChat = s.exists() ? { id: "wing", ...s.data() } : { id: "wing" }; renderSoon(); if (threadId === "wing") refreshThread(); }, quietErr("chats")));
@@ -1236,16 +1258,10 @@ function dhakaDeadlineMs(dateStr, hhmm) {
   const [h, m] = (hhmm || "22:15").split(":").map(Number);
   return Date.parse(dateStr + "T00:00:00Z") - DHK_OFFSET + h * 3600000 + m * 60000;
 }
-const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-function fmtReportDate(dateStr) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return `${d} ${MONTHS_SHORT[m - 1]} ${y}`;
-}
 function shiftDate(dateStr, days) {
   const d = new Date(dateStr + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
-const letterAt = i => i < 26 ? String.fromCharCode(97 + i) : "a" + String.fromCharCode(97 + (i - 26));
 
 const HALL_SECTIONS = ["hallActivities", "maleWing", "femaleWing", "sickness"];
 const DSW_SECTIONS = ["dswActivities", "tomorrow", "counselling"];
@@ -1264,7 +1280,6 @@ function drEditableSections() {
   return all.filter(drCan);
 }
 
-function sumParts(a) { return (a || []).reduce((x, y) => x + (Number(y) || 0), 0); }
 function wingDefault(parts) { return { presentParts: Array(Math.max((parts || []).length, 1)).fill(0), present: 0, yetToJoin: 0, total: sumParts(parts) }; }
 function hostelDefault(parts) { return wingDefault(parts); }
 
@@ -1310,56 +1325,7 @@ function drPartsEditor(key, label, parts) {
     <button type="button" class="icon-btn" data-act="cfgpartdel" data-k="${key}" data-i="${i}" aria-label="Remove" ${list.length <= 1 ? "disabled" : ""}>${ic("x",16)}</button></div>`).join("");
   return `<label style="margin-top:14px"><b>${label}</b> · total ${sumParts(list)}</label>${rows}<button type="button" class="link" data-act="cfgpartadd" data-k="${key}">+ Add another building</button>`;
 }
-function drPresentParts(d, parts) {
-  const n = Math.max((parts || []).length, 1);
-  const base = Array.isArray(d.presentParts) ? d.presentParts : [d.present];
-  return Array.from({ length: n }, (_, i) => Number(base[i]) || 0);
-}
-function wingLine(letter, label, parts, data, _unused, T) {
-  T = T || drTpl();
-  const alot = sumParts(parts);
-  const alotTxt = parts.length > 1 ? `${parts.join("+")}= ${alot}` : String(alot);
-  const pp = drPresentParts(data, parts), present = pp.reduce((a, b) => a + b, 0);
-  const presentTxt = pp.length > 1 ? `${pp.join("+")}= ${present}` : String(present);
-  const total = data.total != null && data.total !== "" ? Number(data.total) : alot;
-  const onLeave = wingOnLeave(data, parts);
-  const yet = String(Number(data.yetToJoin) || 0).padStart(2, "0");
-  return [`*(${letter}) ${label}:*`, `${T.lAlot}${tplGap(T.gAlot)}${alotTxt}`, `${T.lPresent}${tplGap(T.gPresent)}${presentTxt}`, `${T.lOnLeave}${tplGap(T.gOnLeave)}${onLeave}`, `${T.lYet}${tplGap(T.gYet)}${yet}`, `${T.lTotal}${tplGap(T.gTotal)}${total}`].join("\n");
-}
-function wingOnLeave(d, parts) {
-  const alot = sumParts(parts);
-  const present = drPresentParts(d, parts).reduce((a, b) => a + b, 0);
-  const total = d.total != null && d.total !== "" ? Number(d.total) || 0 : alot;
-  return Math.max(0, total - present - (Number(d.yetToJoin) || 0));
-}
-function peopleLine(num, title, students, T) {
-  T = T || drTpl();
-  if (!num) return `*${title} ${T.nil}*`;
-  const word = num === 1 ? "Student" : "Students";
-  const head = `*${title} ${num} x ${word}*`;
-  const body = (students || []).slice(0, num).map((s, i) => `(${letterAt(i)}) ${[s.name, s.id, s.dept, s.level, s.details].filter(x => String(x || "").trim()).join(", ") || "—"}`).join("\n\n");
-  return body ? `${head}\n\n${body}` : head;
-}
-function drCompile(dateStr, sec, over) {
-  const T = drTpl(over);
-  const dsw = (sec.dswActivities && sec.dswActivities.items) || [];
-  const hall = (sec.hallActivities && sec.hallActivities.items) || [];
-  const all = [...dsw, ...hall].filter(x => x && String(x.text || "").trim());
-  const line1 = all.length ? `*${T.daily}*\n\n${all.map((a, i) => `${all.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.daily} ${T.nstr}*`;
-  const tm = sec.tomorrow || {};
-  const tmItems = (Array.isArray(tm.items) ? tm.items : (String(tm.text || "").trim() && String(tm.text).trim().toUpperCase() !== "NSTR" ? [{ text: String(tm.text).trim() }] : [])).filter(x => x && String(x.text || "").trim());
-  const line2 = tmItems.length ? `*${T.tomorrow}*\n\n${tmItems.map((a, i) => `${tmItems.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.tomorrow} ${T.nstr}*`;
-  const male = sec.maleWing || drSectionDefault("maleWing");
-  const female = sec.femaleWing || drSectionDefault("femaleWing");
-  const hostel = sec.hostel || drSectionDefault("hostel");
-  const line3 = `*${T.state}*\n\n${wingLine("a", T.maleLabel, drConfig.maleParts, male, true, T)}\n\n${wingLine("b", T.femaleLabel, drConfig.femaleParts, female, true, T)}\n\n${wingLine("c", T.hostelLabel, drConfig.hostelParts, hostel, true, T)}`;
-  const sick = sec.sickness || { mode: 0, students: [] };
-  const line4 = peopleLine(Number(sick.mode) || 0, T.sickness, sick.students, T);
-  const cns = sec.counselling || { mode: 0, students: [] };
-  const line5 = peopleLine(Number(cns.mode) || 0, T.counselling, [], T);
-  const closing = String(T.closing || "").replace(/^\s+|\s+$/g, "");
-  return [T.greeting, `*${T.subject}*`, `${T.dateLabel} ${fmtReportDate(dateStr)}`, line1, line2, line3, line4, line5, closing].filter(x => String(x).length).join("\n\n");
-}
+function drCompile(dateStr, sec, over) { return compileReport(dateStr, sec, drConfig, over); }
 function drWarnings(sec) {
   const w = [];
   [["maleWing", "Male Wing", drConfig.maleParts], ["femaleWing", "Female Wing", drConfig.femaleParts], ["hostel", "Student-Run Hostel", drConfig.hostelParts]].forEach(([k, label, parts]) => {
@@ -2097,9 +2063,7 @@ function viewAdminDaily() {
       <label>Daily submission deadline (Bangladesh time)</label>
       <input id="drCfgDeadline" type="time" value="${esc(dd.deadline||"22:15")}">
       <label class="toggle"><input type="checkbox" id="drCfgReminders" ${dd.remindersOn!==false?"checked":""}> Enable missed-deadline reminders</label>
-      <label>WhatsApp number that receives the report</label>
-      <input id="drCfgWa" type="tel" inputmode="tel" value="${esc(dd.waNumber||"")}" placeholder="e.g. 01712345678">
-      <div class="muted" style="font-size:12px;margin-top:6px">When a report is finalized, WhatsApp opens with the report ready for this number. Just tap Send.</div>
+      <div class="muted" style="font-size:12px;margin-top:8px">The WhatsApp number, send time and auto-send are under Daily Reports › WhatsApp.</div>
       <button class="btn" style="width:100%;margin-top:14px" data-act="drcfgsave">Save defaults</button>
     </div>
     <div class="sec">Report permissions</div>
@@ -2563,32 +2527,7 @@ function drDateRow() {
   </div>`;
 }
 /* ---------- REPORT FORMAT (editable by Full Access) ---------- */
-const DR_TPL = {
-  greeting: "Assalamualaikum sir,",
-  subject: "Subj: DSW Wg-Daily Report",
-  dateLabel: "Dt:",
-  daily: "1. Daily Activities :",
-  tomorrow: "2. Tomorrow's Activities:",
-  state: "3. O/Hall Students State:",
-  sickness: "4. Sickness :",
-  counselling: "5. Counselling:",
-  nstr: "NSTR",
-  nil: "Nil",
-  maleLabel: "Male Wg", femaleLabel: "Female Wg", hostelLabel: "Student Run Hostel",
-  lAlot: "Alot:", gAlot: 1,
-  lPresent: "Present:", gPresent: 2,
-  lOnLeave: "On Lve:", gOnLeave: 5,
-  lYet: "Yet to join from lve:", gYet: 2,
-  lTotal: "Total:", gTotal: 7,
-  closing: "Regards\nDSW",
-};
-function drTpl(over) {
-  const src = over || drConfig.template || {};
-  const out = { ...DR_TPL };
-  Object.keys(DR_TPL).forEach(k => { if (src[k] !== undefined && src[k] !== null) out[k] = src[k]; });
-  return out;
-}
-const tplGap = n => " ".repeat(Math.max(0, Math.min(20, Number(n) || 0)));
+function drTpl(over) { return tplOf(drConfig, over); }
 let drTplDraft = null;
 function drTplDraftGet() { if (!drTplDraft) drTplDraft = { ...drTpl() }; return drTplDraft; }
 function viewDailyFormat() {
@@ -2629,7 +2568,7 @@ function viewDailyFormat() {
 
 function drTabs() {
   const tabs = [["entry","Entry"],["preview","Preview & Send"],["history","History"]];
-  if (isAdmin || drRole() === "full") tabs.push(["format", "Format"]);
+  if (isAdmin || drRole() === "full") { tabs.splice(2, 0, ["wa", "WhatsApp"]); tabs.push(["format", "Format"]); }
   return `<div class="filters">${tabs.map(([k,l]) => `<button class="fchip ${drSub===k?"on":""}" data-act="drtab" data-v="${k}">${l}</button>`).join("")}</div>`;
 }
 function viewDailyEntry() {
@@ -2667,14 +2606,95 @@ function viewDailyPreview() {
       ${canFinal ? (fin ? `<button class="btn danger" data-act="drunfinal">Reopen</button>` : `<button class="btn ghost" data-act="drfinal">Finalize</button>`) : ""}
     </div>
     ${fin && drReport.waOpenedAt ? `<div class="muted" style="font-size:12px;margin-top:10px">Opened in WhatsApp by ${esc(drReport.waBy || "")} · ${fmtDate(drReport.waOpenedAt)}</div>` : ""}
-    ${canFinal && !drWaNumber() ? `<div class="muted" style="font-size:12px;margin-top:10px">To send the report straight to WhatsApp, the Admin saves the number under More › Admin › Daily report.</div>` : ""}
+    ${canFinal && !drWaNumber() ? `<div class="muted" style="font-size:12px;margin-top:10px">To send the report to WhatsApp, the Admin saves the number under Daily Reports › WhatsApp.</div>` : ""}
+    ${canFinal && waAuto() && !(drReport && drReport.wa && drReport.wa.sentAt) ? `<div class="muted" style="font-size:12px;margin-top:10px">This report goes to WhatsApp by itself at ${esc(waTimeTxt())}. See Daily Reports › WhatsApp.</div>` : ""}
     <div class="muted" style="font-size:12px;margin-top:10px">The copied text keeps the asterisks WhatsApp uses for bold, so paste it directly into the chat.</div>`}`;
 }
-function drWaNumber() { return bdPhone(drConfig.waNumber || ""); }
+function drWaNumber() { return bdPhone(waCfg.number || drConfig.waNumber || ""); }
+const waAuto = () => waCfg.autoSend !== false && !!waState.ready && !!drWaNumber();
 function drSendWhatsApp(text) {
   const n = drWaNumber(); if (!n) { toast("No WhatsApp number saved yet (More › Admin › Daily report).", "err"); return; }
   window.open(`https://wa.me/${n}?text=${encodeURIComponent(text)}`, "_blank");
   setDoc(doc(db, "dailyReports", drDate), { waOpenedAt: Date.now(), waBy: myName() }, { merge: true }).catch(() => {});
+}
+/* ---------- DAILY REPORTS › WHATSAPP: automatic sending ---------- */
+const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
+  maleWing: "Male Wing state", femaleWing: "Female Wing state", sickness: "Sickness", counselling: "Counselling" };
+const REQ_SECS = ["hallActivities", "maleWing", "femaleWing", "sickness", "dswActivities", "tomorrow", "counselling"];
+const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function hhmmTxt(hhmm) { const [h, m] = String(hhmm).split(":").map(Number); const d = new Date(2000, 0, 1, h || 0, m || 0); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
+const waTimeTxt = () => hhmmTxt(waCfg.sendTime || "22:25");
+function waSrvRefresh(force) {
+  const u = pushUrl(); if (!u || (!force && Date.now() - waSrvAt < 60000)) return;
+  waSrvAt = Date.now();
+  fetch(u + "/wa/status").then(r => r.json()).then(j => { waSrv = j; renderSoon(); }).catch(() => { waSrv = { ready: false, error: "Could not reach the server" }; renderSoon(); });
+}
+function waDraftGet() {
+  const src = JSON.stringify([waCfg.number, waCfg.autoSend, waCfg.sendTime, waCfg.alarmOn, drConfig.deadline]);
+  const n0 = waCfg.number || drConfig.waNumber || "";
+  if (!waDraft || (!waDraft.dirty && waDraft.src !== src))
+    waDraft = { number: n0 ? "+" + bdPhone(n0) : "", autoSend: waCfg.autoSend !== false, sendTime: waCfg.sendTime || "22:25", alarmOn: waCfg.alarmOn !== false, deadline: drConfig.deadline || "22:15", dirty: false, src };
+  return waDraft;
+}
+function waStatusBlock() {
+  const r = drReport || {}, w = r.wa || {};
+  const missing = REQ_SECS.filter(k => drSections[k] === undefined);
+  const sendAt = dhakaDeadlineMs(drDate, waCfg.sendTime || "22:25"), now = Date.now();
+  const connected = waSrv ? waSrv.ready : !!waState.ready;
+  let tone = "", title, sub = "";
+  if (w.status === "sent") { tone = "ok"; title = `Sent to WhatsApp at ${clock(w.sentAt || w.at)}`; sub = w.by && w.by !== "Auto" ? `Sent by ${w.by}` : "Sent automatically"; }
+  else if (w.status === "waiting") { tone = "warn"; title = "Waiting for a tap on “Show report”"; sub = "The free 24-hour window was closed, so a short message with a Show report button went first. The full report goes the moment it is tapped."; }
+  else if (w.status === "sending") { title = "Sending…"; }
+  else if (w.status === "failed") { tone = "bad"; title = "Could not send"; sub = w.error || ""; }
+  else if (!drWaNumber()) { tone = "warn"; title = "No WhatsApp number yet"; sub = isAdmin ? "Add it below." : "The Admin adds it below."; }
+  else if (!connected) { tone = "warn"; title = "WhatsApp is not connected yet"; sub = "Until it is, use “Open in WhatsApp” and tap Send yourself."; }
+  else if (waCfg.autoSend === false) { title = "Auto-send is off"; sub = "Use Send now when the report is ready."; }
+  else if (missing.length) { tone = now >= sendAt ? "bad" : ""; title = now >= sendAt ? "Late — waiting for sections" : `Goes at ${waTimeTxt()} if everything is in`;
+    sub = `Still missing: ${missing.map(k => SEC_NAME[k]).join(", ")}. The report goes 2–3 minutes after the last one is submitted.`; }
+  else if (now < sendAt) { tone = "ok"; title = `Ready — goes automatically at ${waTimeTxt()}`; sub = "Changes made before then are included."; }
+  else { title = "Sending in a moment…"; }
+  const meta = waSrv && waSrv.provider === "meta";
+  const steps = [["All sections in", !missing.length], ["Sent", w.status === "sent" || w.status === "waiting"], ["Delivered", !!w.deliveredAt], ["Read", !!w.readAt], [meta ? "OK pressed" : "Replied", !!w.okAt]];
+  return `<div class="glass drcard wa-st ${tone}">
+      <div class="wa-h"><span class="wa-dot"></span><div><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div></div>
+      <div class="wa-steps">${steps.map(([l, on]) => `<span class="${on ? "on" : ""}"><i>${on ? ic("check", 12, 3.2) : ""}</i>${l}</span>`).join("")}</div>
+    </div>`;
+}
+function viewDailyWhatsApp() {
+  if (!(isAdmin || drRole() === "full")) return `<div class="empty">Only the Admin and people with Full Access can see this.</div>`;
+  waSrvRefresh(false);
+  const w = (drReport && drReport.wa) || {}, sent = !!w.sentAt, d = waDraftGet();
+  const connected = waSrv ? waSrv.ready : !!waState.ready;
+  const winOpen = waSrv && waSrv.windowOpenUntil && waSrv.windowOpenUntil > Date.now();
+  const actions = `<div class="row" style="margin-top:2px">
+      <button class="btn" data-act="wasend" ${connected && drWaNumber() ? "" : "disabled"}>${sent ? "Send again" : "Send now"}</button>
+      <button class="btn ghost" data-act="waopen" ${drWaNumber() ? "" : "disabled"}>Open in WhatsApp</button></div>
+    <div class="muted" style="font-size:12px;margin:8px 2px 0">“Open in WhatsApp” opens the chat with the report typed in, for sending it yourself.</div>`;
+  const ro = !isAdmin;
+  const settings = `<div class="sec">Schedule</div>
+    <div class="glass drcard wa-set">
+      <label>Report goes to (WhatsApp number)</label>
+      <input id="waNum" type="tel" inputmode="tel" value="${esc(d.number)}" placeholder="e.g. 01712345678" ${ro ? "disabled" : ""}>
+      <label class="wa-sw"><span><b>Send automatically every day</b><small>At the send time, or 2–3 minutes after the last late section</small></span><input type="checkbox" id="waAuto" ${d.autoSend ? "checked" : ""} ${ro ? "disabled" : ""}></label>
+      <div class="wa-times">
+        <div><label>Reminder</label><input id="waRemind" type="time" value="${esc(d.deadline)}" ${ro ? "disabled" : ""}></div>
+        <div><label>Send time</label><input id="waTime" type="time" value="${esc(d.sendTime)}" ${ro ? "disabled" : ""}></div>
+      </div>
+      <label class="wa-sw"><span><b>Alarm if a section is late</b><small>Rings for the person who owes it and the Admin, every 5 minutes for 30 minutes</small></span><input type="checkbox" id="waAlarm" ${d.alarmOn ? "checked" : ""} ${ro ? "disabled" : ""}></label>
+      ${ro ? `<div class="muted" style="font-size:12px;margin-top:10px">Only the Admin can change these.</div>` : `<button class="btn" data-act="wasave" style="width:100%;margin-top:14px" ${d.dirty ? "" : "disabled"}>Save</button>`}
+    </div>`;
+  const meta = waSrv && waSrv.provider === "meta";
+  const from = waSrv && waSrv.phone ? `${esc(waSrv.phone.name || "")} ${esc(waSrv.phone.number || "")}`.trim() : "";
+  const conn = `<div class="sec">Connection</div>
+    <div class="glass drcard" style="font-size:13.5px;line-height:1.55">
+      ${connected ? `<div><b style="color:var(--ok)">Connected</b>${from ? ` · sending from ${from}` : ""}</div>
+        <div class="muted" style="margin-top:4px">${meta
+          ? (winOpen ? `Free messages until ${new Date(waSrv.windowOpenUntil).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })}. Each OK tap keeps it free for another 24 hours.` : "The next report starts with a short “Show report” message (small Meta charge). Tapping OK each day keeps it free.")
+          : "Keep WhatsApp installed on the phone with that number, and let it go online at least once every two weeks. If it ever gets logged out, the Admin gets a notice."}</div>`
+      : `<div><b style="color:var(--warn)">Not connected</b></div><div class="muted" style="margin-top:4px">${esc((waSrv && waSrv.error) || "WhatsApp is not linked to the server yet.")}<br>Setup: on console.green-api.com scan the QR code with the WhatsApp of the DSW Wing number, then on the computer run npm run wa:secret and npm run wa:setup.</div>`}
+      <button class="link" data-act="warefresh" style="margin-top:6px">Check again</button>
+    </div>`;
+  return `<div class="sec">${esc(fmtReportDate(drDate))}</div>` + waStatusBlock() + actions + settings + conn;
 }
 function viewDailyHistory() {
   const rows = drHist;
@@ -2693,7 +2713,7 @@ function viewDailyHistory() {
 }
 function viewDaily() {
   drEnsureSub();
-  return drDateRow() + drTabs() + (drSub === "entry" ? viewDailyEntry() : drSub === "history" ? viewDailyHistory() : drSub === "format" ? viewDailyFormat() : viewDailyPreview());
+  return drDateRow() + drTabs() + (drSub === "entry" ? viewDailyEntry() : drSub === "history" ? viewDailyHistory() : drSub === "format" ? viewDailyFormat() : drSub === "wa" ? viewDailyWhatsApp() : viewDailyPreview());
 }
 
 async function drLoadHistory() {
@@ -2737,6 +2757,7 @@ function openNotifications() {
     const n = notifs.find(x => x.id === el.dataset.id); if (!n) return;
     if (!n.read) await updateDoc(doc(db, "notifications", me, "items", n.id), { read: true });
     if (n.link && n.link.tab === "daily") { tab = "daily"; drEnsureSubFor(n.link.date); drSub = "preview"; }
+    else if (n.link && n.link.tab === "alarm") { tab = "daily"; drEnsureSubFor(n.link.date); drSub = "entry"; }
     else if (n.link && n.link.tab === "chat" && n.link.id) { tab = "home"; close(); render(); openChat(n.link.id); return; }
     else if (n.link && n.link.tab === "dm" && n.link.id) { tab = "chats"; close(); render(); openThread(n.link.id); return; }
     else if (n.link && n.link.tab === "callend" && n.link.dm) { tab = "chats"; close(); render(); openThread(n.link.dm); return; }
@@ -3801,7 +3822,8 @@ $("#view").addEventListener("click", e => run(async () => {
     const text = drCompile(drDate, drSections);
     await setDoc(doc(db, "dailyReports", drDate), { date: drDate, finalized: true, finalText: text, finalizedBy: myName(), finalizedByEmail: me, finalizedAt: Date.now() }, { merge: true });
     await notifyReportAudience(`Daily report for ${fmtReportDate(drDate)} has been finalized.`, { tab: "daily", date: drDate }, me);
-    if (drWaNumber()) { toast("Report finalized — opening WhatsApp"); drSendWhatsApp(text); }
+    if (waAuto()) toast(`Report finalized — it goes to WhatsApp at ${waTimeTxt()}`);
+    else if (drWaNumber()) { toast("Report finalized — opening WhatsApp"); drSendWhatsApp(text); }
     else toast("Report finalized");
   }
   else if (act === "drunfinal") {
@@ -3817,7 +3839,24 @@ $("#view").addEventListener("click", e => run(async () => {
     drEditText = false; toast("Report text saved");
   }
   else if (act === "drtextreset") { await setDoc(doc(db, "dailyReports", drDate), { manualText: null }, { merge: true }); toast("Back to automatic text"); }
-  else if (act === "drwa") drSendWhatsApp(drCurrentText());
+  else if (act === "drwa" || act === "waopen") drSendWhatsApp(drCurrentText());
+  else if (act === "warefresh") { waSrvRefresh(true); toast("Checking…"); }
+  else if (act === "wasave") {
+    const d = waDraftGet(), num = bdPhone(d.number);
+    if (d.number && num.length < 10) { toast("That number looks too short. Include the country code for numbers outside Bangladesh, e.g. +81…", "err"); return; }
+    await setDoc(doc(db, "config", "whatsapp"), { number: num, autoSend: !!d.autoSend, sendTime: d.sendTime || "22:25", alarmOn: !!d.alarmOn, by: myName(), at: Date.now() }, { merge: true });
+    if (d.deadline && d.deadline !== drConfig.deadline) await setDoc(doc(db, "config", "dailyReport"), { deadline: d.deadline }, { merge: true });
+    waDraft = null; toast("Saved");
+  }
+  else if (act === "wasend") {
+    const sent = !!(drReport && drReport.wa && drReport.wa.sentAt);
+    const missing = REQ_SECS.filter(k => drSections[k] === undefined);
+    const msg = (sent ? "Send this report to WhatsApp again?" : "Send this report to WhatsApp now?") + (missing.length ? ` ${missing.length} section${missing.length > 1 ? "s are" : " is"} still missing.` : "");
+    if (!(await uiConfirm(msg, sent ? "Send again" : "Send now"))) return;
+    await setDoc(doc(db, "dailyReports", drDate), { date: drDate, sendNowAt: Date.now(), sendNowBy: myName() }, { merge: true });
+    const u = pushUrl(); if (u) fetch(u + "/wa/kick", { method: "POST" }).catch(() => {});
+    toast("Sending… the status updates here in a few seconds");
+  }
   else if (act === "drcopy") {
     const text = drCurrentText();
     try { await navigator.clipboard.writeText(text); toast("Report copied — paste it into WhatsApp"); }
@@ -3860,6 +3899,8 @@ $("#view").addEventListener("input", e => {
   if (e.target.dataset.cfgparts) { const d = drCfgDraftGet(); d[e.target.dataset.cfgparts][+e.target.dataset.i] = Math.max(0, Math.floor(Number(e.target.value) || 0)); d.dirty = true; return; }
   if (e.target.id === "drCfgDeadline") { const d = drCfgDraftGet(); d.deadline = e.target.value; d.dirty = true; return; }
   if (e.target.id === "drCfgWa") { const d = drCfgDraftGet(); d.waNumber = e.target.value; d.dirty = true; return; }
+  const waF = { waNum: "number", waTime: "sendTime", waRemind: "deadline", waAuto: "autoSend", waAlarm: "alarmOn" }[e.target.id];
+  if (waF) { const d = waDraftGet(); d[waF] = e.target.type === "checkbox" ? e.target.checked : e.target.value; if (!d.dirty) { d.dirty = true; const b = $('[data-act="wasave"]'); if (b) b.disabled = false; } return; }
   if (e.target.id === "drCfgReminders") { const d = drCfgDraftGet(); d.remindersOn = e.target.checked; d.dirty = true; return; }
   const sec = e.target.dataset.drsec;
   if (sec && e.target.dataset.drpart !== undefined) {

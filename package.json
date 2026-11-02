@@ -8,7 +8,9 @@
     "rules": "firebase deploy --only firestore:rules",
     "push:login": "wrangler login",
     "push:deploy": "wrangler deploy -c push-worker/wrangler.toml",
-    "push:secret": "node tools/set-push-secret.js"
+    "push:secret": "node tools/set-push-secret.js",
+    "wa:secret": "node tools/wa-secret.js",
+    "wa:setup": "node tools/wa-setup.js"
   },
   "devDependencies": {
     "qrcode-terminal": "^0.12.0",

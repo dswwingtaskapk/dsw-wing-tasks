@@ -10,7 +10,17 @@
    - GET /diag is the health check used by More > Notifications > checkup.
 
    Needs ONE secret: SERVICE_ACCOUNT  (the Firebase service-account JSON key)
+
+   WhatsApp daily report (optional) - set with: npm run wa:secret
+     Green-API (the DSW Wing WhatsApp linked like WhatsApp Web, no Facebook needed):
+       GREEN_URL    apiUrl from the Green-API console, e.g. https://7105.api.greenapi.com
+       GREEN_ID     idInstance
+       GREEN_TOKEN  apiTokenInstance
+     or the official WhatsApp Cloud API (needs a verified Meta business):
+       WA_TOKEN, WA_PHONE_ID, WA_WABA_ID
+     WA_VERIFY      a secret word the app's setup command uses; also guards the webhook
    ===================================================================== */
+import { compileReport, fmtReportDate, REQUIRED_SECTIONS } from "../app/src/main/assets/report.js";
 
 const SCOPES = "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging";
 const DHK = 6 * 3600000;
@@ -32,6 +42,11 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
     try {
       if (url.pathname === "/diag") return json(await diag(env));
+      if (url.pathname === "/wa") return await waWebhook(req, env, ctx, url);
+      if (url.pathname === "/wa/status") return json(await waStatus(env));
+      if (url.pathname === "/wa/kick" && req.method === "POST") { ctx.waitUntil(dailyFlow(env).catch(e => console.log("kick", e))); return json({ ok: true }); }
+      if (url.pathname === "/wa/setup") return json(await waSetup(env, url.searchParams.get("key") || "", url.origin));
+      if (url.pathname === "/privacy") return new Response(PRIVACY, { headers: { "Content-Type": "text/html; charset=utf-8" } });
       if (url.pathname === "/push" && req.method === "POST") {
         const body = await req.json().catch(() => ({}));
         if (!body.q || typeof body.q !== "string" || !/^[A-Za-z0-9]{6,40}$/.test(body.q)) return json({ ok: false, error: "missing or bad queue id" }, 400);
@@ -46,6 +61,7 @@ export default {
     ctx.waitUntil((async () => {
       try { await sweepQueue(env); } catch (e) { console.log("sweep failed", e); }
       try { await deadlineReminders(env); } catch (e) { console.log("reminders failed", e); }
+      try { await dailyFlow(env); } catch (e) { console.log("daily flow failed", e); }
     })());
   },
 };
@@ -132,6 +148,20 @@ async function queryEq(env, collection, field, value) {
 async function setDocFields(env, path, obj) {
   const mask = Object.keys(obj).map(k => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
   return fs(env, `${path}?${mask}`, { method: "PATCH", body: JSON.stringify({ fields: encFields(obj) }) });
+}
+/* write nested fields such as {"wa.okAt": 123} without touching the rest of the document.
+   cond: "exists=false" or an updateTime, so two runs can never both send */
+async function patchPaths(env, path, obj, cond) {
+  const root = {};
+  for (const k in obj) {
+    const parts = k.split("."); let o = root;
+    parts.slice(0, -1).forEach(p => { o[p] = o[p] && typeof o[p] === "object" ? o[p] : {}; o = o[p]; });
+    o[parts[parts.length - 1]] = obj[k];
+  }
+  let q = Object.keys(obj).map(k => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
+  if (cond === "exists=false") q += "&currentDocument.exists=false";
+  else if (cond) q += "&currentDocument.updateTime=" + encodeURIComponent(cond);
+  return fs(env, `${path}?${q}`, { method: "PATCH", body: JSON.stringify({ fields: encFields(root) }) });
 }
 async function addDoc(env, collPath, obj) {
   return fs(env, collPath, { method: "POST", body: JSON.stringify({ fields: encFields(obj) }) });
@@ -220,6 +250,8 @@ async function deadlineReminders(env) {
   const [y, mo, d] = today.split("-").map(Number);
   const dateTxt = `${d} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][mo - 1]} ${y}`;
   if (!missing.length) {
+    const wa = (await getDoc(env, "/config/whatsapp")) || {};
+    if (wa.autoSend !== false && waReady(env) && wa.number) return;   // it will go to WhatsApp by itself
     // everything is in but nobody has finalized it yet: ask the people who can finalize and send it
     for (const mem of members) {
       const role = mem.isAdmin ? "full" : (mem.reportRole || "none");
@@ -267,3 +299,318 @@ async function diag(env) {
   out.ok = out.secret && out.accessToken && out.firestore && out.fcmApi === "ok";
   return out;
 }
+
+/* =====================================================================
+   WHATSAPP DAILY REPORT
+   - at the send time (Admin sets it, default 10:25 PM) the report goes to the chosen number
+   - if a section is missing: alarm on the phones of the people who still owe it + Admin,
+     every 5 minutes, at most 6 times; the report goes 2-3 minutes after the last section arrives
+   - a free WhatsApp message is used while the person has written to us in the last 24 hours
+     (tapping OK opens that window); otherwise a short paid template with a "Show report" button
+   ===================================================================== */
+const GRAPH = "https://graph.facebook.com/v23.0";
+const TEMPLATE = "daily_report_ready";
+const GRACE = 150000;            // wait 2.5 minutes after a late section, in case of a quick fix
+const ALARM_EVERY = 5 * 60000, ALARM_TIMES = 6;
+const provider = env => env.GREEN_ID && env.GREEN_TOKEN ? "green" : (env.WA_TOKEN && env.WA_PHONE_ID ? "meta" : null);
+const waReady = env => !!provider(env);
+
+/* ---------- Green-API ---------- */
+const greenBase = env => String(env.GREEN_URL || "https://api.green-api.com").trim().replace(/\/+$/, "");
+async function green(env, method, body) {
+  const r = await fetch(`${greenBase(env)}/waInstance${env.GREEN_ID}/${method}/${env.GREEN_TOKEN}`, {
+    method: body ? "POST" : "GET", headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined,
+  });
+  const t = await r.text(); let j = {}; try { j = t ? JSON.parse(t) : {}; } catch (e) { j = { raw: t }; }
+  if (!r.ok) { const e = new Error((j && (j.message || j.error)) || (r.status === 401 || r.status === 403 ? "Green-API: wrong idInstance or token" : "Green-API " + r.status)); e.status = r.status; throw e; }
+  return j;
+}
+async function greenSend(env, to, date, text) {
+  const r = await green(env, "sendMessage", { chatId: to + "@c.us", message: text.slice(0, 20000), linkPreview: false, typingTime: 2000 });
+  if (!r.idMessage) throw new Error("WhatsApp did not accept the message");
+  await remember(env, r.idMessage, date);
+  return [r.idMessage];
+}
+const digits = s => String(s || "").replace(/\D/g, "");
+function bdNum(p) {
+  let d = digits(p);
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("01")) d = "88" + d;
+  if (d.length === 10 && d.startsWith("1")) d = "880" + d;
+  return d;
+}
+const dhakaDate = ms => new Date(ms + DHK).toISOString().slice(0, 10);
+const atTime = (date, hhmm, dflt) => { const [h, m] = String(hhmm || dflt).split(":").map(Number); return Date.parse(date + "T00:00:00Z") - DHK + (h || 0) * 3600000 + (m || 0) * 60000; };
+const prevDate = d => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() - 1); return x.toISOString().slice(0, 10); };
+
+async function graph(env, path, body, method) {
+  const r = await fetch(GRAPH + path, {
+    method: method || (body ? "POST" : "GET"),
+    headers: { Authorization: "Bearer " + env.WA_TOKEN, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || j.error) { const e = new Error((j.error && (j.error.error_user_msg || j.error.message)) || ("WhatsApp " + r.status)); e.code = j.error && j.error.code; e.raw = j.error; throw e; }
+  return j;
+}
+const waMsg = (env, to, msg) => graph(env, `/${env.WA_PHONE_ID}/messages`, { messaging_product: "whatsapp", recipient_type: "individual", to, ...msg });
+const okButton = (date, text) => ({ type: "interactive", interactive: { type: "button", body: { text }, action: { buttons: [{ type: "reply", reply: { id: "ok:" + date, title: "OK ✓" } }] } } });
+
+async function remember(env, wamid, date) { if (wamid) await setDocFields(env, `/waMsgs/${encodeURIComponent(wamid)}`, { date, at: Date.now() }).catch(() => {}); }
+
+/* the full report in our own format, with an OK button at the end (needs the 24-hour window) */
+async function sendReportText(env, to, date, text) {
+  const ids = [];
+  if (text.length <= 1024) ids.push((await waMsg(env, to, okButton(date, text))).messages[0].id);
+  else {
+    ids.push((await waMsg(env, to, { type: "text", text: { body: text.slice(0, 4096), preview_url: false } })).messages[0].id);
+    ids.push((await waMsg(env, to, okButton(date, `Daily report ${fmtReportDate(date)} — tap OK once you have seen it.`))).messages[0].id);
+  }
+  for (const id of ids) await remember(env, id, date);
+  return ids;
+}
+const outsideWindow = e => [131047, 131051, 470].includes(Number(e.code)) || /24 ?hour|re-?engagement|customer service window/i.test(e.message || "");
+
+async function reportTextFor(env, date, rep, secs) {
+  if (rep && rep.finalized && rep.finalText) return rep.finalText;
+  if (rep && rep.manualText) return rep.manualText;
+  const cfg = (await getDoc(env, "/config/dailyReport")) || {};
+  const map = {}; secs.forEach(x => { map[x._id] = x; });
+  return compileReport(date, map, cfg);
+}
+
+async function sendDaily(env, date, rep, secs, wa, who) {
+  const to = bdNum(wa.number);
+  const path = `/dailyReports/${date}`;
+  // lock: only one run may send this report
+  try { await patchPaths(env, path, { "wa.status": "sending", "wa.at": Date.now() }, rep ? rep._updateTime : "exists=false"); }
+  catch (e) { if ([400, 409, 412].includes(e.status)) return { ok: false, note: "already being sent" }; throw e; }
+  const text = await reportTextFor(env, date, rep, secs);
+  const fin = rep && rep.finalized ? {} : { date, finalized: true, finalText: text, finalizedBy: "Auto (WhatsApp)", finalizedAt: Date.now() };
+  try {
+    let via = "text", ids;
+    if (provider(env) === "green") ids = await greenSend(env, to, date, text);
+    else try { ids = await sendReportText(env, to, date, text); }
+    catch (e) {
+      if (!outsideWindow(e)) throw e;
+      via = "template";
+      const r = await waMsg(env, to, { type: "template", template: { name: TEMPLATE, language: { code: "en" }, components: [
+        { type: "body", parameters: [{ type: "text", text: fmtReportDate(date) }] },
+        { type: "button", sub_type: "quick_reply", index: "0", parameters: [{ type: "payload", payload: "show:" + date }] }] } });
+      ids = [r.messages[0].id]; await remember(env, ids[0], date);
+    }
+    await patchPaths(env, path, { ...fin, "wa.status": via === "text" ? "sent" : "waiting", "wa.via": via, "wa.sentAt": Date.now(), "wa.to": to, "wa.by": who || "Auto",
+      "wa.error": null, "wa.deliveredAt": null, "wa.readAt": null, "wa.okAt": null, "wa.ids": ids, "sendNowAt": null });
+    return { ok: true, via };
+  } catch (e) {
+    await patchPaths(env, path, { "wa.status": "failed", "wa.error": String(e.message || e).slice(0, 300), "wa.failedAt": Date.now(), "sendNowAt": null }).catch(() => {});
+    return { ok: false, error: String(e.message || e) };
+  }
+}
+
+/* who still owes which section: Hall Manager, Report Contributors, and the Admin always */
+function owesAlarm(mem, missing) {
+  if (mem.isAdmin) return missing;
+  const role = mem.reportRole || "none";
+  if (role === "hallManager") return missing.filter(k => ["hallActivities", "maleWing", "femaleWing", "sickness"].includes(k));
+  if (role === "contributor") return missing.filter(k => (mem.reportSections || []).includes(k));
+  return [];   // Full Access people do not get the alarm
+}
+async function alarms(env, date, rep, missing, sendAt) {
+  const now = Date.now(), a = (rep && rep.alarm) || {};
+  const count = Number(a.count) || 0;
+  if (count >= ALARM_TIMES || now > sendAt + ALARM_EVERY * ALARM_TIMES + 60000) return;
+  if (a.lastAt && now - a.lastAt < ALARM_EVERY - 20000) return;
+  try { await patchPaths(env, `/dailyReports/${date}`, { "alarm.count": count + 1, "alarm.lastAt": now }, rep ? rep._updateTime : "exists=false"); }
+  catch (e) { if ([400, 409, 412].includes(e.status)) return; throw e; }
+  const members = (await listDocs(env, "/members", 300)).filter(x => x.active !== false);
+  const dt = fmtReportDate(date);
+  for (const mem of members) {
+    const mine = owesAlarm(mem, missing); if (!mine.length) continue;
+    const text = mem.isAdmin
+      ? `Daily report ${dt} is late. Still missing: ${mine.map(k => LABEL[k]).join(", ")}.`
+      : `Daily report ${dt}: please submit ${mine.map(k => LABEL[k]).join(", ")} now. It goes to WhatsApp as soon as everything is in.`;
+    const link = { tab: "alarm", date };
+    if (count === 0) await addDoc(env, `/notifications/${encodeURIComponent(mem._id)}/items`, { text, link, at: now, read: false }).catch(() => {});
+    await sendToEmail(env, mem._id, text, link).catch(() => {});
+  }
+}
+
+async function dailyFlow(env) {
+  if (!env.SERVICE_ACCOUNT) return;
+  const wa = (await getDoc(env, "/config/whatsapp")) || {};
+  const legacy = wa.number ? null : await getDoc(env, "/config/dailyReport");
+  if (!wa.number && legacy && legacy.waNumber) wa.number = legacy.waNumber;
+  const now = Date.now(), today = dhakaDate(now);
+  for (const date of [prevDate(today), today]) {
+    const sendAt = atTime(date, wa.sendTime, "22:25");
+    const rep = await getDoc(env, `/dailyReports/${date}`);
+    const w = (rep && rep.wa) || {};
+    const manual = rep && rep.sendNowAt && (!w.sentAt || rep.sendNowAt > w.sentAt);
+    if (!manual) {
+      if (w.sentAt || w.status === "sending") continue;
+      if (now < sendAt || now > sendAt + 20 * 3600000) continue;
+    }
+    const secs = await listDocs(env, `/dailyReports/${date}/sections`, 20);
+    const have = new Set(secs.map(x => x._id));
+    const missing = REQUIRED_SECTIONS.filter(k => !have.has(k));
+    const canSend = waReady(env) && wa.number;
+    if (manual) { if (canSend) await sendDaily(env, date, rep, secs, wa, rep.sendNowBy || "Manual"); continue; }
+    if (missing.length) { if (wa.alarmOn !== false) await alarms(env, date, rep, missing, sendAt); continue; }
+    if (wa.autoSend === false || !canSend) continue;
+    const last = Math.max(0, ...secs.map(x => Number(x.updatedAt) || 0), Number(rep && rep.manualAt) || 0, Number(rep && rep.finalEditedAt) || 0);
+    if (last >= sendAt && now - last < GRACE) continue;      // a late section just came in: give 2-3 minutes for corrections
+    await sendDaily(env, date, rep, secs, wa, "Auto");
+  }
+}
+
+/* ---------- webhook: Meta tells us about button taps, replies and delivered / read ---------- */
+async function checkSig(req, env, raw) {
+  if (!env.WA_APP_SECRET) return true;
+  const sig = (req.headers.get("x-hub-signature-256") || "").replace("sha256=", "");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.WA_APP_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw)));
+  return [...mac].map(b => b.toString(16).padStart(2, "0")).join("") === sig;
+}
+async function waWebhook(req, env, ctx, url) {
+  if (req.method === "GET") {
+    if (url.searchParams.get("hub.mode") === "subscribe" && env.WA_VERIFY && url.searchParams.get("hub.verify_token") === env.WA_VERIFY)
+      return new Response(url.searchParams.get("hub.challenge") || "", { status: 200 });
+    return new Response("forbidden", { status: 403 });
+  }
+  const raw = await req.text();
+  let body = {}; try { body = JSON.parse(raw); } catch (e) {}
+  if (body && body.typeWebhook) {      // Green-API
+    const auth = (req.headers.get("authorization") || "").replace(/^(Bearer|Basic)\s+/i, "");
+    if (!env.WA_VERIFY || auth !== env.WA_VERIFY) return new Response("forbidden", { status: 403 });
+    ctx.waitUntil(handleGreen(env, body).catch(e => console.log("green hook", e)));
+    return new Response("ok");
+  }
+  if (!(await checkSig(req, env, raw))) return new Response("bad signature", { status: 401 });
+  ctx.waitUntil(handleWa(env, body).catch(e => console.log("wa hook", e)));
+  return new Response("ok");
+}
+async function handleWa(env, body) {
+  const wa = (await getDoc(env, "/config/whatsapp")) || {};
+  const boss = bdNum(wa.number);
+  for (const entry of body.entry || []) for (const ch of entry.changes || []) {
+    const v = ch.value || {};
+    for (const st of v.statuses || []) {
+      const m = await getDoc(env, `/waMsgs/${encodeURIComponent(st.id)}`); if (!m || !m.date) continue;
+      const t = (Number(st.timestamp) || Date.now() / 1000) * 1000;
+      if (st.status === "delivered") await patchPaths(env, `/dailyReports/${m.date}`, { "wa.deliveredAt": t }).catch(() => {});
+      else if (st.status === "read") await patchPaths(env, `/dailyReports/${m.date}`, { "wa.readAt": t }).catch(() => {});
+      else if (st.status === "failed") await patchPaths(env, `/dailyReports/${m.date}`, { "wa.status": "failed", "wa.error": String((st.errors && st.errors[0] && (st.errors[0].error_data && st.errors[0].error_data.details || st.errors[0].title)) || "Not delivered").slice(0, 300) }).catch(() => {});
+    }
+    for (const msg of v.messages || []) {
+      const from = digits(msg.from);
+      if (boss && from !== boss) continue;          // only the report receiver can use the buttons
+      await setDocFields(env, "/config/waState", { lastInboundAt: Date.now(), lastFrom: from }).catch(() => {});
+      const payload = (msg.button && msg.button.payload) || (msg.interactive && msg.interactive.button_reply && msg.interactive.button_reply.id) || "";
+      const [kind, date] = payload.split(":");
+      if (kind === "ok" && /^\d{4}-\d\d-\d\d$/.test(date || "")) await patchPaths(env, `/dailyReports/${date}`, { "wa.okAt": Date.now(), "wa.status": "sent" }).catch(() => {});
+      if (kind === "show" && /^\d{4}-\d\d-\d\d$/.test(date || "")) {
+        const rep = await getDoc(env, `/dailyReports/${date}`);
+        const secs = await listDocs(env, `/dailyReports/${date}/sections`, 20);
+        const text = await reportTextFor(env, date, rep, secs);
+        const ids = await sendReportText(env, from, date, text);
+        await patchPaths(env, `/dailyReports/${date}`, { "wa.status": "sent", "wa.shownAt": Date.now(), "wa.ids": [...((rep && rep.wa && rep.wa.ids) || []), ...ids] }).catch(() => {});
+      }
+    }
+  }
+}
+
+async function handleGreen(env, b) {
+  const t = b.typeWebhook;
+  if (t === "outgoingMessageStatus" || t === "outgoingAPIMessageReceived") {
+    if (!b.idMessage || !b.status) return;
+    const m = await getDoc(env, `/waMsgs/${encodeURIComponent(b.idMessage)}`); if (!m || !m.date) return;
+    const at = (Number(b.timestamp) || Date.now() / 1000) * 1000, path = `/dailyReports/${m.date}`;
+    if (b.status === "delivered") await patchPaths(env, path, { "wa.deliveredAt": at }).catch(() => {});
+    else if (b.status === "read") await patchPaths(env, path, { "wa.readAt": at }).catch(() => {});
+    else if (["failed", "noAccount", "suspended"].includes(b.status))
+      await patchPaths(env, path, { "wa.status": "failed", "wa.error": b.status === "noAccount" ? "That number has no WhatsApp" : String(b.description || "Not delivered").slice(0, 300) }).catch(() => {});
+    return;
+  }
+  if (t === "stateInstanceChanged") {
+    const st = String(b.stateInstance || "");
+    await setDocFields(env, "/config/waState", { state: st, stateAt: Date.now(), ready: st === "authorized" }).catch(() => {});
+    if (st && st !== "authorized" && st !== "starting") {
+      const members = (await listDocs(env, "/members", 300).catch(() => [])).filter(x => x.isAdmin);
+      for (const a of members) await notifyPerson(env, a._id, "The DSW Wing WhatsApp was logged out, so reports cannot go automatically. Open the Green-API console and scan the QR code again with the WhatsApp of that number.", { tab: "daily" });
+    }
+    return;
+  }
+  if (t === "incomingMessageReceived") {
+    const wa = (await getDoc(env, "/config/whatsapp")) || {};
+    const from = digits((b.senderData && (b.senderData.sender || b.senderData.chatId)) || "");
+    if (!from || from !== bdNum(wa.number)) return;     // only the report receiver counts
+    await setDocFields(env, "/config/waState", { lastInboundAt: Date.now(), lastFrom: from, ready: true, state: "authorized" }).catch(() => {});
+    // any reply (text, 👍, "ok") marks the latest sent report as acknowledged
+    const now = Date.now(), today = dhakaDate(now);
+    for (const date of [today, prevDate(today)]) {
+      const rep = await getDoc(env, `/dailyReports/${date}`);
+      if (rep && rep.wa && rep.wa.sentAt && !rep.wa.okAt && now - rep.wa.sentAt < 30 * 3600000) { await patchPaths(env, `/dailyReports/${date}`, { "wa.okAt": now }); break; }
+    }
+  }
+}
+
+/* ---------- status for the app + one-time setup ---------- */
+async function waStatus(env) {
+  const out = { ready: waReady(env), provider: provider(env), verify: !!env.WA_VERIFY, phone: null, error: null, windowOpenUntil: null, state: null };
+  if (out.provider === "green") {
+    try {
+      const st = await green(env, "getStateInstance"); out.state = st.stateInstance;
+      out.ready = st.stateInstance === "authorized";
+      if (!out.ready) out.error = st.stateInstance === "notAuthorized" ? "The WhatsApp is not linked. Open the Green-API console and scan the QR code." : "WhatsApp state: " + st.stateInstance;
+      else { const w = await green(env, "getWaSettings").catch(() => ({})); out.phone = { number: w.phone ? "+" + w.phone : "", name: "" }; }
+      await setDocFields(env, "/config/waState", { ready: out.ready, state: out.state || "", checkedAt: Date.now() }).catch(() => {});
+    } catch (e) { out.ready = false; out.error = String(e.message || e); }
+    return out;
+  }
+  try {
+    const st = (await getDoc(env, "/config/waState")) || {};
+    if (st.lastInboundAt) out.windowOpenUntil = st.lastInboundAt + 24 * 3600000;
+    if (out.ready) { const p = await graph(env, `/${env.WA_PHONE_ID}?fields=display_phone_number,verified_name,quality_rating`); out.phone = { number: p.display_phone_number, name: p.verified_name, quality: p.quality_rating }; }
+  } catch (e) { out.error = String(e.message || e); }
+  return out;
+}
+async function waSetup(env, key, origin) {
+  if (!env.WA_VERIFY || key !== env.WA_VERIFY) return { ok: false, error: "wrong or missing key (run: npm run wa:setup)" };
+  const steps = [];
+  const step = async (name, fn) => { try { steps.push({ name, ok: true, detail: await fn() }); } catch (e) { steps.push({ name, ok: false, detail: String(e.message || e) }); } };
+  if (provider(env) === "green") {
+    await step("Green-API account", async () => { const s = await green(env, "getStateInstance"); if (s.stateInstance !== "authorized") throw new Error(s.stateInstance === "notAuthorized" ? "WhatsApp is not linked yet: scan the QR code in the Green-API console" : "state: " + s.stateInstance); return "WhatsApp linked"; });
+    await step("WhatsApp number", async () => { const w = await green(env, "getWaSettings"); return w.phone ? "+" + w.phone : "unknown"; });
+    await step("Delivered / read / replies come back to the server", async () => {
+      await green(env, "setSettings", { webhookUrl: origin + "/wa", webhookUrlToken: "Bearer " + env.WA_VERIFY, incomingWebhook: "yes", outgoingAPIMessageWebhook: "yes",
+        outgoingMessageWebhook: "no", stateWebhook: "yes", markIncomingMessagesReaded: "no" });
+      return origin + "/wa";
+    });
+    const wa = (await getDoc(env, "/config/whatsapp")) || {};
+    if (wa.number) await step("Report receiver has WhatsApp", async () => { const c = await green(env, "checkWhatsapp", { phoneNumber: Number(bdNum(wa.number)) }); if (c.existsWhatsapp === false) throw new Error("+" + bdNum(wa.number) + " has no WhatsApp"); return "+" + bdNum(wa.number); });
+    await setDocFields(env, "/config/waState", { setupAt: Date.now(), ready: steps.every(s => s.ok), provider: "green" }).catch(() => {});
+    return { ok: steps.every(s => s.ok), steps };
+  }
+  await step("Token and phone number", async () => { const p = await graph(env, `/${env.WA_PHONE_ID}?fields=display_phone_number,verified_name,code_verification_status,quality_rating`); return `${p.verified_name || ""} ${p.display_phone_number || ""} (${p.code_verification_status || "?"})`; });
+  if (env.WA_WABA_ID) {
+    await step("Connect webhook to the WhatsApp account", async () => { await graph(env, `/${env.WA_WABA_ID}/subscribed_apps`, {}); return "connected"; });
+    await step("Report template", async () => {
+      const list = await graph(env, `/${env.WA_WABA_ID}/message_templates?name=${TEMPLATE}&fields=name,status,language`);
+      const have = (list.data || []).find(t => t.name === TEMPLATE);
+      if (have) return "already there: " + have.status;
+      const r = await graph(env, `/${env.WA_WABA_ID}/message_templates`, { name: TEMPLATE, language: "en", category: "UTILITY", components: [
+        { type: "BODY", text: "DSW Wing daily report for {{1}} is ready. Tap Show report to read it.", example: { body_text: [["2 Nov 2026"]] } },
+        { type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Show report" }] }] });
+      return "sent to Meta for approval: " + (r.status || "PENDING");
+    });
+  } else steps.push({ name: "WhatsApp Business Account ID", ok: false, detail: "WA_WABA_ID is not set (npm run wa:secret)" });
+  await setDocFields(env, "/config/waState", { setupAt: Date.now(), ready: steps.every(s => s.ok) }).catch(() => {});
+  return { ok: steps.every(s => s.ok), steps };
+}
+
+const PRIVACY = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wing Tasks privacy</title>
+<body style="font-family:system-ui;max-width:640px;margin:40px auto;padding:0 16px;line-height:1.6"><h1>Wing Tasks — privacy</h1>
+<p>Wing Tasks is an internal tool of the DSW Wing. It sends the daily report by WhatsApp to one number chosen by the Wing's Admin.</p>
+<p>We store only what the Wing's members enter in the app, and the time a WhatsApp message was delivered, read or acknowledged. Nothing is sold or shared.</p>
+<p>Contact: dswwingtaskapk@gmail.com</p></body>`;

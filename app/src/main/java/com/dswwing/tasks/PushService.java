@@ -27,6 +27,8 @@ public class PushService extends FirebaseMessagingService {
 
     static final String CHANNEL = "wingtasks_alerts";
     static final String CALL_CHANNEL = "wingtasks_calls";
+    static final String ALARM_CHANNEL = "wingtasks_report_alarm";
+    static final int ALARM_ID = 6100;
 
     static void ensureChannel(Context c) {
         if (Build.VERSION.SDK_INT >= 26) {
@@ -47,6 +49,20 @@ public class PushService extends FirebaseMessagingService {
                 ch.enableVibration(true);
                 ch.setVibrationPattern(new long[]{0, 900, 700, 900, 700});
                 ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+                nm.createNotificationChannel(ch);
+            }
+            if (nm.getNotificationChannel(ALARM_CHANNEL) == null) {
+                NotificationChannel ch = new NotificationChannel(ALARM_CHANNEL, "Daily report alarm", NotificationManager.IMPORTANCE_HIGH);
+                ch.setDescription("Rings when your daily report section is late");
+                Uri snd = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+                if (snd == null) snd = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+                ch.setSound(snd, new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
+                ch.enableVibration(true);
+                ch.setVibrationPattern(new long[]{0, 1000, 500, 1000, 500});
+                ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+                ch.setBypassDnd(true);
                 nm.createNotificationChannel(ch);
             }
         }
@@ -98,6 +114,36 @@ public class PushService extends FirebaseMessagingService {
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setContentIntent(open("dm", d.get("dm"), null, null, rc));
             try { NotificationManagerCompat.from(this).notify(rc, b.build()); } catch (SecurityException ignored) {}
+            return;
+        }
+
+        // the daily report is late: ring like an alarm for about a minute (even when the app is open)
+        if ("alarm".equals(tab)) {
+            if (!canPost()) return;
+            String body = d.get("body") != null ? d.get("body") : "Please submit your daily report section now.";
+            PendingIntent openIt = open("daily", null, d.get("date"), "alarm", ALARM_ID);
+            Intent stop = new Intent(this, AlarmStopReceiver.class);
+            PendingIntent stopIt = PendingIntent.getBroadcast(this, ALARM_ID + 1, stop, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+            NotificationCompat.Builder b = new NotificationCompat.Builder(this, ALARM_CHANNEL)
+                    .setSmallIcon(R.drawable.ic_stat).setColor(0xFFD23C3C)
+                    .setContentTitle("Daily report is late")
+                    .setContentText(body)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                    .setCategory(NotificationCompat.CATEGORY_ALARM)
+                    .setPriority(NotificationCompat.PRIORITY_MAX)
+                    .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                    .setAutoCancel(true)
+                    .setTimeoutAfter(60000)
+                    .setFullScreenIntent(openIt, true)
+                    .setContentIntent(openIt)
+                    .addAction(0, "Stop", stopIt)
+                    .addAction(0, "Open report", openIt);
+            if (Build.VERSION.SDK_INT < 26) {
+                b.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)).setVibrate(new long[]{0, 1000, 500, 1000, 500});
+            }
+            Notification n = b.build();
+            n.flags |= Notification.FLAG_INSISTENT;
+            try { NotificationManagerCompat.from(this).notify(ALARM_ID, n); } catch (SecurityException ignored) {}
             return;
         }
 
