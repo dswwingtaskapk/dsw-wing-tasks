@@ -707,7 +707,8 @@ body.drawer-open .dr-panel{transform:none}
 
 <script type="module">
 /* Firebase settings live in config.js (the only file you edit). */
-import { firebaseConfig, ADMIN_EMAIL } from "./config.js";
+import * as CFG from "./config.js";
+const { firebaseConfig, ADMIN_EMAIL } = CFG;
 import { BUILD } from "./build-info.js";
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -981,7 +982,8 @@ window.addEventListener("nativeopen", () => {
 });
 function pushStatusLine() {
   if (!window.Android) return "Phone alerts work in the Android app.";
-  const reg = fcmSaved ? `This phone is registered for alerts.` : `This phone is not registered for alerts yet.`;
+  const reg = (fcmSaved ? `This phone is registered for alerts.` : `This phone is not registered for alerts yet.`)
+    + (lastPush ? (lastPush.none ? ` Last alert: the person had no phone registered.` : ` Last alert went out in ${lastPush.secs} second${lastPush.secs === 1 ? "" : "s"}.`) : "");
   const srv = pushUrl() ? "" : " The Admin still has to save the push server address below.";
   return reg + srv;
 }
@@ -1297,7 +1299,7 @@ function drSubscribe(dateStr) {
   });
 }
 /* Phone push server (Cloudflare Worker). The Admin saves its address inside the app: More > Notifications. */
-const PUSH_URL = "";
+const PUSH_URL = CFG.PUSH_SERVER || "";
 let pushCfg = {}, pushCheck = null;
 const pushUrl = () => String((pushCfg && pushCfg.workerUrl) || PUSH_URL || "").trim().replace(/\/+$/, "");
 async function callPush(body) {
@@ -1307,7 +1309,16 @@ async function callPush(body) {
     return await r.json();
   } catch (e) { return { ok: false, error: "the server could not be reached (" + (e.message || e) + ")" }; }
 }
-function pingPush(id) { callPush({ q: id }).then(r => { if (!r || !r.ok) setTimeout(() => callPush({ q: id }), 5000); }); }
+let lastPush = null;   // shown in the notification checkup
+function pingPush(id, at) {
+  const t0 = at || Date.now(), waits = [0, 3000, 10000, 20000];
+  const go = n => callPush({ q: id }).then(r => {
+    if (r && r.ok && (r.sent > 0 || /already/.test(r.note || ""))) { if (r.sent > 0) lastPush = { secs: Math.max(1, Math.round((Date.now() - t0) / 1000)), at: Date.now(), tries: n + 1 }; return; }
+    if (r && r.ok && /no phone/.test(r.note || "")) { lastPush = { none: true, at: Date.now() }; return; }
+    if (n + 1 < waits.length) setTimeout(() => go(n + 1), waits[n + 1]);
+  });
+  go(0);
+}
 async function notify(targetEmail, text, link, opts = {}) {
   if (!targetEmail || targetEmail === me) return;
   const l = link || null, at = Date.now();
@@ -1315,7 +1326,7 @@ async function notify(targetEmail, text, link, opts = {}) {
     addDoc(collection(db, "pushQueue"), { email: targetEmail, text: String(text).slice(0, 300), link: l, at }),
     opts.bell === false ? Promise.resolve() : addDoc(collection(db, "notifications", targetEmail, "items"), { text, link: l, at, read: false }),
   ]);
-  if (rs[0].status === "fulfilled") pingPush(rs[0].value.id);   // the server also sweeps the queue every minute, so nothing is lost
+  if (rs[0].status === "fulfilled") pingPush(rs[0].value.id, at);   // the server also sweeps the queue every minute, so nothing is lost
 }
 async function notifyReportAudience(text, link, excludeEmail) {
   const targets = new Set();

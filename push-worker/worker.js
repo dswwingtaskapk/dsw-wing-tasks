@@ -184,7 +184,7 @@ async function processQueueItem(env, id) {
 
 async function sweepQueue(env) {
   const items = await listDocs(env, "/pushQueue", 100);
-  const old = Date.now() - 30000;   // the app sends new ones itself; we pick up anything left behind
+  const old = Date.now() - 10000;   // the app sends new ones itself; we pick up anything left behind
   for (const it of items) if (!it.at || it.at < old) await processQueueItem(env, it._id).catch(e => console.log("item", it._id, e.message));
 }
 

@@ -17,3 +17,6 @@ export const firebaseConfig = {
 /* The Admin signs in with ID "admin". This must be the SAME email that is
    written in firestore.rules (it already is). */
 export const ADMIN_EMAIL = "dswwingtaskapk@gmail.com";
+
+/* Phone notification server (Cloudflare Worker). Built in, so nobody has to type it. */
+export const PUSH_SERVER = "https://wing-push.dswwingtaskapk.workers.dev";
