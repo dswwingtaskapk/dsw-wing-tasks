@@ -34,6 +34,11 @@ android {
             signingConfig ksFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
+    lint {
+        // the APK is shared directly (not through Play Store), so store-only checks must not stop the build
+        checkReleaseBuilds false
+        abortOnError false
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

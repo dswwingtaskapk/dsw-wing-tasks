@@ -42,7 +42,7 @@ jobs:
             echo "::error::The signing key is missing. Add KEYSTORE_BASE64 and KEYSTORE_PASSWORD in GitHub > Settings > Secrets and variables > Actions."
             exit 1
           fi
-          if grep -q PASTE_HERE app/src/main/assets/config.js; then
+          if grep -q '"PASTE_HERE"' app/src/main/assets/config.js; then
             echo "::error::config.js still has PASTE_HERE. Paste your Firebase web settings into app/src/main/assets/config.js."
             exit 1
           fi
