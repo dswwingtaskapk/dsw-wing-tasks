@@ -81,15 +81,17 @@ service cloud.firestore {
       allow create, update: if signedIn() && request.resource.data.email == me();
     }
 
-    // ---- chats: one-to-one ("dm:a:b", only those two) and the whole wing ("wing") ----
-    function chatPath(id) { return /databases/$(database)/documents/chats/$(id); }
-    function inChat(id) { return id == 'wing' || (exists(chatPath(id)) && me() in get(chatPath(id)).data.members); }
+    // ---- chats ----
+    // "wing" = the whole wing. One-to-one chats are named "dm:<email1>:<email2>",
+    // so the name itself says who may open it (works even before the first message).
+    function inChatName(chatId) { return chatId == 'wing' || (chatId.split(':')[0] == 'dm' && me() in chatId.split(':')); }
     match /chats/{chatId} {
-      allow read: if isMember() && (chatId == 'wing' || me() in resource.data.members);
-      allow create: if isMember() && (chatId == 'wing' || (me() in request.resource.data.members && request.resource.data.members.size() == 2));
-      allow update: if isMember() && (chatId == 'wing' || me() in resource.data.members);
+      allow get: if isMember() && inChatName(chatId);
+      allow list: if isMember() && me() in resource.data.members;
+      allow create, update: if isMember() && inChatName(chatId);
       match /{part}/{id} {
-        allow read, create: if isMember() && inChat(chatId);
+        allow read: if isMember() && inChatName(chatId);
+        allow create: if isMember() && inChatName(chatId) && request.resource.data.by == me();
         allow update, delete: if isMember() && (isAdmin() || resource.data.by == me());
       }
     }

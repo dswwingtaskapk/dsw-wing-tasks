@@ -410,7 +410,7 @@ nav .bar .nicw{position:relative}
 .pcnote{font-size:12.5px;color:var(--muted);line-height:1.5;margin:10px 0 0}
 
 /* ---------- login ---------- */
-#login,#denied{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;padding:24px 4px}
+#login,#denied{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;gap:14px;padding:calc(48px + var(--safe-t)) 4px 40px}
 .brandmark{width:76px;height:76px;border-radius:24px;display:grid;place-items:center;background:var(--primary);color:var(--on-primary);font-weight:800;font-size:22px;letter-spacing:.02em;box-shadow:0 14px 30px rgba(16,18,24,.25)}
 .logo{font-size:30px;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1.1}
 .logo small{display:block;font-size:12.5px;letter-spacing:.24em;font-weight:700;color:var(--muted);margin-top:6px}
@@ -815,10 +815,11 @@ const ICONS = {
 const ic = (n, s = 18, w = 1.9) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 
 const showBanner = m => { const b = $("#banner"); b.textContent = m; b.classList.toggle("hidden", !m); };
+$("#banner").onclick = () => showBanner("");
 const onErr = e => {
   console.error(e);
   showBanner(e.code === "permission-denied"
-    ? "Some information could not load: the database rules on Firebase are older than this app. On the computer, run: npm run rules"
+    ? "Some information could not load: the database rules on Firebase are older than this app. On the computer, run: npm run rules  (tap to hide)"
     : "Error: " + (e.message || e.code));
 };
 let toastT;
@@ -916,7 +917,7 @@ onAuthStateChanged(auth, u => {
   tmaps.a = {}; tmaps.c = {}; tmaps.g = {};
   drUnsubs = []; drSubscribed = null; drReport = null; drSections = {}; drDraft = {}; notifs = [];
   try { if (call) endCallLocal(""); incoming = null; callScreen(); closePage(); } catch (e) {}
-  dmChats = {}; wingChat = { id: "wing" }; tf = tfDefault();
+  dmChats = {}; dmSubs = {}; chatLoadError = ""; wingChat = { id: "wing" }; tf = tfDefault();
   user = u;
   if (!u) { me = ""; isAdmin = false; screens("login"); return; }
   me = norm(u.email);
@@ -1049,7 +1050,7 @@ function start() {
 
 function listen() {
   const sub = (ref, fn) => unsubs.push(onSnapshot(ref, fn, onErr));
-  sub(collection(db, "members"), s => { members = s.docs.map(d => ({ id: d.id, email: d.id, ...d.data() })).sort((a,b) => (a.name||"").localeCompare(b.name||"")); renderSoon(); });
+  sub(collection(db, "members"), s => { members = s.docs.map(d => ({ id: d.id, email: d.id, ...d.data() })).sort((a,b) => (a.name||"").localeCompare(b.name||"")); syncDmListeners(); renderSoon(); });
   sub(collection(db, "categories"), s => { cats = s.docs.map(d => ({ id: d.id, ...d.data() })); renderSoon(); });
   sub(collection(db, "users", user.uid, "categories"), s => { myCats = s.docs.map(d => ({ id: d.id, ...d.data() })); renderSoon(); });
   if (isAdmin) {
@@ -1064,9 +1065,9 @@ function listen() {
   sub(userDoc(), s => { settings = { ...settings, ...((s.data() || {}).settings || {}) }; renderSoon(); });
   sub(doc(db, "config", "dailyReport"), s => { if (s.exists()) drConfig = { ...drConfig, ...s.data() }; renderSoon(); });
   sub(doc(db, "config", "push"), s => { pushCfg = s.exists() ? s.data() : {}; renderSoon(); });
-  sub(query(collection(db, "chats"), where("members", "array-contains", me)), s => { dmChats = {}; s.docs.forEach(d => dmChats[d.id] = { id: d.id, ...d.data() }); renderSoon(); if (threadId) refreshThread(); });
-  sub(doc(db, "chats", "wing"), s => { wingChat = s.exists() ? { id: "wing", ...s.data() } : { id: "wing" }; renderSoon(); if (threadId === "wing") refreshThread(); });
-  sub(query(collection(db, "calls"), where("to", "==", me), where("status", "==", "ringing")), onIncomingCalls);
+  // chats: one small listener per person (the chat name says who may read it), so nothing needs a list query
+  unsubs.push(onSnapshot(doc(db, "chats", "wing"), s => { wingChat = s.exists() ? { id: "wing", ...s.data() } : { id: "wing" }; renderSoon(); if (threadId === "wing") refreshThread(); }, quietErr("chats")));
+  unsubs.push(onSnapshot(query(collection(db, "calls"), where("to", "==", me), where("status", "==", "ringing")), onIncomingCalls, quietErr("calls")));
   sub(query(collection(db, "notifications", me, "items")), s => {
     notifs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 60);
     renderSoon();
@@ -3000,6 +3001,22 @@ async function toggleTaskStep(t, idx) {
    ===================================================================== */
 let dmChats = {}, wingChat = { id: "wing" }, threadId = null, threadMsgs = [], threadUnsub = null, threadFile = null, threadSending = false, lastReadMark = 0;
 const dmId = email => "dm:" + [me, email].sort().join(":");
+let dmSubs = {}, chatLoadError = "";
+function quietErr(what) {          // chat / call problems show a short note on the Chats page instead of the red bar
+  return e => { console.warn(what, e); chatLoadError = e && e.code === "permission-denied" ? "rules" : "net"; renderSoon(); };
+}
+function syncDmListeners() {
+  const want = new Set(activeMembers().filter(m => m.email !== me).map(m => dmId(m.email)));
+  Object.keys(dmSubs).forEach(id => { if (!want.has(id)) { dmSubs[id](); delete dmSubs[id]; delete dmChats[id]; } });
+  want.forEach(id => {
+    if (dmSubs[id]) return;
+    const u = onSnapshot(doc(db, "chats", id), s => {
+      if (s.exists()) dmChats[id] = { id, ...s.data() }; else delete dmChats[id];
+      chatLoadError = ""; renderSoon(); if (threadId === id) refreshThread();
+    }, quietErr("chat " + id));
+    dmSubs[id] = u; unsubs.push(u);
+  });
+}
 const dmPeer = id => (id || "").replace(/^dm:/, "").split(":").find(e => e !== me) || "";
 const chatOf = id => id === "wing" ? wingChat : dmChats[id];
 function chatUnread(c) { return !!(c && c.lastAt && c.lastBy !== me && c.lastAt > ((c.reads || {})[me] || 0)); }
@@ -3019,7 +3036,8 @@ function viewChats() {
       <span class="cav ${group ? "grp" : ""}">${group ? "DW" : esc(initials(name))}</span>
       <span class="cmid"><b>${esc(name)}</b><small>${prev(c) || esc(sub)}</small></span>
       <span class="cend"><small>${c && c.lastAt ? shortTime(c.lastAt) : ""}</small>${chatUnread(c) ? `<i class="cdot"></i>` : ""}</span></button>`;
-  return `<div class="list glass chatlistbox">${row("wing", "DSW Wing", "Everyone in the wing", wingChat, true)}${rows.map(({ m, c }) => row(dmId(m.email), m.name, m.designation || "Tap to chat", c, false)).join("")}</div>
+  const note = chatLoadError ? `<div class="info" style="margin-bottom:10px">${chatLoadError === "rules" ? "Chats could not load because the database rules on Firebase are older than this app. On the computer run: npm run rules" : "Chats could not load. Check the internet connection."}</div>` : "";
+  return note + `<div class="list glass chatlistbox">${row("wing", "DSW Wing", "Everyone in the wing", wingChat, true)}${rows.map(({ m, c }) => row(dmId(m.email), m.name, m.designation || "Tap to chat", c, false)).join("")}</div>
     ${ppl.length ? "" : `<div class="empty"><p>No other members yet. The Admin adds members under More › Admin.</p></div>`}`;
 }
 function openThread(id) {
@@ -3059,7 +3077,7 @@ function openThread(id) {
     if (threadId !== id) return;
     threadMsgs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-300);
     refreshThread(); markThreadRead();
-  }, onErr);
+  }, e => { quietErr("messages")(e); const b = $("#thList"); if (b) b.innerHTML = `<div class="chat-empty"><b>Could not open this chat</b><br>${chatLoadError === "rules" ? "The database rules on Firebase need updating (npm run rules)." : "Check the internet connection."}</div>`; });
   markThreadRead();
 }
 function closeThread() {

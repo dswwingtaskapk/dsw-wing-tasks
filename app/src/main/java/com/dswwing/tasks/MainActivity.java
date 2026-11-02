@@ -127,6 +127,8 @@ public class MainActivity extends Activity {
         web.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
         web.setVerticalScrollBarEnabled(false);
         web.setHorizontalScrollBarEnabled(false);
+        // phone "autofill" pop-ups made the keyboard close while typing the login on some phones (e.g. Xiaomi)
+        if (Build.VERSION.SDK_INT >= 26) web.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
         setContentView(web);
         applyBars(getSharedPreferences("ui", MODE_PRIVATE).getBoolean("dark", false));
 
