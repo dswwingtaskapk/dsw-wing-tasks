@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.provider.Settings;
 import android.util.Base64;
 import android.view.View;
 import android.webkit.JavascriptInterface;
+import android.webkit.PermissionRequest;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -45,6 +47,8 @@ public class MainActivity extends Activity {
     private static final String HOME = "https://" + HOST + "/assets/index.html";
 
     private static final int REQ_FILE = 4711;
+    private static final int REQ_MIC = 78;
+    private PermissionRequest pendingMic;
     private ValueCallback<Uri[]> filePathCallback;
     static volatile boolean visible = false;
     static String pushToken = null;
@@ -137,7 +141,7 @@ public class MainActivity extends Activity {
         s.setSupportMultipleWindows(true);
         s.setJavaScriptCanOpenWindowsAutomatically(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
-        s.setMediaPlaybackRequiresUserGesture(true);
+        s.setMediaPlaybackRequiresUserGesture(false);   // call audio and ringtone must play without a tap
         if (Build.VERSION.SDK_INT >= 23) s.setOffscreenPreRaster(true);   // smoother scrolling
 
         web.addJavascriptInterface(new Bridge(), "Android");
@@ -178,6 +182,23 @@ public class MainActivity extends Activity {
                     return false;
                 }
                 return true;
+            }
+
+            // in-app audio calls ask for the microphone
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(() -> {
+                    boolean audio = false;
+                    for (String r : request.getResources()) if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(r)) audio = true;
+                    if (!audio) { request.deny(); return; }
+                    if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                    } else {
+                        if (pendingMic != null) pendingMic.deny();
+                        pendingMic = request;
+                        requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC);
+                    }
+                });
             }
 
             @Override
@@ -275,6 +296,26 @@ public class MainActivity extends Activity {
 
     /** Called from the page: saves a file into the phone's Downloads folder. */
     private class Bridge {
+
+        @JavascriptInterface
+        @SuppressWarnings("deprecation")
+        public void callAudio(boolean active) {
+            runOnUiThread(() -> {
+                AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+                if (am == null) return;
+                am.setMode(active ? AudioManager.MODE_IN_COMMUNICATION : AudioManager.MODE_NORMAL);
+                am.setSpeakerphoneOn(false);
+            });
+        }
+
+        @JavascriptInterface
+        @SuppressWarnings("deprecation")
+        public void setSpeaker(boolean on) {
+            runOnUiThread(() -> {
+                AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+                if (am != null) am.setSpeakerphoneOn(on);
+            });
+        }
 
         @JavascriptInterface
         public void setDarkBars(boolean dark) {
@@ -380,6 +421,17 @@ public class MainActivity extends Activity {
             return;
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_MIC && pendingMic != null) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                pendingMic.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+            else pendingMic.deny();
+            pendingMic = null;
+        }
     }
 
     @Override

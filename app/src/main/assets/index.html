@@ -422,6 +422,76 @@ nav .bar .nicw{position:relative}
 #denied h3{font-size:20px}
 .setupmsg{max-width:420px;margin:12vh auto;padding:24px;text-align:center}
 
+
+/* ---------- tasks filters ---------- */
+#q{margin-bottom:12px}
+.tbar{display:flex;align-items:center;justify-content:space-between;margin:2px 2px 8px;font-size:13px;color:var(--muted);font-weight:600}
+.tbar .link{padding:4px 0;color:var(--text)}
+.fpanel{padding:14px 16px 16px;margin-bottom:12px}
+/* ---------- full pages (task details, chat thread) ---------- */
+body.paged{overflow:hidden}
+#pageHost:empty{display:none}
+.page{position:fixed;inset:0;z-index:25;background:var(--bg);display:flex;flex-direction:column;animation:pgin .3s cubic-bezier(.32,.72,0,1)}
+@keyframes pgin{from{transform:translateX(30%);opacity:0}}
+.pg-head{flex:none;display:flex;align-items:center;gap:10px;padding:calc(10px + var(--safe-t)) 12px 10px;background:var(--bg)}
+.pg-back,.pg-icon{width:42px;height:42px;border-radius:50%;border:0;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;color:var(--text);flex:none;padding:0}
+.pg-ht{flex:1;min-width:0}
+.pg-ht b{display:block;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-ht small{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:6px 16px 24px}
+.pg-foot{flex:none;display:flex;gap:10px;padding:12px 16px calc(14px + var(--safe-b));background:var(--surface);box-shadow:0 -6px 20px rgba(16,18,24,.06)}
+.pg-foot .btn{flex:1 1 0;min-width:0;font-size:14.5px;padding:10px 8px;white-space:nowrap}
+.d-title{font-size:22px;line-height:1.3;font-weight:700;margin:6px 2px 8px;overflow-wrap:anywhere}
+.dcard2{padding:6px 16px;margin-top:12px}
+.dcard2.dtext{padding:14px 16px;white-space:pre-wrap;font-size:14.5px;line-height:1.55;overflow-wrap:anywhere}
+.drow{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+.drow:last-child{border-bottom:0}
+.drow span{color:var(--muted);flex:none}
+.drow b{font-weight:600;text-align:right;min-width:0;overflow-wrap:anywhere}
+.drow em{font-style:normal;margin-left:6px}
+.frow{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.frow:last-child{border-bottom:0}
+.frow div{flex:1;min-width:0}
+.frow b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow small{display:block;font-size:12px;color:var(--muted)}
+.frow .btn{min-height:38px;padding:6px 14px;font-size:13.5px}
+.arow{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.arow:last-child{border-bottom:0}
+.arow > i{width:8px;height:8px;border-radius:50%;background:var(--line2);margin-top:6px;flex:none}
+.arow div{min-width:0;overflow-wrap:anywhere}
+.arow span{color:var(--text)}
+.arow small{display:block;font-size:12px;color:var(--faint);margin-top:2px}
+.sec{margin-top:20px}
+/* ---------- chats ---------- */
+.chatlistbox{margin-top:4px}
+.chatrow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;color:var(--text)}
+.chatrow:last-child{border-bottom:0}
+.chatrow:active{background:var(--surface2);transform:none}
+.cav{width:46px;height:46px;border-radius:50%;background:var(--surface2);color:var(--text);display:grid;place-items:center;font-weight:700;font-size:15px;flex:none}
+.cav.grp{background:var(--primary);color:var(--on-primary)}
+.cav.sm{width:38px;height:38px;font-size:13px}
+.cmid{flex:1;min-width:0}
+.cmid b{display:block;font-size:15.5px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmid small{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.cend{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
+.cend small{font-size:11.5px;color:var(--faint)}
+.cdot{width:10px;height:10px;border-radius:50%;background:var(--bad);display:block}
+.chatpage .chat-list{flex:1;min-height:0}
+.chatpage .chat-bar{padding-bottom:calc(12px + var(--safe-b))}
+/* ---------- call screen ---------- */
+#callHost:empty{display:none}
+.callscr{position:fixed;inset:0;z-index:350;background:#111214;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:calc(60px + var(--safe-t)) 24px calc(46px + var(--safe-b));animation:fade .25s}
+.c-top{text-align:center}
+.c-avt{width:104px;height:104px;border-radius:50%;background:#2a2c33;display:grid;place-items:center;margin:0 auto 20px;font-size:34px;font-weight:700}
+.callscr h2{font-size:26px;font-weight:700;color:#fff}
+.c-st{margin-top:8px;font-size:15px;color:#a8acb6;font-variant-numeric:tabular-nums}
+.c-btns{display:flex;justify-content:space-around;align-items:flex-end}
+.c-btns button{display:flex;flex-direction:column;align-items:center;gap:10px;background:none;border:0;color:#fff;font-size:13px;font-weight:600}
+.c-btns button .ic{width:62px;height:62px;padding:18px;border-radius:50%;background:#2a2c33;box-sizing:border-box}
+.c-btns button.on .ic{background:#fff;color:#111}
+.c-btns button.end .ic{background:#e5483d;color:#fff;transform:rotate(135deg)}
+.c-btns.two button.end .ic{transform:none}
+.c-btns button.ok .ic{background:#22b35e;color:#fff}
 /* ---------- report paper (always white, like a printed page) ---------- */
 .paper{background:#fff;color:#1b2140;border-radius:16px;overflow:hidden;font-size:13px;line-height:1.45;border:1px solid var(--line)}
 .paper *{box-sizing:border-box}
@@ -509,7 +579,10 @@ nav .bar .nicw{position:relative}
 <button class="fab hidden" id="fab" aria-label="New task"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>New task</span></button>
 <nav class="hidden" id="nav"><div class="bar" id="navBar"></div></nav>
 
+<div id="pageHost"></div>
 <div id="sheetHost"></div>
+<div id="callHost"></div>
+<audio id="remoteAudio" autoplay playsinline></audio>
 
 <script type="module">
 /* Firebase settings live in config.js (the only file you edit). */
@@ -612,6 +685,11 @@ const ICONS = {
   up: "<path d=\"M5 15l7-7 7 7\"/>",
   down: "<path d=\"M5 9l7 7 7-7\"/>",
   arrow: "<path d=\"M5 12h14M13 6l6 6-6 6\"/>",
+  back: "<path d=\"M15 5l-7 7 7 7\"/>",
+  phone: "<path d=\"M5 4h3.5l1.8 4.5-2.3 1.4a11 11 0 005.1 5.1l1.4-2.3L19 14.5V18a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z\"/>",
+  mic: "<rect x=\"9\" y=\"3\" width=\"6\" height=\"11\" rx=\"3\"/><path d=\"M5.5 11a6.5 6.5 0 0013 0M12 17.5V21\"/>",
+  micoff: "<path d=\"M15 9.5V6a3 3 0 00-5.7-1.3M9 9v2a3 3 0 004.6 2.5M5.5 11a6.5 6.5 0 0010.6 5M18.5 11a6.4 6.4 0 01-.6 2.7M12 17.5V21M3 3l18 18\"/>",
+  speaker: "<path d=\"M4 9.5h3.5L12 5.5v13l-4.5-4H4z\"/><path d=\"M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11\"/>",
 };
 const ic = (n, s = 18, w = 1.9) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ""}</svg>`;
 
@@ -716,6 +794,8 @@ onAuthStateChanged(auth, u => {
   members = []; cats = []; myCats = []; tasks = []; myMember = null;
   tmaps.a = {}; tmaps.c = {}; tmaps.g = {};
   drUnsubs = []; drSubscribed = null; drReport = null; drSections = {}; drDraft = {}; notifs = [];
+  try { if (call) endCallLocal(""); incoming = null; callScreen(); closePage(); } catch (e) {}
+  dmChats = {}; wingChat = { id: "wing" }; tf = tfDefault();
   user = u;
   if (!u) { me = ""; isAdmin = false; screens("login"); return; }
   me = norm(u.email);
@@ -764,6 +844,14 @@ function consumeOpen() {
     window.__pendingOpen = null; tab = "home"; render(); openChat(p.id); return true;
   }
   if (p.tab === "daily") { window.__pendingOpen = null; tab = "daily"; drEnsureSubFor(p.date); drSub = "preview"; render(); return true; }
+  if (p.tab === "dm" && p.id) { if (!members.length) return false; window.__pendingOpen = null; tab = "chats"; render(); openThread(p.id); return true; }
+  if (p.tab === "call" && p.id) {
+    window.__pendingOpen = null;
+    getDoc(doc(db, "calls", p.id)).then(s => { const c = s.exists() ? { id: s.id, ...s.data() } : null;
+      if (c && c.status === "ringing" && c.at > Date.now() - 50000 && !call) { incoming = c; callScreen(); startRing(false); }
+      else if (c) toast("Missed call from " + (c.fromName || nameOf(c.from))); }).catch(() => {});
+    return true;
+  }
   window.__pendingOpen = null; return true;
 }
 window.addEventListener("nativeopen", () => {
@@ -855,6 +943,9 @@ function listen() {
   sub(userDoc(), s => { settings = { ...settings, ...((s.data() || {}).settings || {}) }; renderSoon(); });
   sub(doc(db, "config", "dailyReport"), s => { if (s.exists()) drConfig = { ...drConfig, ...s.data() }; renderSoon(); });
   sub(doc(db, "config", "push"), s => { pushCfg = s.exists() ? s.data() : {}; renderSoon(); });
+  sub(query(collection(db, "chats"), where("members", "array-contains", me)), s => { dmChats = {}; s.docs.forEach(d => dmChats[d.id] = { id: d.id, ...d.data() }); renderSoon(); if (threadId) refreshThread(); });
+  sub(doc(db, "chats", "wing"), s => { wingChat = s.exists() ? { id: "wing", ...s.data() } : { id: "wing" }; renderSoon(); if (threadId === "wing") refreshThread(); });
+  sub(query(collection(db, "calls"), where("to", "==", me), where("status", "==", "ringing")), onIncomingCalls);
   sub(query(collection(db, "notifications", me, "items")), s => {
     notifs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.at || 0) - (a.at || 0)).slice(0, 60);
     renderSoon();
@@ -1095,12 +1186,12 @@ async function callPush(body) {
   } catch (e) { return { ok: false, error: "the server could not be reached (" + (e.message || e) + ")" }; }
 }
 function pingPush(id) { callPush({ q: id }).then(r => { if (!r || !r.ok) setTimeout(() => callPush({ q: id }), 5000); }); }
-async function notify(targetEmail, text, link) {
-  if (targetEmail === me) return;
+async function notify(targetEmail, text, link, opts = {}) {
+  if (!targetEmail || targetEmail === me) return;
   const l = link || null, at = Date.now();
   const rs = await Promise.allSettled([
     addDoc(collection(db, "pushQueue"), { email: targetEmail, text: String(text).slice(0, 300), link: l, at }),
-    addDoc(collection(db, "notifications", targetEmail, "items"), { text, link: l, at, read: false }),
+    opts.bell === false ? Promise.resolve() : addDoc(collection(db, "notifications", targetEmail, "items"), { text, link: l, at, read: false }),
   ]);
   if (rs[0].status === "fulfilled") pingPush(rs[0].value.id);   // the server also sweeps the queue every minute, so nothing is lost
 }
@@ -1135,15 +1226,14 @@ const isNewForMe = t => t.assigneeEmail === me && t.creatorEmail !== me && t.see
 /* bottom bar: up to 4 main screens + More. Everything else opens from the More screen. */
 function primaryTabs(items) {
   const has = k => items.some(i => i[0] === k);
-  const keys = ["home", "tasks", "cal"];
-  if (has("daily")) keys.push("daily"); else if (has("deleg")) keys.push("deleg"); else keys.push("reports");
+  const keys = ["home", "tasks", "chats"];
+  if (has("daily")) keys.push("daily"); else keys.push("reports");
   keys.push("more");
-  const short = { home: "Home", tasks: "Tasks", cal: "Calendar", daily: "Daily", deleg: "Assigned", reports: "Reports", more: "More" };
+  const short = { home: "Home", tasks: "Tasks", chats: "Chats", daily: "Daily", reports: "Reports", more: "More" };
   return keys.map(k => { const it = items.find(i => i[0] === k); return it ? [k, it[1], short[k]] : null; }).filter(Boolean);
 }
 function navItems() {
-  const a = [["home","home","Home"],["tasks","tasks","Tasks"],["cal","calendar","Calendar"]];
-  if (showDeleg()) a.push(["deleg","send","Assigned"]);
+  const a = [["home","home","Home"],["tasks","tasks","Tasks"],["chats","msg","Chats"]];
   a.push(["reports","chart","Reports"]);
   if (drHasAccess()) a.push(["daily","doc","Daily Reports"]);
   if (isAdmin) a.push(["admin","shield","Admin"]);
@@ -1166,28 +1256,30 @@ function render() {
   if (chatId && !refreshChat()) chatId = null;
   if (isTyping()) { renderPending = true; return; }
   renderPending = false;
-  if (tab !== "tasks") statFilter = null;
+  if (tab !== "tasks" && tab !== "cal" && statFilter) { statFilter = null; tf = tfDefault(); }
   const items = navItems();
-  if (!items.some(i => i[0] === tab)) tab = "home";
+  if (tab === "deleg") { tab = "tasks"; tf = { ...tfDefault(), scope: "out" }; }
+  if (tab !== "cal" && !items.some(i => i[0] === tab)) tab = "home";
+  if (detailId) renderDetail(false);
   const prim = primaryTabs(items);
-  const activeK = prim.some(p => p[0] === tab) ? tab : "more";
-  const unreadChats = tasks.reduce((n, t) => n + (canChat(t) ? unreadOf(t) : 0), 0);
-  $("#navBar").innerHTML = prim.map(([k,i,l]) => `<button data-tab="${k}" class="${activeK===k?"on":""}" aria-label="${l}"><span class="nicw"><span class="nic">${ic(i,22)}</span>${k==="home" && unreadChats ? `<i class="nb">${unreadChats > 9 ? "9+" : unreadChats}</i>` : ""}</span><span>${l}</span></button>`).join("");
+  const activeK = tab === "cal" ? "tasks" : prim.some(p => p[0] === tab) ? tab : "more";
+  const unreadTaskChats = tasks.reduce((n, t) => n + (canChat(t) ? unreadOf(t) : 0), 0), unreadC = unreadChats();
+  $("#navBar").innerHTML = prim.map(([k,i,l]) => `<button data-tab="${k}" class="${activeK===k?"on":""}" aria-label="${l}"><span class="nicw"><span class="nic">${ic(i,22)}</span>${k==="home" && unreadTaskChats ? `<i class="nb">${unreadTaskChats > 9 ? "9+" : unreadTaskChats}</i>` : k==="chats" && unreadC ? `<i class="nb">${unreadC > 9 ? "9+" : unreadC}</i>` : ""}</span><span>${l}</span></button>`).join("");
   const h = new Date().getHours();
   const greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : h < 20 ? "Good evening" : "Good night";
   const pending = myTasks().filter(t => t.status !== "done");
   $("#greet").textContent = `${greet}, ${myName().split(" ")[0]} · ${pending.length} pending`;
   $("#avatar").textContent = (myName().trim().charAt(0) || "?").toUpperCase();
-  $("#pageTitle").textContent = {home:"Home",tasks:"My Tasks",cal:"Calendar",deleg:"Assigned by me",reports:"Reports",daily:"Daily Reports",admin:"Admin",more:"More"}[tab];
-  $("#fab span").textContent = tab === "admin" ? "Add member" : tab === "deleg" ? "Give a task" : "New task";
-  $("#fab").classList.toggle("hidden", tab === "more" || tab === "reports" || tab === "daily" || (tab === "admin" && adminSub !== "members"));
+  $("#pageTitle").textContent = {home:"Home",tasks:"Tasks",cal:"Tasks",chats:"Chats",reports:"Reports",daily:"Daily Reports",admin:"Admin",more:"More"}[tab];
+  $("#fab span").textContent = tab === "admin" ? "Add member" : (tab === "tasks" && tf.scope === "out") ? "Give a task" : "New task";
+  $("#fab").classList.toggle("hidden", tab === "more" || tab === "chats" || tab === "reports" || tab === "daily" || (tab === "admin" && adminSub !== "members"));
   const unreadN = notifs.filter(n => !n.read).length;
   $("#notifDot").classList.toggle("hidden", !unreadN);
   $("#notifDot").textContent = unreadN > 9 ? "9+" : unreadN;
   const hadQ = document.activeElement && document.activeElement.id === "q";
   const keepVals = {};
   document.querySelectorAll('#view input[id^="dr_new_"], #view input[id^="drHist"], #view input[id^="drCfg"]').forEach(i => { if (i.type !== "checkbox") keepVals[i.id] = i.value; });
-  const html = ({home:viewHome,tasks:viewTasks,cal:viewCal,deleg:viewDeleg,reports:viewReports,daily:viewDaily,admin:viewAdmin,more:viewMore})[tab]();
+  const html = ({home:viewHome,tasks:viewTasks,cal:viewCal,chats:viewChats,reports:viewReports,daily:viewDaily,admin:viewAdmin,more:viewMore})[tab]();
   const newTab = tab !== lastTabRendered;
   if (newTab || html !== lastViewHtml) {          // nothing changed -> leave the screen alone (no flicker)
     const y = window.scrollY;
@@ -1213,12 +1305,15 @@ function navPush() { const top = navStack[navStack.length - 1]; if (top && top.t
    5) on Home -> leave the app */
 window.__appBack = function () {
   try {
+    if (call || incoming) return 1;
     if (chatId) { closeChat(); return 1; }
+    if (detailId || threadId) { closePage(); return 1; }
+    if (tab === "tasks" && tf.open) { tf.open = false; render(); return 1; }
     const prim = primaryTabs(navItems()).map(p => p[0]);
     if (tab === "daily" && drSub !== "entry") { drSub = "entry"; drEditText = false; drTplDraft = null; render(); return 1; }
     if (tab === "admin" && adminSub !== "members") { adminSub = "members"; render(); return 1; }
     if (tab === "tasks" && searchQ && !statFilter) { searchQ = ""; render(); return 1; }
-    if (tab !== "home" && tab !== "more" && !prim.includes(tab)) { tab = "more"; render(); return 1; }
+    if (tab !== "home" && tab !== "more" && tab !== "cal" && !prim.includes(tab)) { tab = "more"; render(); return 1; }
     if (tab !== "home") { tab = "home"; statFilter = null; render(); return 1; }
   } catch (e) {}
   return 0;
@@ -1289,21 +1384,21 @@ async function compressImage(file) {
   } catch (e) { return file; }
 }
 const blobToB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(blob); });
-async function uploadChatFile(taskId, file) {
+async function uploadFileTo(segs, file) {
   const blob = await compressImage(file);
   if (blob.size > MAX_FILE) throw new Error("This file is too large (maximum 5 MB).");
   const b64 = await blobToB64(blob);
   const fid = "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const n = Math.max(1, Math.ceil(b64.length / CHUNK));
   for (let i = 0; i < n; i++)
-    await setDoc(doc(db, "tasks", taskId, "files", fid + "_" + i), { fid, i, n, data: b64.slice(i * CHUNK, (i + 1) * CHUNK), by: me, at: Date.now() });
+    await setDoc(doc(db, ...segs, fid + "_" + i), { fid, i, n, data: b64.slice(i * CHUNK, (i + 1) * CHUNK), by: me, at: Date.now() });
   return { id: fid, name: safeName(file.name), type: blob.type || file.type || "application/octet-stream", size: blob.size, n };
 }
-async function loadChatFile(taskId, f) {
+async function loadFileFrom(segs, f) {
   if (fileCache.has(f.id)) return fileCache.get(f.id);
   const parts = [];
   for (let i = 0; i < f.n; i++) {
-    const s = await getDoc(doc(db, "tasks", taskId, "files", f.id + "_" + i));
+    const s = await getDoc(doc(db, ...segs, f.id + "_" + i));
     if (!s.exists()) throw new Error("File not found");
     parts.push(s.data().data);
   }
@@ -1315,12 +1410,15 @@ async function loadChatFile(taskId, f) {
   fileCache.set(f.id, v);
   return v;
 }
-async function downloadChatFile(taskId, f) {
-  const v = await loadChatFile(taskId, f);
+async function downloadFileFrom(segs, f) {
+  const v = await loadFileFrom(segs, f);
   if (window.Android && window.Android.save) { window.Android.save(v.b64, f.type, safeName(f.name)); return; }
   const a = document.createElement("a"); a.href = v.url; a.download = safeName(f.name); document.body.appendChild(a); a.click(); a.remove();
   toast("Download started");
 }
+const uploadChatFile = (taskId, file) => uploadFileTo(["tasks", taskId, "files"], file);
+const loadChatFile = (taskId, f) => loadFileFrom(["tasks", taskId, "files"], f);
+const downloadChatFile = (taskId, f) => downloadFileFrom(["tasks", taskId, "files"], f);
 async function deleteTaskFiles(t) {
   for (const u of (t.updates || [])) if (u.file) for (let i = 0; i < (u.file.n || 1); i++)
     await deleteDoc(doc(db, "tasks", t.id, "files", u.file.id + "_" + i)).catch(() => {});
@@ -1470,7 +1568,7 @@ function taskCard(t) {
   const foot = canChat(t) && (hasMsgs || isAssigned(t)) ? `<div class="tfoot">${chatBtn(t)}</div>` : "";
   return `<div class="task glass ${t.urgent && t.status !== "done" ? "urgent" : ""} ${t.status==="done"?"done":""}">
     ${mine ? `<button class="check" data-act="toggle" data-id="${t.id}" aria-label="Mark done">${t.status==="done"?ic("check",14,3):""}</button>` : `<span class="check ro">${t.status==="done"?ic("check",14,3):""}</span>`}
-    <div class="tcol"><div class="tbody" ${canEdit(t) ? `data-act="edit" data-id="${t.id}"` : ""}>
+    <div class="tcol"><div class="tbody" data-act="detail" data-id="${t.id}">
       <div class="ttl">${esc(t.title)}${isNewForMe(t) ? `<span class="tag new">New</span>` : ""}</div>
       ${flags.length ? `<div class="tags">${flags.join("")}</div>` : ""}
       ${bits.length ? `<div class="meta">${bits.join('<span class="sep">·</span>')}</div>` : ""}
@@ -1591,42 +1689,6 @@ function viewHome() {
     </div>` + (body || `<div class="empty"><h4>You're all caught up</h4><p>No pending tasks right now.</p><button class="btn" data-act="newtask">New task</button></div>`);
 }
 
-function taskListHtml() {
-  const q = searchQ.trim().toLowerCase();
-  let list;
-  if (q) {
-    list = myTasks().filter(t => [t.title, t.details, t.creatorName, t.giverName, (catInfo(t)||{}).name, ...(t.steps||[]).map(s => s.text)]
-      .some(x => String(x || "").toLowerCase().includes(q)));
-  } else {
-    list = myTasks().filter(t => filterStatus==="pending" ? t.status!=="done" : t.status==="done");
-    if (filterScope === "others") list = list.filter(isAssigned);
-    if (filterScope === "mine") list = list.filter(isSelfTask);
-    if (filterCat !== "all") list = list.filter(t => t.categoryId === filterCat);
-  }
-  if (!q && statFilter) {
-    const now = Date.now(), te = new Date(); te.setHours(23,59,59,999);
-    list = myTasks().filter(t => statFilter === "done" ? (t.status === "done" && t.doneAt > now - 7*86400000)
-      : t.status !== "done" && t.deadline && (statFilter === "overdue" ? t.deadline < now : (t.deadline >= now && t.deadline <= te.getTime())));
-  }
-  list.sort((a,b) => (b.pinned?1:0) - (a.pinned?1:0) || (a.deadline||Infinity) - (b.deadline||Infinity));
-  return list.length ? list.map(taskCard).join("") : `<div class="empty">${q ? "Nothing matches your search" : "No tasks here"}</div>`;
-}
-function viewTasks() {
-  return `<input id="q" type="search" placeholder="Search tasks, people, steps..." value="${esc(searchQ)}" style="margin-bottom:10px">
-    ${statFilter ? `<div class="statbar"><span>${({today:"Due today",overdue:"Overdue",done:"Done this week"})[statFilter]}</span><button data-act="statclear">Show all tasks</button></div>` : ""}
-    <div class="filters">
-      <button class="fchip ${filterStatus==="pending"?"on":""}" data-act="fstatus" data-v="pending">Pending</button>
-      <button class="fchip ${filterStatus==="done"?"on":""}" data-act="fstatus" data-v="done">Done</button>
-    </div>
-    <div class="filters">
-      ${[["all","All tasks"],["others","From others"],["mine","My own"]].map(([k,l]) => `<button class="fchip ${filterScope===k?"on":""}" data-act="fscope" data-v="${k}">${l}</button>`).join("")}
-    </div>
-    ${(filterScope==="others"?cats:filterScope==="mine"?myCats:[]).length ? `<div class="filters">
-      <button class="fchip ${filterCat==="all"?"on":""}" data-act="fcat" data-v="all">All categories</button>
-      ${(filterScope==="others"?cats:myCats).map(c=>`<button class="fchip ${filterCat===c.id?"on":""}" data-act="fcat" data-v="${c.id}">${esc(c.name)}</button>`).join("")}
-    </div>` : ""}<div id="taskList">${taskListHtml()}</div>`;
-}
-
 function calItems() {
   const map = {};
   const add = (t) => { const k = dayStart(t.deadline); (map[k] = map[k] || []).push(t); };
@@ -1650,7 +1712,7 @@ function viewCal() {
   }
   const sel = (map[calSel] || []).slice().sort((a,b) => a.deadline - b.deadline);
   const dayTitle = new Date(calSel).toLocaleDateString([], { weekday: "long", day: "numeric", month: "short" });
-  return `<div class="cal-head">
+  return tasksSwitch("cal") + `<div class="cal-head">
       <button class="btn ghost" data-act="calprev">‹</button>
       <b>${new Date(y, m, 1).toLocaleDateString([], { month: "long", year: "numeric" })}</b>
       <span style="display:flex;gap:6px"><button class="btn ghost" data-act="caltoday">Today</button><button class="btn ghost" data-act="calnext">›</button></span>
@@ -2385,6 +2447,7 @@ function openNotifications() {
     if (!n.read) await updateDoc(doc(db, "notifications", me, "items", n.id), { read: true });
     if (n.link && n.link.tab === "daily") { tab = "daily"; drEnsureSubFor(n.link.date); drSub = "preview"; }
     else if (n.link && n.link.tab === "chat" && n.link.id) { tab = "home"; close(); render(); openChat(n.link.id); return; }
+    else if (n.link && n.link.tab === "dm" && n.link.id) { tab = "chats"; close(); render(); openThread(n.link.id); return; }
     close(); render();
   }));
 }
@@ -2582,6 +2645,515 @@ function openSheet(task, opts = {}) {
   setTimeout(() => $("#fTitle")?.focus(), 50);
 }
 
+/* =====================================================================
+   TASKS: every task in one list, with filters
+   ===================================================================== */
+const tfDefault = () => ({ status: "pending", scope: "all", cat: "all", person: "all", due: "any", sort: "due", urgent: false, pinned: false, open: false });
+let tf = tfDefault();
+function tfMoreCount() {
+  let n = 0;
+  if (tf.cat !== "all") n++; if (tf.person !== "all") n++; if (tf.due !== "any") n++;
+  if (tf.sort !== "due") n++; if (tf.urgent) n++; if (tf.pinned) n++;
+  return n;
+}
+function tScopeList(scope) {
+  const uniq = arr => [...new Map(arr.map(t => [t.id, t])).values()];
+  if (scope === "forme") return myTasks();
+  if (scope === "mine") return tasks.filter(t => t.assigneeEmail === me && t.creatorEmail !== me);
+  if (scope === "own") return tasks.filter(t => t.assigneeEmail === me && t.creatorEmail === me);
+  if (scope === "out") return outTasks();
+  if (scope === "wing" && isAdmin) return tasks.filter(t => isAssigned(t) || t.assigneeEmail === me);
+  return uniq([...myTasks(), ...outTasks()]);
+}
+const otherPerson = t => t.assigneeEmail === me
+  ? (t.creatorEmail !== me ? [t.creatorEmail, t.creatorName || nameOf(t.creatorEmail)] : null)
+  : [t.assigneeEmail, t.assigneeName || nameOf(t.assigneeEmail)];
+function tSorter() {
+  if (tf.sort === "new") return (a, b) => (b.givenAt || b.createdAt || 0) - (a.givenAt || a.createdAt || 0);
+  if (tf.sort === "name") return (a, b) => String(a.title).localeCompare(String(b.title));
+  return (a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (a.deadline || Infinity) - (b.deadline || Infinity);
+}
+function filteredTasks() {
+  const now = Date.now(), q = searchQ.trim().toLowerCase();
+  let list = tScopeList(tf.scope);
+  if (q) return list.filter(t => [t.title, t.details, t.creatorName, t.assigneeName, t.giverName, catNameOf(t), t.customCategory, ...(t.steps || []).map(s => s.text)]
+    .some(x => String(x || "").toLowerCase().includes(q))).sort(tSorter());
+  const st = tf.status;
+  if (st === "pending") list = list.filter(t => t.status !== "done");
+  else if (st === "doing") list = list.filter(t => t.status === "doing");
+  else if (st === "overdue") list = list.filter(t => t.status !== "done" && t.deadline && t.deadline < now);
+  else if (st === "done") list = list.filter(t => t.status === "done");
+  if (tf.cat !== "all") list = list.filter(t => catNameOf(t) === tf.cat);
+  if (tf.person !== "all") list = list.filter(t => { const o = otherPerson(t); return o && o[0] === tf.person; });
+  const te = new Date(); te.setHours(23, 59, 59, 999);
+  if (tf.due === "today") list = list.filter(t => t.deadline && t.deadline >= now && t.deadline <= te.getTime());
+  if (tf.due === "week") list = list.filter(t => t.deadline && t.deadline >= now && t.deadline <= now + 7 * 86400000);
+  if (tf.due === "none") list = list.filter(t => !t.deadline);
+  if (tf.due === "done7") list = list.filter(t => t.status === "done" && t.doneAt > now - 7 * 86400000);
+  if (tf.urgent) list = list.filter(t => t.urgent);
+  if (tf.pinned) list = list.filter(t => t.pinned);
+  return list.sort(tSorter());
+}
+function tasksSwitch(which) {
+  return `<div class="segc" style="margin-bottom:14px"><button data-act="tview" data-v="tasks" class="${which === "tasks" ? "on" : ""}">List</button><button data-act="tview" data-v="cal" class="${which === "cal" ? "on" : ""}">Calendar</button></div>`;
+}
+function taskListHtml() {
+  const list = filteredTasks();
+  const c = $("#tcount"); if (c) c.textContent = `${list.length} task${list.length === 1 ? "" : "s"}`;
+  return list.length ? list.map(taskCard).join("") : `<div class="empty"><h4>${searchQ.trim() ? "Nothing matches your search" : "No tasks here"}</h4><p>${tfMoreCount() || tf.status !== "pending" || tf.scope !== "all" ? "Try another filter." : "Tap New task to add one."}</p></div>`;
+}
+function viewTasks() {
+  const chip = (g, k, l) => `<button class="fchip ${tf[g] === k ? "on" : ""}" data-act="tf" data-g="${g}" data-v="${k}">${l}</button>`;
+  const sts = [["pending", "Pending"], ["doing", "In progress"], ["overdue", "Overdue"], ["done", "Done"], ["all", "All"]];
+  const scopes = [["all", "All"], ["forme", "For me"], ["mine", "Given to me"], ["own", "My own"], ["out", "I assigned"]];
+  if (isAdmin) scopes.push(["wing", "Entire wing"]);
+  const base = tScopeList(tf.scope);
+  const catsL = [...new Set(base.map(catNameOf))].sort();
+  const ppl = [...new Map(base.map(otherPerson).filter(Boolean)).entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+  const opt = (v, l, cur) => `<option value="${esc(v)}" ${String(cur) === String(v) ? "selected" : ""}>${esc(l)}</option>`;
+  const n = tfMoreCount();
+  const panel = tf.open ? `<div class="glass fpanel">
+      <div class="grid2">
+        <div><label style="margin-top:0">Category</label><select data-tf="cat">${opt("all", "All categories", tf.cat)}${catsL.map(c => opt(c, c, tf.cat)).join("")}</select></div>
+        <div><label style="margin-top:0">Person</label><select data-tf="person">${opt("all", "Everyone", tf.person)}${ppl.map(([e, nm]) => opt(e, nm, tf.person)).join("")}</select></div>
+      </div>
+      <div class="grid2">
+        <div><label>Deadline</label><select data-tf="due">${opt("any", "Any time", tf.due)}${opt("today", "Due today", tf.due)}${opt("week", "Next 7 days", tf.due)}${opt("none", "No deadline", tf.due)}${opt("done7", "Done in last 7 days", tf.due)}</select></div>
+        <div><label>Sort by</label><select data-tf="sort">${opt("due", "Deadline", tf.sort)}${opt("new", "Newest first", tf.sort)}${opt("name", "Name", tf.sort)}</select></div>
+      </div>
+      <label class="toggle"><input type="checkbox" data-tf="urgent" ${tf.urgent ? "checked" : ""}> Urgent only</label>
+      <label class="toggle"><input type="checkbox" data-tf="pinned" ${tf.pinned ? "checked" : ""}> Pinned only</label>
+      <div class="row"><button class="btn ghost" data-act="tfreset">Reset</button><button class="btn" data-act="tfopen">Done</button></div>
+    </div>` : "";
+  const list = filteredTasks();
+  return tasksSwitch("tasks") +
+    `<input id="q" type="search" placeholder="Search tasks, people, steps..." value="${esc(searchQ)}">
+    ${statFilter ? `<div class="statbar"><span>${({ today: "Due today", overdue: "Overdue", done: "Done this week" })[statFilter]}</span><button data-act="statclear">Show all tasks</button></div>` : ""}
+    <div class="filters">${sts.map(([k, l]) => chip("status", k, l)).join("")}</div>
+    <div class="filters">${scopes.map(([k, l]) => chip("scope", k, l)).join("")}</div>
+    <div class="tbar"><span id="tcount">${list.length} task${list.length === 1 ? "" : "s"}</span><button class="link" data-act="tfopen">${tf.open ? "Hide filters" : "Filters"}${n ? ` (${n})` : ""}</button></div>
+    ${panel}<div id="taskList">${list.length ? list.map(taskCard).join("") : taskListHtml()}</div>`;
+}
+
+/* =====================================================================
+   TASK DETAILS PAGE (view first; Edit opens the form)
+   ===================================================================== */
+let detailId = null;
+function closePage() {
+  detailId = null;
+  if (threadId) closeThread();
+  const h = $("#pageHost"); h.innerHTML = ""; delete h.dataset.last;
+  document.body.classList.remove("paged");
+}
+function openTaskDetail(id) {
+  if (threadId) closeThread();
+  detailId = id; document.body.classList.add("paged");
+  renderDetail(true);
+  const t = tasks.find(x => x.id === id);
+  if (t && isNewForMe(t)) run(() => updateDoc(doc(db, "tasks", t.id), { seenByAssignee: true }));
+}
+function renderDetail(first) {
+  const t = tasks.find(x => x.id === detailId);
+  const host = $("#pageHost");
+  if (!t) { closePage(); return; }
+  const html = taskDetailHtml(t);
+  if (!first && host.dataset.last === html) return;
+  const body = host.querySelector(".pg-body"), y = body ? body.scrollTop : 0;
+  host.innerHTML = html; host.dataset.last = html;
+  if (!first) { const b = host.querySelector(".pg-body"); if (b) b.scrollTop = y; }
+}
+function taskDetailHtml(t) {
+  const now = Date.now(), c = catInfo(t);
+  const st = t.status === "done" ? ["ok", "Done"] : (t.deadline && t.deadline < now) ? ["bad", "Overdue"] : t.status === "doing" ? ["warn", "In progress"] : ["", "Pending"];
+  const cd = t.deadline && t.status !== "done" ? countdown(t.deadline) : null;
+  const row = (k, v) => v ? `<div class="drow"><span>${k}</span><b>${v}</b></div>` : "";
+  const by = t.creatorEmail === t.assigneeEmail ? (t.giverName ? esc(t.giverName) : "Myself") : esc(t.creatorName || nameOf(t.creatorEmail));
+  const steps = t.steps || [], sd = steps.filter(s => s.done).length, canTick = t.assigneeEmail === me;
+  const files = (t.updates || []).filter(u => u.file);
+  files.forEach(u => chatFilesMeta[u.file.id] = u.file);
+  const acts = (t.updates || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0));
+  const msgs = (t.updates || []).filter(isMsg).length, un = unreadOf(t);
+  const mine = t.assigneeEmail === me;
+  return `<div class="page" id="pg">
+    <div class="pg-head"><button class="pg-back" data-act="pgclose" aria-label="Back">${ic("back", 20, 2.2)}</button><div class="pg-ht"><b>Task details</b></div></div>
+    <div class="pg-body">
+      <h2 class="d-title">${esc(t.title)}</h2>
+      <div class="tags"><span class="tag ${st[0]}">${st[1]}</span>${t.urgent && t.status !== "done" ? `<span class="tag bad">Urgent</span>` : ""}${t.type && t.type !== "Task" ? `<span class="tag">${esc(t.type)}</span>` : ""}${t.repeat && t.repeat !== "none" ? `<span class="tag">Repeats ${esc(t.repeat)}</span>` : ""}</div>
+      <div class="glass dcard2">
+        ${row("Assigned to", t.assigneeEmail === me ? "Me" : esc(t.assigneeName || nameOf(t.assigneeEmail)))}
+        ${row("Given by", by)}
+        ${row("Category", c ? `<span class="mcat"><i style="background:${esc(c.color)}"></i>${esc(c.name)}</span>${t.customCategory ? " · " + esc(t.customCategory) : ""}` : (t.customCategory ? esc(t.customCategory) : ""))}
+        ${row("Given on", t.givenAt ? fmtDate(t.givenAt) : "")}
+        ${row("Deadline", t.deadline ? `${fmtDate(t.deadline)}${cd ? ` <em class="cd ${cd.cls}">${cd.txt}</em>` : ""}` : "No deadline")}
+        ${t.status === "done" && t.doneAt ? row("Completed", fmtDate(t.doneAt)) : ""}
+      </div>
+      ${t.details ? `<div class="sec">Details</div><div class="glass dcard2 dtext">${esc(t.details)}</div>` : ""}
+      ${steps.length ? `<div class="sec">Steps · ${sd} of ${steps.length} done</div><div class="glass dcard2">
+        <div class="prog" style="margin:0 0 6px"><i style="width:${Math.round(sd / steps.length * 100)}%"></i></div>
+        ${steps.map((s, i) => `<div class="step ${s.done ? "on" : ""}" ${canTick ? `data-act="togglestep" data-id="${t.id}" data-i="${i}"` : ""}><b>${s.done ? ic("check", 12, 3) : ""}</b><span>${esc(s.text)}</span></div>`).join("")}
+      </div>` : ""}
+      ${files.length ? `<div class="sec">Files · ${files.length}</div><div class="glass dcard2">${files.map(u => `<div class="frow"><div><b>${esc(u.file.name)}</b><small>${fmtSize(u.file.size)} · ${esc(u.by || "")}</small></div><button class="btn ghost" data-act="dfile" data-id="${t.id}" data-fid="${u.file.id}">Download</button></div>`).join("")}</div>` : ""}
+      <div class="sec">Activity</div>
+      <div class="glass dcard2">${acts.length ? acts.map(u => `<div class="arow"><i></i><div><b>${esc(u.by || "")}</b> <span>${isMsg(u) ? esc(u.text || (u.file ? "sent " + u.file.name : "")) : esc(u.text)}</span><small>${fmtDate(u.at)}</small></div></div>`).join("") : `<div class="muted">No activity yet.</div>`}</div>
+    </div>
+    <div class="pg-foot">
+      ${canChat(t) ? `<button class="btn ghost" data-act="chat" data-id="${t.id}">Chat${un ? ` (${un} new)` : msgs ? ` (${msgs})` : ""}</button>` : ""}
+      ${canEdit(t) ? `<button class="btn ghost" data-act="edit" data-id="${t.id}">Edit</button>` : ""}
+      ${mine ? `<button class="btn" data-act="toggle" data-id="${t.id}">${t.status === "done" ? "Reopen" : "Mark done"}</button>` : ""}
+    </div>
+  </div>`;
+}
+async function toggleTaskDone(t) {
+  const done = t.status !== "done";
+  const upd = { status: done ? "done" : "todo", doneAt: done ? Date.now() : null };
+  if (t.steps && t.steps.length) {
+    if (done) upd.steps = t.steps.map(s => ({ ...s, done: true }));
+    else { upd.steps = t.steps.map((s, i) => i === t.steps.length - 1 ? { ...s, done: false } : s); upd.status = "doing"; }
+  }
+  upd.updates = arrayUnion({ text: `Status: ${STATUS[t.status] || "Pending"} → ${STATUS[upd.status]}`, by: myName(), byEmail: me, at: Date.now() });
+  if (done && t.creatorEmail !== me) notify(t.creatorEmail, `${myName()} completed: ${t.title}`, { tab: "chat", id: t.id }).catch(() => {});
+  if (t.seenByAssignee === false) upd.seenByAssignee = true;
+  await updateDoc(doc(db, "tasks", t.id), upd);
+  if (done) await spawnNext(t);
+}
+async function toggleTaskStep(t, idx) {
+  const steps = t.steps.map((s, i) => i === idx ? { ...s, done: !s.done } : s);
+  const status = statusFromSteps(steps, t.status);
+  const upd = { steps, status, doneAt: status === "done" ? Date.now() : null };
+  if (status !== t.status) upd.updates = arrayUnion({ text: `Status: ${STATUS[t.status] || "Pending"} → ${STATUS[status]}`, by: myName(), byEmail: me, at: Date.now() });
+  await updateDoc(doc(db, "tasks", t.id), upd);
+  if (status === "done" && t.status !== "done") await spawnNext({ ...t, steps });
+}
+
+/* =====================================================================
+   CHATS: one-to-one + the whole wing
+   ===================================================================== */
+let dmChats = {}, wingChat = { id: "wing" }, threadId = null, threadMsgs = [], threadUnsub = null, threadFile = null, threadSending = false, lastReadMark = 0;
+const dmId = email => "dm:" + [me, email].sort().join(":");
+const dmPeer = id => (id || "").replace(/^dm:/, "").split(":").find(e => e !== me) || "";
+const chatOf = id => id === "wing" ? wingChat : dmChats[id];
+function chatUnread(c) { return !!(c && c.lastAt && c.lastBy !== me && c.lastAt > ((c.reads || {})[me] || 0)); }
+function unreadChats() { return Object.values(dmChats).filter(chatUnread).length + (chatUnread(wingChat) ? 1 : 0); }
+const initials = n => String(n || "?").trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join("") || "?";
+function shortTime(ms) {
+  if (!ms) return "";
+  const d = new Date(ms), now = new Date();
+  if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  return d.toLocaleDateString([], { day: "numeric", month: "short" });
+}
+function viewChats() {
+  const ppl = activeMembers().filter(m => m.email !== me);
+  const rows = ppl.map(m => ({ m, c: dmChats[dmId(m.email)] })).sort((a, b) => ((b.c && b.c.lastAt) || 0) - ((a.c && a.c.lastAt) || 0) || String(a.m.name).localeCompare(String(b.m.name)));
+  const prev = c => c && c.lastAt ? `${c.lastBy === me ? "You: " : ""}${esc(c.lastText || "")}` : "";
+  const row = (id, name, sub, c, group) => `<button class="chatrow" data-act="openthread" data-v="${esc(id)}">
+      <span class="cav ${group ? "grp" : ""}">${group ? "DW" : esc(initials(name))}</span>
+      <span class="cmid"><b>${esc(name)}</b><small>${prev(c) || esc(sub)}</small></span>
+      <span class="cend"><small>${c && c.lastAt ? shortTime(c.lastAt) : ""}</small>${chatUnread(c) ? `<i class="cdot"></i>` : ""}</span></button>`;
+  return `<div class="list glass chatlistbox">${row("wing", "DSW Wing", "Everyone in the wing", wingChat, true)}${rows.map(({ m, c }) => row(dmId(m.email), m.name, m.designation || "Tap to chat", c, false)).join("")}</div>
+    ${ppl.length ? "" : `<div class="empty"><p>No other members yet. The Admin adds members under More › Admin.</p></div>`}`;
+}
+function openThread(id) {
+  if (detailId) detailId = null;
+  if (threadUnsub) { threadUnsub(); threadUnsub = null; }
+  threadId = id; threadMsgs = []; threadFile = null; document.body.classList.add("paged");
+  const group = id === "wing", peer = group ? null : members.find(m => m.email === dmPeer(id));
+  const name = group ? "DSW Wing" : (peer ? peer.name : nameOf(dmPeer(id)));
+  const sub = group ? `${activeMembers().length} members` : (peer && peer.designation) || "";
+  const host = $("#pageHost"); delete host.dataset.last;
+  host.innerHTML = `<div class="page chatpage" id="pg">
+    <div class="pg-head"><button class="pg-back" data-act="pgclose" aria-label="Back">${ic("back", 20, 2.2)}</button>
+      <span class="cav sm ${group ? "grp" : ""}">${group ? "DW" : esc(initials(name))}</span>
+      <div class="pg-ht"><b>${esc(name)}</b><small>${esc(sub)}</small></div>
+      ${group ? "" : `<button class="pg-icon" data-act="callmenu" aria-label="Call">${ic("phone", 20, 2)}</button>`}</div>
+    <div class="chat-list" id="thList"><div class="chat-empty">Loading…</div></div>
+    <div class="chat-pending hidden" id="thPending"></div>
+    <div class="chat-bar"><button type="button" class="attach" id="thAttach" aria-label="Attach a file">${ic("clip", 21)}</button>
+      <input id="thIn" placeholder="Message" autocomplete="off"><button class="send" id="thSend" aria-label="Send">${ic("send", 20)}</button></div>
+    <input type="file" id="thFileIn" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv">
+  </div>`;
+  $("#thSend").onclick = sendThread;
+  $("#thIn").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); sendThread(); } });
+  $("#thAttach").onclick = () => $("#thFileIn").click();
+  $("#thFileIn").onchange = e => {
+    const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
+    if (!(f.type || "").startsWith("image/") && f.size > MAX_FILE) { toast("This file is too large (maximum 5 MB).", "err"); return; }
+    threadFile = f; const b = $("#thPending"); b.classList.remove("hidden");
+    b.innerHTML = `<span class="pf">Attached: <b>${esc(f.name)}</b> <small>${fmtSize(f.size)}</small></span><button type="button" id="thPendX" aria-label="Remove">${ic("x", 16)}</button>`;
+    $("#thPendX").onclick = () => { threadFile = null; b.classList.add("hidden"); };
+  };
+  $("#thList").onclick = e => {
+    const dl = e.target.closest("[data-tdl]");
+    if (dl) { const f = threadFileMeta[dl.dataset.tdl]; if (f) run(() => downloadFileFrom(["chats", threadId, "files"], f)); }
+  };
+  threadUnsub = onSnapshot(collection(db, "chats", id, "messages"), s => {
+    if (threadId !== id) return;
+    threadMsgs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-300);
+    refreshThread(); markThreadRead();
+  }, onErr);
+  markThreadRead();
+}
+function closeThread() {
+  if (threadUnsub) { threadUnsub(); threadUnsub = null; }
+  threadId = null; threadMsgs = []; threadFile = null;
+}
+const threadFileMeta = {};
+function threadMsgsHtml() {
+  const group = threadId === "wing";
+  if (!threadMsgs.length) return `<div class="chat-empty"><b>Say hello</b><br>${group ? "Messages here go to everyone in the wing." : "Only the two of you can see these messages."}</div>`;
+  const c = chatOf(threadId) || {}, peer = dmPeer(threadId), peerRead = ((c.reads || {})[peer] || 0);
+  let lastDay = "", lastMine = -1;
+  threadMsgs.forEach((m, i) => { if (m.by === me) lastMine = i; });
+  return threadMsgs.map((m, i) => {
+    const d = new Date(m.at || 0), day = d.toDateString();
+    let sep = "";
+    if (day !== lastDay) { lastDay = day; sep = `<div class="cday">${d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}</div>`; }
+    const mine = m.by === me, time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    let file = "";
+    if (m.file) {
+      threadFileMeta[m.file.id] = m.file;
+      const cached = fileCache.get(m.file.id);
+      file = m.file.type && m.file.type.startsWith("image/")
+        ? `<div class="cimg" data-tfid="${m.file.id}">${cached ? `<img src="${cached.url}" alt="">` : `<div class="cph">Loading image…</div>`}<button type="button" class="cdl" data-tdl="${m.file.id}" aria-label="Download">${ic("download", 16)}</button></div>`
+        : `<button type="button" class="cfile" data-tdl="${m.file.id}"><span class="cfi">${ic("doc", 22)}</span><span class="cft"><b>${esc(m.file.name)}</b><small>${fmtSize(m.file.size)} · Tap to download</small></span></button>`;
+    }
+    const seen = !group && mine && i === lastMine && peerRead >= (m.at || 0) ? `<span class="ct">Seen</span>` : "";
+    return sep + `<div class="cm ${mine ? "me" : "them"}">${!mine && group ? `<span class="cn">${esc(m.byName || nameOf(m.by))}</span>` : ""}<div class="cb ${m.file ? "hasfile" : ""}">${file}${m.text ? `<div class="ctx">${esc(m.text)}</div>` : ""}</div><span class="ct">${time}</span>${seen}</div>`;
+  }).join("");
+}
+function refreshThread() {
+  const box = $("#thList"); if (!box || !threadId) return;
+  const near = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+  const html = threadMsgsHtml();
+  if (html !== box.dataset.last) { box.innerHTML = html; box.dataset.last = html; if (near || !box.dataset.scrolled) { box.scrollTop = box.scrollHeight; box.dataset.scrolled = "1"; } }
+  box.querySelectorAll(".cimg:not([data-done])").forEach(el => {
+    const f = threadFileMeta[el.dataset.tfid]; if (!f) return; el.dataset.done = "1";
+    if (el.querySelector("img")) return;
+    loadFileFrom(["chats", threadId, "files"], f).then(v => { const ph = el.querySelector(".cph"); if (ph) ph.outerHTML = `<img src="${v.url}" alt="">`; })
+      .catch(() => { const ph = el.querySelector(".cph"); if (ph) ph.textContent = "Could not load"; });
+  });
+}
+function markThreadRead() {
+  if (!threadId) return;
+  const c = chatOf(threadId); const mine = ((c && c.reads) || {})[me] || 0;
+  const last = Math.max((c && c.lastAt) || 0, ...threadMsgs.map(m => m.at || 0));
+  if (!last || last <= mine || Date.now() - lastReadMark < 1500) return;
+  lastReadMark = Date.now();
+  setDoc(doc(db, "chats", threadId), { reads: { [me]: Date.now() } }, { merge: true }).catch(() => {});
+}
+async function sendThread() {
+  if (threadSending || !threadId) return;
+  const inp = $("#thIn"), text = inp.value.trim();
+  if (!text && !threadFile) return;
+  const id = threadId, group = id === "wing", at = Date.now();
+  threadSending = true; $("#thSend").disabled = true;
+  try {
+    const base = { type: group ? "group" : "dm", lastText: (text || (threadFile ? "Sent a file" : "")).slice(0, 120), lastAt: at, lastBy: me, lastByName: myName(), reads: { [me]: at } };
+    if (!group) base.members = [me, dmPeer(id)].sort();
+    await setDoc(doc(db, "chats", id), base, { merge: true });
+    let meta = null;
+    if (threadFile) { toast("Uploading file..."); meta = await uploadFileTo(["chats", id, "files"], threadFile); }
+    const msg = { text, by: me, byName: myName(), at };
+    if (meta) msg.file = meta;
+    await addDoc(collection(db, "chats", id, "messages"), msg);
+    inp.value = ""; threadFile = null; const b = $("#thPending"); if (b) b.classList.add("hidden");
+    const body = `${group ? "DSW Wing · " : ""}${myName()}: ${text || "sent a file"}`.slice(0, 160);
+    const targets = group ? activeMembers().map(m => m.email).filter(e => e !== me) : [dmPeer(id)];
+    targets.forEach(e => notify(e, body, { tab: "dm", id }, { bell: false }).catch(() => {}));
+  } catch (e) { onErr(e); toast(String(e.message || e), "err"); }
+  finally { threadSending = false; const sb = $("#thSend"); if (sb) sb.disabled = false; }
+}
+
+/* ---------- call options: in-app, phone, WhatsApp ---------- */
+function bdPhone(p) {
+  let d = String(p || "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("01")) d = "88" + d;
+  if (d.length === 10 && d.startsWith("1")) d = "880" + d;
+  return d;
+}
+function openCallMenu(email) {
+  const m = members.find(x => x.email === email) || {}, ph = bdPhone(m.phone);
+  const host = document.createElement("div"); host.className = "dlg-wrap";
+  host.innerHTML = `<div class="dlg"><h4>Call ${esc(m.name || nameOf(email))}</h4>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:14px">${ph ? "+" + esc(ph) : "No phone number saved. The Admin can add it under More › Admin › Members."}</p>
+    <div class="dlg-col">
+      <button class="btn" data-c="app">Call in app (internet)</button>
+      <button class="btn ghost" data-c="tel" ${ph ? "" : "disabled"}>Phone call</button>
+      <button class="btn ghost" data-c="wa" ${ph ? "" : "disabled"}>WhatsApp call</button>
+      <button class="btn ghost" data-c="x">Cancel</button></div></div>`;
+  document.body.appendChild(host);
+  host.onclick = e => {
+    const b = e.target.closest("[data-c]");
+    if (!b) { if (e.target === host) host.remove(); return; }
+    host.remove();
+    if (b.dataset.c === "app") startCall(email);
+    if (b.dataset.c === "tel") window.open("tel:+" + ph, "_blank");
+    if (b.dataset.c === "wa") window.open("https://wa.me/" + ph, "_blank");
+  };
+}
+
+/* =====================================================================
+   IN-APP AUDIO CALL (WebRTC; Firestore carries the call set-up)
+   ===================================================================== */
+const ICE = { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] }] };
+let call = null, incoming = null, ringT = null, ringCtx = null;
+const A = () => window.Android || {};
+function callScreen() {
+  const host = $("#callHost");
+  if (!call && !incoming) { host.innerHTML = ""; return; }
+  if (incoming && !call) {
+    host.innerHTML = `<div class="callscr"><div class="c-top"><span class="c-avt">${esc(initials(incoming.fromName))}</span><h2>${esc(incoming.fromName || nameOf(incoming.from))}</h2><div class="c-st">Incoming audio call</div></div>
+      <div class="c-btns two"><button data-call="decline" class="end">${ic("x", 26, 2.4)}<span>Decline</span></button><button data-call="accept" class="ok">${ic("phone", 26, 2.2)}<span>Accept</span></button></div></div>`;
+    return;
+  }
+  host.innerHTML = `<div class="callscr"><div class="c-top"><span class="c-avt">${esc(initials(call.peerName))}</span><h2>${esc(call.peerName)}</h2><div class="c-st" id="cSt">${esc(callStatusText())}</div></div>
+    <div class="c-btns"><button data-call="mute" class="${call.muted ? "on" : ""}">${ic(call.muted ? "micoff" : "mic", 24, 2)}<span>${call.muted ? "Unmute" : "Mute"}</span></button>
+      <button data-call="spk" class="${call.speaker ? "on" : ""}">${ic("speaker", 24, 2)}<span>Speaker</span></button>
+      <button data-call="end" class="end">${ic("phone", 26, 2.2)}<span>End</span></button></div></div>`;
+}
+function callStatusText() {
+  if (!call) return "";
+  if (call.startAt) { const s = Math.floor((Date.now() - call.startAt) / 1000); return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`; }
+  return call.state;
+}
+function startRing(outgoing) {
+  stopRing();
+  try {
+    ringCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const beep = () => {
+      if (!ringCtx) return;
+      const o = ringCtx.createOscillator(), g = ringCtx.createGain();
+      o.frequency.value = outgoing ? 425 : 660; g.gain.value = outgoing ? 0.05 : 0.12;
+      o.connect(g); g.connect(ringCtx.destination); o.start(); o.stop(ringCtx.currentTime + (outgoing ? 1.0 : 0.5));
+      if (!outgoing && navigator.vibrate) navigator.vibrate(500);
+    };
+    beep(); ringT = setInterval(beep, outgoing ? 3000 : 1300);
+  } catch (e) {}
+}
+function stopRing() { clearInterval(ringT); ringT = null; if (ringCtx) { ringCtx.close().catch(() => {}); ringCtx = null; } try { navigator.vibrate && navigator.vibrate(0); } catch (e) {} }
+function newPc(id, mySide, otherSide) {
+  const pc = new RTCPeerConnection(ICE), pending = [], seen = new Set();
+  pc.onicecandidate = e => { if (e.candidate) addDoc(collection(db, "calls", id, mySide), e.candidate.toJSON()).catch(() => {}); };
+  pc.ontrack = e => { const a = $("#remoteAudio"); a.srcObject = e.streams[0]; a.play().catch(() => {}); };
+  pc.onconnectionstatechange = () => {
+    if (!call || call.pc !== pc) return;
+    const s = pc.connectionState;
+    if (s === "connected") { stopRing(); if (!call.startAt) call.startAt = Date.now(); callScreen(); }
+    else if (s === "disconnected") { call.state = "Reconnecting…"; if (!call.startAt) callScreen(); }
+    else if (s === "failed") hangup("Could not connect on this network. Try a phone call.");
+  };
+  call.unsubs.push(onSnapshot(collection(db, "calls", id, otherSide), s => s.docs.forEach(d => {
+    if (seen.has(d.id)) return; seen.add(d.id);
+    const c = d.data();
+    if (pc.remoteDescription) pc.addIceCandidate(c).catch(() => {}); else pending.push(c);
+  })));
+  pc.flush = () => { while (pending.length) pc.addIceCandidate(pending.shift()).catch(() => {}); };
+  return pc;
+}
+async function getMic() {
+  if (!navigator.mediaDevices || !window.RTCPeerConnection) throw new Error("In-app calls are not supported on this phone. Use Phone call instead.");
+  try { return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false }); }
+  catch (e) { throw new Error("Microphone permission is needed. Allow it and try again."); }
+}
+async function startCall(email) {
+  if (call) { toast("You are already in a call."); return; }
+  const id = "c" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  call = { id, role: "caller", peer: email, peerName: nameOf(email), state: "Calling…", unsubs: [], timers: [] };
+  callScreen(); startRing(true);
+  try {
+    call.stream = await getMic();
+    try { A().callAudio && A().callAudio(true); } catch (e) {}
+    const pc = call.pc = newPc(id, "callerCandidates", "calleeCandidates");
+    call.stream.getTracks().forEach(t => pc.addTrack(t, call.stream));
+    const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+    const ref = doc(db, "calls", id);
+    await setDoc(ref, { from: me, fromName: myName(), to: email, toName: nameOf(email), status: "ringing", offer: { type: offer.type, sdp: offer.sdp }, at: Date.now() });
+    notify(email, `Incoming call from ${myName()}. Open Wing Tasks to answer.`, { tab: "call", id }).catch(() => {});
+    call.state = "Ringing…"; callScreen();
+    call.unsubs.push(onSnapshot(ref, async s => {
+      const d = s.data(); if (!d || !call || call.id !== id) return;
+      if (d.answer && !pc.currentRemoteDescription) { call.state = "Connecting…"; callScreen(); await pc.setRemoteDescription(d.answer).catch(() => {}); pc.flush(); }
+      if (d.status === "declined") endCallLocal("Call declined");
+      else if (d.status === "ended") endCallLocal("Call ended");
+    }));
+    call.timers.push(setTimeout(() => { if (call && call.id === id && !call.startAt && !(call.pc && call.pc.currentRemoteDescription)) {
+      updateDoc(ref, { status: "missed" }).catch(() => {}); endCallLocal("No answer"); } }, 45000));
+  } catch (e) { endCallLocal(String(e.message || e)); }
+}
+function onIncomingCalls(s) {
+  const list = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.at > Date.now() - 50000).sort((a, b) => b.at - a.at);
+  if (call) return;
+  if (list.length && (!incoming || incoming.id !== list[0].id)) { incoming = list[0]; callScreen(); startRing(false); }
+  else if (!list.length && incoming) { incoming = null; stopRing(); callScreen(); }
+}
+async function acceptCall() {
+  const c = incoming; if (!c) return;
+  incoming = null; stopRing();
+  call = { id: c.id, role: "callee", peer: c.from, peerName: c.fromName || nameOf(c.from), state: "Connecting…", unsubs: [], timers: [] };
+  callScreen();
+  try {
+    call.stream = await getMic();
+    try { A().callAudio && A().callAudio(true); } catch (e) {}
+    const pc = call.pc = newPc(c.id, "calleeCandidates", "callerCandidates");
+    call.stream.getTracks().forEach(t => pc.addTrack(t, call.stream));
+    await pc.setRemoteDescription(c.offer); pc.flush();
+    const ans = await pc.createAnswer(); await pc.setLocalDescription(ans);
+    const ref = doc(db, "calls", c.id);
+    await updateDoc(ref, { answer: { type: ans.type, sdp: ans.sdp }, status: "accepted", acceptedAt: Date.now() });
+    call.unsubs.push(onSnapshot(ref, s => { const d = s.data(); if (call && call.id === c.id && d && (d.status === "ended" || d.status === "missed")) endCallLocal("Call ended"); }));
+    call.timers.push(setTimeout(() => { if (call && call.id === c.id && !call.startAt) hangup("Could not connect on this network. Try a phone call."); }, 30000));
+  } catch (e) { hangup(String(e.message || e)); }
+}
+async function declineCall() {
+  const c = incoming; incoming = null; stopRing(); callScreen();
+  if (c) await updateDoc(doc(db, "calls", c.id), { status: "declined" }).catch(() => {});
+}
+async function hangup(msg) {
+  if (!call) return;
+  const id = call.id;
+  updateDoc(doc(db, "calls", id), { status: "ended", endedAt: Date.now() }).catch(() => {});
+  endCallLocal(msg || "Call ended");
+}
+function endCallLocal(msg) {
+  stopRing();
+  if (call) {
+    call.unsubs.forEach(u => { try { u(); } catch (e) {} });
+    call.timers.forEach(t => clearTimeout(t));
+    try { call.stream && call.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    try { call.pc && call.pc.close(); } catch (e) {}
+  }
+  call = null;
+  try { A().callAudio && A().callAudio(false); } catch (e) {}
+  const a = $("#remoteAudio"); if (a) a.srcObject = null;
+  callScreen();
+  if (msg) toast(msg, /Could not|needed|not supported/.test(msg) ? "err" : "");
+}
+setInterval(() => { if (call && call.startAt) { const el = $("#cSt"); if (el) el.textContent = callStatusText(); } }, 1000);
+$("#callHost").addEventListener("click", e => {
+  const b = e.target.closest("[data-call]"); if (!b) return;
+  const k = b.dataset.call;
+  if (k === "accept") acceptCall();
+  else if (k === "decline") declineCall();
+  else if (k === "end") hangup();
+  else if (k === "mute" && call && call.stream) { call.muted = !call.muted; call.stream.getAudioTracks().forEach(t => t.enabled = !call.muted); callScreen(); }
+  else if (k === "spk" && call) { call.speaker = !call.speaker; try { A().setSpeaker && A().setSpeaker(call.speaker); } catch (e) {} callScreen(); }
+});
+
+/* ---------- page host (task details + chat thread) clicks ---------- */
+$("#pageHost").addEventListener("click", e => run(async () => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const { act, id } = el.dataset;
+  const t = id ? tasks.find(x => x.id === id) : null;
+  if (act === "pgclose") closePage();
+  else if (act === "edit" && t) openSheet(t);
+  else if (act === "chat" && t) openChat(t.id);
+  else if (act === "toggle" && t) await toggleTaskDone(t);
+  else if (act === "togglestep" && t) await toggleTaskStep(t, +el.dataset.i);
+  else if (act === "dfile" && t) { const f = chatFilesMeta[el.dataset.fid]; if (f) { toast("Preparing download..."); await downloadChatFile(t.id, f); } }
+  else if (act === "callmenu" && threadId) openCallMenu(dmPeer(threadId));
+}));
+
 /* ---------- POPUP LAYOUT: title + close on top, form scrolls, buttons stay at the bottom ---------- */
 function polishSheet() {
   const ov = $("#sheetHost .overlay"); const sh = ov && ov.querySelector(".sheet:not(.chat):not(.pro)");
@@ -2623,6 +3195,8 @@ function openMemberSheet(m) {
     ${isEdit ? `<div class="muted" style="font-size:12.5px;margin-top:6px">The ID cannot be changed. Members can change their own password from More &gt; Change my password. If someone forgets it, see the note given by your developer.</div>`
       : `<label>Password (at least 6 characters)</label>
     <input id="mPass" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Give this to the member">`}
+    <label>Mobile number (for Phone and WhatsApp calls)</label>
+    <input id="mPhone" type="tel" inputmode="tel" value="${esc(d.phone||"")}" placeholder="e.g. 01712345678">
     <label>Designation</label>
     <input id="mDesig" list="desigList" value="${esc(d.designation||"")}" placeholder="Officer / Staff / Director ...">
     <datalist id="desigList">${DESIGNATIONS.map(x => `<option value="${x}">`).join("")}</datalist>
@@ -2673,7 +3247,7 @@ function openMemberSheet(m) {
       const pw = $("#mPass").value;
       if (pw.length < 6) { $("#mPass").focus(); toast("The password must be at least 6 characters."); return; }
     }
-    const data = { name, email, designation: $("#mDesig").value.trim() };
+    const data = { name, email, designation: $("#mDesig").value.trim(), phone: ($("#mPhone").value || "").trim() };
     if (!self) {
       const mode = $("#mMode").value;
       data.assignMode = mode;
@@ -2705,7 +3279,7 @@ function openMemberSheet(m) {
 
 $("#fab").onclick = () => {
   if (tab === "admin") return openMemberSheet();
-  openSheet(null, { assign: tab === "deleg" });
+  openSheet(null, { assign: tab === "tasks" && tf.scope === "out" });
 };
 
 /* ---------- EVENTS ---------- */
@@ -2726,21 +3300,13 @@ $("#view").addEventListener("click", e => run(async () => {
   { const ae = document.activeElement; if (ae && ae !== el && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName) && !el.matches("input,textarea,select")) ae.blur(); }
   const { act, id, v } = el.dataset;
   const T = () => tasks.find(x => x.id === id);
-  if (act === "toggle") {
-    const t = T();
-    const done = t.status !== "done";
-    el.closest(".task").classList.add("pop");
-    const upd = { status: done ? "done" : "todo", doneAt: done ? Date.now() : null };
-    if (t.steps && t.steps.length) {
-      if (done) upd.steps = t.steps.map(s => ({ ...s, done: true }));
-      else { upd.steps = t.steps.map((s,i) => i === t.steps.length-1 ? { ...s, done: false } : s); upd.status = "doing"; }
-    }
-    upd.updates = arrayUnion({ text: `Status: ${STATUS[t.status]||"Pending"} → ${STATUS[upd.status]}`, by: myName(), byEmail: me, at: Date.now() });
-    if (done && t.creatorEmail !== me) notify(t.creatorEmail, `${myName()} completed: ${t.title}`, { tab: "chat", id: t.id }).catch(() => {});
-    if (t.seenByAssignee === false) upd.seenByAssignee = true;
-    await updateDoc(doc(db, "tasks", id), upd);
-    if (done) await spawnNext(t);
-  }
+  if (act === "toggle") { const t = T(); el.closest(".task")?.classList.add("pop"); await toggleTaskDone(t); }
+  else if (act === "detail") openTaskDetail(id);
+  else if (act === "tf") { tf[el.dataset.g] = v; if (el.dataset.g === "scope") { tf.person = "all"; tf.cat = "all"; } statFilter = null; render(); }
+  else if (act === "tfopen") { tf.open = !tf.open; render(); }
+  else if (act === "tfreset") { tf = { ...tfDefault(), open: true }; statFilter = null; render(); }
+  else if (act === "tview") { if (tab !== v) { tab = v; render(); } }
+  else if (act === "openthread") openThread(v);
   else if (act === "gcal") window.open(taskCalUrl(T()), "_blank", "noopener");
   else if (act === "gcalmorning") window.open(summaryCalUrl("morning"), "_blank", "noopener");
   else if (act === "gcalevening") window.open(summaryCalUrl("evening"), "_blank", "noopener");
@@ -2751,21 +3317,17 @@ $("#view").addEventListener("click", e => run(async () => {
   else if (act === "calnext") { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); render(); }
   else if (act === "caltoday") { calMonth = new Date(); calMonth.setDate(1); calSel = dayStart(Date.now()); render(); }
   else if (act === "expand") { expanded.has(id) ? expanded.delete(id) : expanded.add(id); render(); }
-  else if (act === "togglestep") {
-    const t = T();
-    const steps = t.steps.map((s,i) => i === +el.dataset.i ? { ...s, done: !s.done } : s);
-    const status = statusFromSteps(steps, t.status);
-    const upd = { steps, status, doneAt: status === "done" ? Date.now() : null };
-    if (status !== t.status) upd.updates = arrayUnion({ text: `Status: ${STATUS[t.status]||"Pending"} → ${STATUS[status]}`, by: myName(), byEmail: me, at: Date.now() });
-    await updateDoc(doc(db, "tasks", id), upd);
-    if (status === "done" && t.status !== "done") await spawnNext({ ...t, steps });
-  }
+  else if (act === "togglestep") await toggleTaskStep(T(), +el.dataset.i);
   else if (act === "chat") openChat(id);
   else if (act === "newtask") $("#fab").click();
-  else if (act === "statgo") { statFilter = v; filterStatus = v === "done" ? "done" : "pending"; filterScope = "all"; filterCat = "all"; searchQ = ""; navPush(); tab = "tasks"; render(); }
+  else if (act === "statgo") {
+    statFilter = v; searchQ = ""; tf = { ...tfDefault(), scope: "forme" };
+    if (v === "today") tf.due = "today"; else if (v === "overdue") tf.status = "overdue"; else { tf.status = "done"; tf.due = "done7"; }
+    tab = "tasks"; render();
+  }
   else if (act === "cfgpartadd") { const d = drCfgDraftGet(); d[el.dataset.k].push(0); d.dirty = true; render(); }
   else if (act === "cfgpartdel") { const d = drCfgDraftGet(); const arr = d[el.dataset.k]; if (arr.length > 1) arr.splice(+el.dataset.i, 1); d.dirty = true; render(); }
-  else if (act === "statclear") { statFilter = null; filterStatus = "pending"; render(); }
+  else if (act === "statclear") { statFilter = null; tf = tfDefault(); render(); }
   else if (act === "edit") openSheet(T());
   else if (act === "fassignee") { filterAssignee = v; render(); }
   else if (act === "fstatus") { filterStatus = v; render(); }
@@ -2957,6 +3519,7 @@ $("#view").addEventListener("input", e => {
   }
 });
 $("#view").addEventListener("change", e => run(async () => {
+  if (e.target.dataset.tf) { const k = e.target.dataset.tf; tf[k] = e.target.type === "checkbox" ? e.target.checked : e.target.value; render(); return; }
   if (e.target.dataset.rep) {
     const k = e.target.dataset.rep; rep[k] = e.target.value;
     if (k === "scope") { rep.person = "all"; rep.cat = "all"; }
