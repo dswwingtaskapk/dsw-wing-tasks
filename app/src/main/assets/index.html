@@ -2064,7 +2064,10 @@ applyTheme();
 
 /* ---------- INSTALL ON ANOTHER PHONE + UPDATES ---------- */
 const apkUrl = () => BUILD.repo ? `https://github.com/${BUILD.repo}/releases/latest/download/WingTasks.apk` : "";
-let qrCache = "", updInfo = "";
+let qrCache = "", updInfo = "", updTag = "";
+/* the update button downloads a file with the version in its name (e.g. WingTasks-1.9.apk),
+   so an older WingTasks.apk lying in Downloads cannot be installed by mistake */
+const updUrl = () => updTag ? `https://github.com/${BUILD.repo}/releases/download/${updTag}/WingTasks-${updTag.replace(/^v/, "")}.apk` : apkUrl();
 function installCardHtml() {
   const u = apkUrl(); if (!u) return "";
   if (!qrCache) setTimeout(drawQr, 30);
@@ -2092,11 +2095,12 @@ async function checkUpdate(manual) {
     const latest = Number(String(j.tag_name || "").split(".").pop()) || 0;
     const b = $("#updBanner");
     updInfo = latest > BUILD.versionCode ? String(j.tag_name).replace(/^v/, "") : "";
+    updTag = latest > BUILD.versionCode && (j.assets || []).some(a => /^WingTasks-/.test(a.name || "")) ? String(j.tag_name) : "";
     if (tab === "home") render();
     if (latest > BUILD.versionCode) {
       b.className = "upd";
       b.innerHTML = `<div><b>New version ${esc(String(j.tag_name).replace(/^v/, ""))} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" id="updGo">Update</button>`;
-      $("#updGo").onclick = () => window.open(apkUrl(), "_blank");
+      $("#updGo").onclick = () => window.open(updUrl(), "_blank");
       if (manual) window.scrollTo({ top: 0, behavior: "smooth" });
     } else { b.className = "hidden"; if (manual) toast("You have the newest version (" + BUILD.versionName + ")."); }
   } catch (e) { if (manual) toast("Could not check for updates. Check the internet connection.", "err"); }
@@ -3584,7 +3588,7 @@ $("#view").addEventListener("click", e => run(async () => {
     }
   }
   else if (act === "pushcheck") { await runPushCheck(); }
-  else if (act === "updgo") window.open(apkUrl(), "_blank");
+  else if (act === "updgo") window.open(updUrl(), "_blank");
   else if (act === "theme") { try { localStorage.setItem("wt_theme", v); } catch (e) {} applyTheme(); render(); }
   else if (act === "sharelink") shareLink();
   else if (act === "checkupd") { el.disabled = true; await checkUpdate(true); el.disabled = false; }
