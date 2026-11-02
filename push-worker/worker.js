@@ -143,11 +143,14 @@ async function sendToEmail(env, email, text, link) {
   if (!tokens.length) return { sent: 0, errors: [], note: "this person has no phone registered yet" };
   const tok = await accessToken(env);
   let sent = 0; const errors = [];
-  const data = { title: "Wing Tasks", body: String(text || "").slice(0, 300), tab: String((link && link.tab) || ""), id: String((link && link.id) || ""), date: String((link && link.date) || "") };
+  const L = link || {};
+  const data = { title: "Wing Tasks", body: String(text || "").slice(0, 300), tab: String(L.tab || ""), id: String(L.id || ""), date: String(L.date || ""), name: String(L.name || "").slice(0, 80), dm: String(L.dm || "").slice(0, 300) };
+  const isCall = data.tab === "call" || data.tab === "callend";
+  const ttl = isCall ? "40s" : "86400s";   // a call that could not be delivered in time must not ring later
   for (const t of tokens) {
     const r = await fetch(`https://fcm.googleapis.com/v1/projects/${sa(env).project_id}/messages:send`, {
       method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
-      body: JSON.stringify({ message: { token: t._id, data, android: { priority: "HIGH", ttl: "86400s" } } }),
+      body: JSON.stringify({ message: { token: t._id, data, android: { priority: "HIGH", ttl } } }),
     });
     if (r.ok) { sent++; continue; }
     const j = await r.json().catch(() => ({}));
@@ -211,12 +214,20 @@ async function deadlineReminders(env) {
   if (report && report.finalized) return;
   const done = new Set((await listDocs(env, `/dailyReports/${today}/sections`, 20)).map(s => s._id));
   const missing = [...HALL, ...DSW].filter(k => !done.has(k));
-  if (!missing.length) return;
 
   const members = (await listDocs(env, "/members", 300)).filter(x => x.active !== false);
   const link = { tab: "daily", date: today };
   const [y, mo, d] = today.split("-").map(Number);
   const dateTxt = `${d} ${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][mo - 1]} ${y}`;
+  if (!missing.length) {
+    // everything is in but nobody has finalized it yet: ask the people who can finalize and send it
+    for (const mem of members) {
+      const role = mem.isAdmin ? "full" : (mem.reportRole || "none");
+      if (role !== "full") continue;
+      await notifyPerson(env, mem._id, `Daily report ${dateTxt} is ready. Please finalize it and send it on WhatsApp.`, link);
+    }
+    return;
+  }
   for (const mem of members) {
     const email = mem._id;
     const role = mem.isAdmin ? "full" : (mem.reportRole || "none");

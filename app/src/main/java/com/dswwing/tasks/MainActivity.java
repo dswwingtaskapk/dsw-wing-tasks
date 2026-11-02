@@ -84,9 +84,15 @@ public class MainActivity extends Activity {
         String tab = clean(in.getStringExtra("ntab")); if (tab.isEmpty()) tab = clean(in.getStringExtra("tab"));
         String id = clean(in.getStringExtra("nid")); if (id.isEmpty()) id = clean(in.getStringExtra("id"));
         String date = clean(in.getStringExtra("ndate")); if (date.isEmpty()) date = clean(in.getStringExtra("date"));
+        String act = clean(in.getStringExtra("nact"));
         if (tab.isEmpty() && id.isEmpty() && date.isEmpty()) return;
-        in.removeExtra("ntab"); in.removeExtra("nid"); in.removeExtra("ndate"); in.removeExtra("tab"); in.removeExtra("id"); in.removeExtra("date");
-        pendingOpenJs = "window.__pendingOpen={tab:'" + tab + "',id:'" + id + "',date:'" + date + "'};window.dispatchEvent(new Event('nativeopen'));";
+        in.removeExtra("ntab"); in.removeExtra("nid"); in.removeExtra("ndate"); in.removeExtra("tab"); in.removeExtra("id"); in.removeExtra("date"); in.removeExtra("nact");
+        if ("call".equals(tab)) {
+            // an incoming call: stop the ringing notification and show the app over the lock screen
+            try { NotificationManagerCompat.from(this).cancel(PushService.callNotifId(id)); } catch (Throwable ignored) {}
+            showOverLock(true);
+        }
+        pendingOpenJs = "window.__pendingOpen={tab:'" + tab + "',id:'" + id + "',date:'" + date + "',act:'" + act + "'};window.dispatchEvent(new Event('nativeopen'));";
         deliverOpen();
     }
 
@@ -264,6 +270,15 @@ public class MainActivity extends Activity {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    private void showOverLock(boolean on) {
+        if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(on); setTurnScreenOn(on); }
+        else {
+            int f = android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
+            if (on) getWindow().addFlags(f); else getWindow().clearFlags(f);
+        }
+    }
+
     private static final int BG_LIGHT = 0xFFEEF2F2, BG_DARK = 0xFF0D1514, BAR_LIGHT = 0xFF1B625D, BAR_DARK = 0xFF102E2B;
 
     /** Status bar and navigation bar follow the app theme (light or dark). */
@@ -304,6 +319,8 @@ public class MainActivity extends Activity {
                 if (am == null) return;
                 am.setMode(active ? AudioManager.MODE_IN_COMMUNICATION : AudioManager.MODE_NORMAL);
                 am.setSpeakerphoneOn(false);
+                if (active) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                else { getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); showOverLock(false); }
             });
         }
 
@@ -313,6 +330,37 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
                 if (am != null) am.setSpeakerphoneOn(on);
+            });
+        }
+
+        /** after declining a call from the lock screen, go back to what the person was doing */
+        @JavascriptInterface
+        public void moveToBack() {
+            runOnUiThread(() -> { showOverLock(false); moveTaskToBack(true); });
+        }
+
+        /** Android 14+: is the app allowed to show calls full screen over the lock screen? */
+        @JavascriptInterface
+        public boolean canFullScreenCalls() {
+            try {
+                if (Build.VERSION.SDK_INT >= 34) {
+                    android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                    return nm == null || nm.canUseFullScreenIntent();
+                }
+            } catch (Throwable ignored) {}
+            return true;
+        }
+
+        @JavascriptInterface
+        public void openFullScreenSettings() {
+            runOnUiThread(() -> {
+                try {
+                    if (Build.VERSION.SDK_INT >= 34) {
+                        startActivity(new Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, Uri.parse("package:" + getPackageName())));
+                        return;
+                    }
+                } catch (Exception ignored) {}
+                openAppDetails();
             });
         }
 

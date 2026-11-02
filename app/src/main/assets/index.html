@@ -325,6 +325,14 @@ nav .bar .nicw{position:relative}
 .chat-pending .pf{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chat-pending button{border:0;background:none;color:var(--muted);display:grid;place-items:center}
 .cb.hasfile{padding:6px}
+.cb.callb{display:flex;align-items:center;gap:10px;padding:9px 14px 9px 10px}
+.callb .cci{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(31,111,106,.12);color:var(--primary);flex:none}
+.cm.me .callb .cci{background:rgba(255,255,255,.22);color:inherit}
+.callb.miss .cci{background:rgba(220,60,60,.12);color:#d23c3c}
+.callb .cct{display:flex;flex-direction:column;line-height:1.25}
+.callb .cct b{font-size:14.5px;font-weight:700}
+.callb .cct small{font-size:12px;opacity:.75}
+.callb.miss .cct b{color:#d23c3c}
 .cb .ctx{padding:4px 7px 2px}
 .cimg{position:relative;border-radius:14px;overflow:hidden;min-width:150px;max-width:230px;background:var(--surface2)}
 .cimg img{display:block;width:100%;max-height:260px;object-fit:cover}
@@ -970,9 +978,17 @@ function consumeOpen() {
   if (p.tab === "dm" && p.id) { if (!members.length) return false; window.__pendingOpen = null; tab = "chats"; render(); openThread(p.id); return true; }
   if (p.tab === "call" && p.id) {
     window.__pendingOpen = null;
+    const act = p.act || "open";
     getDoc(doc(db, "calls", p.id)).then(s => { const c = s.exists() ? { id: s.id, ...s.data() } : null;
-      if (c && c.status === "ringing" && c.at > Date.now() - 50000 && !call) { incoming = c; callScreen(); startRing(false); }
-      else if (c) toast("Missed call from " + (c.fromName || nameOf(c.from))); }).catch(() => {});
+      const live = c && c.status === "ringing" && c.at > Date.now() - 50000 && !call;
+      if (live && act === "decline") {
+        updateDoc(doc(db, "calls", c.id), { status: "declined" }).catch(() => {});
+        if (incoming && incoming.id === c.id) { incoming = null; stopRing(); callScreen(); }
+        try { A().moveToBack && A().moveToBack(); } catch (e) {}
+      }
+      else if (live) { incoming = c; if (act === "accept") acceptCall(); else { callScreen(); startRing(false); } }
+      else if (c) { toast("Missed call from " + (c.fromName || nameOf(c.from))); tab = "chats"; render(); openThread(dmId(c.from)); try { A().callAudio && A().callAudio(false); } catch (e) {} }
+    }).catch(() => {});
     return true;
   }
   window.__pendingOpen = null; return true;
@@ -994,6 +1010,8 @@ function pushCardHtml() {
     <div style="font-size:13.5px;line-height:1.5">${pushStatusLine()}</div>
     ${A ? `<button class="btn" data-act="pushcheck" style="margin-top:12px;width:100%" ${run ? "disabled" : ""}>${run ? "Checking..." : "Run notification checkup + test"}</button>` : ""}
     ${list ? `<div class="pclist">${list}</div>` : ""}
+    ${A && A.canFullScreenCalls && !A.canFullScreenCalls() ? `<div class="drwarn" style="margin-top:12px">Calls cannot ring full screen yet. Tap below and turn on "Allow full screen notifications" (or "Full-screen intents") for Wing Tasks.</div>
+      <button class="btn" data-act="fullscreenset" style="margin-top:8px;width:100%">Allow full-screen calls</button>` : ""}
     ${A ? `<div class="row" style="margin-top:12px"><button class="btn ghost" data-act="pushnotifset">Phone notification settings</button><button class="btn ghost" data-act="pushbattery">Allow background running</button></div>
       <p class="pcnote">If the test says it was sent but nothing appears on the phone: on Oppo, Realme, Vivo, Xiaomi, Infinix or Tecno phones open App info, then Battery (or Auto-start), and allow background activity. Also keep the app locked in the recent-apps list.</p>` : ""}
     ${isAdmin ? `<label>Push server address (Admin)</label><input id="pushUrlIn" value="${esc(pushUrl())}" placeholder="https://wing-push.yourname.workers.dev" autocapitalize="none" spellcheck="false">
@@ -1202,11 +1220,11 @@ const drDirty = new Set();
 function drEdit(section) { drDirty.add(section); return drDraftFor(section); }
 
 let drCfgDraft = null;
-function drCfgSrc() { return JSON.stringify([drConfig.maleParts, drConfig.femaleParts, drConfig.hostelParts, drConfig.deadline, drConfig.remindersOn]); }
+function drCfgSrc() { return JSON.stringify([drConfig.maleParts, drConfig.femaleParts, drConfig.hostelParts, drConfig.deadline, drConfig.remindersOn, drConfig.waNumber || ""]); }
 function drCfgDraftGet() {
   if (!drCfgDraft || (!drCfgDraft.dirty && drCfgDraft.src !== drCfgSrc())) {
     drCfgDraft = { maleParts: [...(drConfig.maleParts || [0])], femaleParts: [...(drConfig.femaleParts || [0])], hostelParts: [...(drConfig.hostelParts || [0])],
-      deadline: drConfig.deadline || "22:15", remindersOn: drConfig.remindersOn !== false, dirty: false, src: drCfgSrc() };
+      deadline: drConfig.deadline || "22:15", remindersOn: drConfig.remindersOn !== false, waNumber: drConfig.waNumber || "", dirty: false, src: drCfgSrc() };
   }
   return drCfgDraft;
 }
@@ -2003,6 +2021,9 @@ function viewAdminDaily() {
       <label>Daily submission deadline (Bangladesh time)</label>
       <input id="drCfgDeadline" type="time" value="${esc(dd.deadline||"22:15")}">
       <label class="toggle"><input type="checkbox" id="drCfgReminders" ${dd.remindersOn!==false?"checked":""}> Enable missed-deadline reminders</label>
+      <label>WhatsApp number that receives the report</label>
+      <input id="drCfgWa" type="tel" inputmode="tel" value="${esc(dd.waNumber||"")}" placeholder="e.g. 01712345678">
+      <div class="muted" style="font-size:12px;margin-top:6px">When a report is finalized, WhatsApp opens with the report ready for this number. Just tap Send.</div>
       <button class="btn" style="width:100%;margin-top:14px" data-act="drcfgsave">Save defaults</button>
     </div>
     <div class="sec">Report permissions</div>
@@ -2564,12 +2585,20 @@ function viewDailyPreview() {
     ${warnings.map(w => `<div class="drwarn">${esc(w)}</div>`).join("")}
     ${edited ? `<div class="drwarn">This text was edited by hand, so changes in the sections will not update it. ${canFinal ? `<button class="link" data-act="drtextreset">Reset to automatic</button>` : ""}</div>` : ""}
     ${paper}
-    ${drEditText ? "" : `<div class="row">
-      <button class="btn" data-act="drcopy">Copy report</button>
+    ${drEditText ? "" : `${fin && canFinal && drWaNumber() ? `<button class="btn" data-act="drwa" style="width:100%;margin-top:12px">Send to WhatsApp</button>` : ""}<div class="row">
+      <button class="btn ${fin && canFinal && drWaNumber() ? "ghost" : ""}" data-act="drcopy">Copy report</button>
       ${canFinal ? `<button class="btn ghost" data-act="drtextedit">Edit text</button>` : ""}
       ${canFinal ? (fin ? `<button class="btn danger" data-act="drunfinal">Reopen</button>` : `<button class="btn ghost" data-act="drfinal">Finalize</button>`) : ""}
     </div>
+    ${fin && drReport.waOpenedAt ? `<div class="muted" style="font-size:12px;margin-top:10px">Opened in WhatsApp by ${esc(drReport.waBy || "")} · ${fmtDate(drReport.waOpenedAt)}</div>` : ""}
+    ${canFinal && !drWaNumber() ? `<div class="muted" style="font-size:12px;margin-top:10px">To send the report straight to WhatsApp, the Admin saves the number under More › Admin › Daily report.</div>` : ""}
     <div class="muted" style="font-size:12px;margin-top:10px">The copied text keeps the asterisks WhatsApp uses for bold, so paste it directly into the chat.</div>`}`;
+}
+function drWaNumber() { return bdPhone(drConfig.waNumber || ""); }
+function drSendWhatsApp(text) {
+  const n = drWaNumber(); if (!n) { toast("No WhatsApp number saved yet (More › Admin › Daily report).", "err"); return; }
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(text)}`, "_blank");
+  setDoc(doc(db, "dailyReports", drDate), { waOpenedAt: Date.now(), waBy: myName() }, { merge: true }).catch(() => {});
 }
 function viewDailyHistory() {
   const rows = drHist;
@@ -2634,6 +2663,7 @@ function openNotifications() {
     if (n.link && n.link.tab === "daily") { tab = "daily"; drEnsureSubFor(n.link.date); drSub = "preview"; }
     else if (n.link && n.link.tab === "chat" && n.link.id) { tab = "home"; close(); render(); openChat(n.link.id); return; }
     else if (n.link && n.link.tab === "dm" && n.link.id) { tab = "chats"; close(); render(); openThread(n.link.id); return; }
+    else if (n.link && n.link.tab === "callend" && n.link.dm) { tab = "chats"; close(); render(); openThread(n.link.dm); return; }
     close(); render();
   }));
 }
@@ -3120,8 +3150,36 @@ function threadMsgsHtml() {
         : `<button type="button" class="cfile" data-tdl="${m.file.id}"><span class="cfi">${ic("doc", 22)}</span><span class="cft"><b>${esc(m.file.name)}</b><small>${fmtSize(m.file.size)} · Tap to download</small></span></button>`;
     }
     const seen = !group && mine && i === lastMine && peerRead >= (m.at || 0) ? `<span class="ct">Seen</span>` : "";
+    if (m.kind === "call") return sep + callBubble(m, mine, time) + seen;
     return sep + `<div class="cm ${mine ? "me" : "them"}">${!mine && group ? `<span class="cn">${esc(m.byName || nameOf(m.by))}</span>` : ""}<div class="cb ${m.file ? "hasfile" : ""}">${file}${m.text ? `<div class="ctx">${esc(m.text)}</div>` : ""}</div><span class="ct">${time}</span>${seen}</div>`;
   }).join("");
+}
+function callLen(secs) {
+  const s = Math.max(0, Math.round(secs || 0)), mm = Math.floor(s / 60), ss = s % 60;
+  return mm ? `${mm} min ${ss} sec` : `${ss} sec`;
+}
+function callBubble(m, mine, time) {
+  const r = m.result || "missed";
+  let title, sub, miss = false;
+  if (r === "completed") { title = mine ? "Outgoing call" : "Incoming call"; sub = callLen(m.secs); }
+  else if (r === "declined") { title = mine ? "Outgoing call" : "Declined call"; sub = mine ? "Declined" : "You declined"; }
+  else if (r === "failed") { title = mine ? "Outgoing call" : "Incoming call"; sub = "Could not connect"; }
+  else { title = mine ? "Outgoing call" : "Missed call"; sub = mine ? "No answer" : "Tap the call button to call back"; miss = !mine; }
+  return `<div class="cm ${mine ? "me" : "them"}"><div class="cb callb ${miss ? "miss" : ""}"><span class="cci">${ic("phone", 17, 2.2)}</span><span class="cct"><b>${title}</b><small>${esc(sub)}</small></span></div><span class="ct">${time}</span></div>`;
+}
+function callText(result, secs) {
+  return result === "completed" ? `Audio call · ${callLen(secs)}` : result === "declined" ? "Audio call declined" : result === "failed" ? "Audio call could not connect" : "Missed audio call";
+}
+/* the caller writes one line into the chat for every in-app call, so both people can see how many calls and how long */
+async function logCall(c, result, secs) {
+  if (!c || c.logged || !c.created) return;
+  c.logged = true;
+  const id = dmId(c.peer), at = Date.now();
+  try {
+    await setDoc(doc(db, "chats", id), { type: "dm", members: [me, c.peer].sort(), lastText: callText(result, secs), lastAt: at, lastBy: me, lastByName: myName(), reads: { [me]: at } }, { merge: true });
+    await addDoc(collection(db, "chats", id, "messages"), { kind: "call", result, secs: Math.round(secs || 0), text: "", by: me, byName: myName(), at });
+  } catch (e) { console.warn("call log", e); }
+  if (result === "missed") notify(c.peer, `Missed call from ${myName()}`, { tab: "callend", id: c.id, name: myName(), dm: id }).catch(() => {});
 }
 function refreshThread() {
   const box = $("#thList"); if (!box || !threadId) return;
@@ -3272,10 +3330,12 @@ async function startCall(email) {
     const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
     const ref = doc(db, "calls", id);
     await setDoc(ref, { from: me, fromName: myName(), to: email, toName: nameOf(email), status: "ringing", offer: { type: offer.type, sdp: offer.sdp }, at: Date.now() });
-    notify(email, `Incoming call from ${myName()}. Open Wing Tasks to answer.`, { tab: "call", id }).catch(() => {});
+    call.created = true;
+    notify(email, `Incoming call from ${myName()}`, { tab: "call", id, name: myName() }, { bell: false }).catch(() => {});
     call.state = "Ringing…"; callScreen();
     call.unsubs.push(onSnapshot(ref, async s => {
       const d = s.data(); if (!d || !call || call.id !== id) return;
+      if (d.answer) call.answered = true;
       if (d.answer && !pc.currentRemoteDescription) { call.state = "Connecting…"; callScreen(); await pc.setRemoteDescription(d.answer).catch(() => {}); pc.flush(); }
       if (d.status === "declined") endCallLocal("Call declined");
       else if (d.status === "ended") endCallLocal("Call ended");
@@ -3314,12 +3374,17 @@ async function declineCall() {
 }
 async function hangup(msg) {
   if (!call) return;
-  const id = call.id;
-  updateDoc(doc(db, "calls", id), { status: "ended", endedAt: Date.now() }).catch(() => {});
+  const id = call.id, unanswered = call.role === "caller" && !call.answered && !call.startAt;
+  updateDoc(doc(db, "calls", id), { status: unanswered ? "missed" : "ended", endedAt: Date.now() }).catch(() => {});
   endCallLocal(msg || "Call ended");
 }
 function endCallLocal(msg) {
   stopRing();
+  if (call && call.role === "caller") {
+    const c = call, secs = c.startAt ? (Date.now() - c.startAt) / 1000 : 0;
+    const result = c.startAt ? "completed" : msg === "Call declined" ? "declined" : c.answered ? "failed" : "missed";
+    logCall(c, result, secs);
+  }
   if (call) {
     call.unsubs.forEach(u => { try { u(); } catch (e) {} });
     call.timers.forEach(t => clearTimeout(t));
@@ -3610,6 +3675,7 @@ $("#view").addEventListener("click", e => run(async () => {
     toast(u ? "Server address saved" : "Server address cleared");
   }
   else if (act === "pushnotifset") { try { window.Android.openNotifSettings(); } catch (e) { toast("Open the phone Settings > Apps > Wing Tasks > Notifications", "err"); } }
+  else if (act === "fullscreenset") { try { window.Android.openFullScreenSettings(); } catch (e) { toast("Open the phone Settings > Apps > Wing Tasks > Notifications", "err"); } }
   else if (act === "pushbattery") { try { window.Android.openBatterySettings(); } catch (e) { toast("Open the phone Settings > Apps > Wing Tasks > Battery", "err"); } }
   else if (act === "logout") {
     if (fcmSaved) { await deleteDoc(doc(db, "fcmTokens", fcmSaved)).catch(() => {}); fcmSaved = null; }
@@ -3658,7 +3724,8 @@ $("#view").addEventListener("click", e => run(async () => {
     const text = drCompile(drDate, drSections);
     await setDoc(doc(db, "dailyReports", drDate), { date: drDate, finalized: true, finalText: text, finalizedBy: myName(), finalizedByEmail: me, finalizedAt: Date.now() }, { merge: true });
     await notifyReportAudience(`Daily report for ${fmtReportDate(drDate)} has been finalized.`, { tab: "daily", date: drDate }, me);
-    toast("Report finalized");
+    if (drWaNumber()) { toast("Report finalized — opening WhatsApp"); drSendWhatsApp(text); }
+    else toast("Report finalized");
   }
   else if (act === "drunfinal") {
     if (!(await uiConfirm("Reopen this report for editing?", "Reopen", true))) return;
@@ -3673,6 +3740,7 @@ $("#view").addEventListener("click", e => run(async () => {
     drEditText = false; toast("Report text saved");
   }
   else if (act === "drtextreset") { await setDoc(doc(db, "dailyReports", drDate), { manualText: null }, { merge: true }); toast("Back to automatic text"); }
+  else if (act === "drwa") drSendWhatsApp(drCurrentText());
   else if (act === "drcopy") {
     const text = drCurrentText();
     try { await navigator.clipboard.writeText(text); toast("Report copied — paste it into WhatsApp"); }
@@ -3692,7 +3760,8 @@ $("#view").addEventListener("click", e => run(async () => {
     const cfg = {
       maleParts: dd.maleParts, femaleParts: dd.femaleParts, hostelParts: dd.hostelParts,
       deadline: ($("#drCfgDeadline") && $("#drCfgDeadline").value) || dd.deadline || "22:15",
-      remindersOn: $("#drCfgReminders") ? $("#drCfgReminders").checked : dd.remindersOn
+      remindersOn: $("#drCfgReminders") ? $("#drCfgReminders").checked : dd.remindersOn,
+      waNumber: bdPhone($("#drCfgWa") ? $("#drCfgWa").value : dd.waNumber)
     };
     await setDoc(doc(db, "config", "dailyReport"), cfg, { merge: true });
     drConfig = { ...drConfig, ...cfg };
@@ -3713,6 +3782,7 @@ $("#view").addEventListener("input", e => {
   }
   if (e.target.dataset.cfgparts) { const d = drCfgDraftGet(); d[e.target.dataset.cfgparts][+e.target.dataset.i] = Math.max(0, Math.floor(Number(e.target.value) || 0)); d.dirty = true; return; }
   if (e.target.id === "drCfgDeadline") { const d = drCfgDraftGet(); d.deadline = e.target.value; d.dirty = true; return; }
+  if (e.target.id === "drCfgWa") { const d = drCfgDraftGet(); d.waNumber = e.target.value; d.dirty = true; return; }
   if (e.target.id === "drCfgReminders") { const d = drCfgDraftGet(); d.remindersOn = e.target.checked; d.dirty = true; return; }
   const sec = e.target.dataset.drsec;
   if (sec && e.target.dataset.drpart !== undefined) {
