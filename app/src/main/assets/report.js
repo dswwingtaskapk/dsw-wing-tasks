@@ -29,6 +29,7 @@ export const DR_TPL = {
   counselling: "5. Counselling:",
   nstr: "NSTR",
   nil: "Nil",
+  offWord: "Nil", offDays: "5,6",           // on these weekdays (0=Sun … 5=Fri, 6=Sat) empty activities show offWord instead of NSTR
   maleLabel: "Male Wg", femaleLabel: "Female Wg", hostelLabel: "Student Run Hostel",
   lAlot: "Alot:", gAlot: 1,
   lPresent: "Present:", gPresent: 2,
@@ -42,6 +43,13 @@ export function tplOf(cfg, over) {
   const out = { ...DR_TPL };
   Object.keys(DR_TPL).forEach(k => { if (src[k] !== undefined && src[k] !== null) out[k] = src[k]; });
   return out;
+}
+export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+export function weekdayOf(dateStr) { const [y, m, d] = String(dateStr).split("-").map(Number); return new Date(Date.UTC(y, (m || 1) - 1, d || 1)).getUTCDay(); }
+export function offDayList(T) { return String((T && T.offDays) ?? "").split(",").map(x => x.trim()).filter(x => /^[0-6]$/.test(x)).map(Number); }
+export function emptyWord(dateStr, T) {
+  T = T || tplOf(null);
+  return offDayList(T).includes(weekdayOf(dateStr)) ? (String(T.offWord || "").trim() || T.nstr) : T.nstr;
 }
 export const tplGap = n => " ".repeat(Math.max(0, Math.min(20, Number(n) || 0)));
 export function wingLine(letter, label, parts, data, _unused, T) {
@@ -72,13 +80,15 @@ export function peopleLine(num, title, students, T) {
 export function compileReport(dateStr, sec, cfg, over) {
   cfg = cfg || {};
   const T = tplOf(cfg, over);
+  const E = emptyWord(dateStr, T);
+  const isEmptyWord = t => { const u = String(t || "").trim().toUpperCase(); return u === "NSTR" || u === String(T.nstr).trim().toUpperCase() || u === String(E).trim().toUpperCase(); };
   const dsw = (sec.dswActivities && sec.dswActivities.items) || [];
   const hall = (sec.hallActivities && sec.hallActivities.items) || [];
   const all = [...dsw, ...hall].filter(x => x && String(x.text || "").trim());
-  const line1 = all.length ? `*${T.daily}*\n\n${all.map((a, i) => `${all.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.daily} ${T.nstr}*`;
+  const line1 = all.length ? `*${T.daily}*\n\n${all.map((a, i) => `${all.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.daily} ${E}*`;
   const tm = sec.tomorrow || {};
-  const tmItems = (Array.isArray(tm.items) ? tm.items : (String(tm.text || "").trim() && String(tm.text).trim().toUpperCase() !== "NSTR" ? [{ text: String(tm.text).trim() }] : [])).filter(x => x && String(x.text || "").trim());
-  const line2 = tmItems.length ? `*${T.tomorrow}*\n\n${tmItems.map((a, i) => `${tmItems.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.tomorrow} ${T.nstr}*`;
+  const tmItems = (Array.isArray(tm.items) ? tm.items : (String(tm.text || "").trim() && !isEmptyWord(tm.text) ? [{ text: String(tm.text).trim() }] : [])).filter(x => x && String(x.text || "").trim());
+  const line2 = tmItems.length ? `*${T.tomorrow}*\n\n${tmItems.map((a, i) => `${tmItems.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.tomorrow} ${E}*`;
   const male = sec.maleWing || wingDefault(cfg.maleParts);
   const female = sec.femaleWing || wingDefault(cfg.femaleParts);
   const hostel = sec.hostel || wingDefault(cfg.hostelParts);

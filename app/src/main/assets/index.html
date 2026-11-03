@@ -689,6 +689,10 @@ body.drawer-open .dr-panel{transform:none}
 .qa{row-gap:16px}
 .qa .qi{position:relative;overflow:visible!important;max-width:none!important}
 .qa .qb{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:10px;background:var(--bad);color:#fff;font-style:normal;font-size:11px;font-weight:800;display:grid;place-items:center;padding:0 5px;border:2px solid var(--hdr2)}
+.offdays{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.offday{display:inline-flex;align-items:center;gap:0;padding:7px 12px;border-radius:999px;border:1px solid var(--line,#d6e2e1);font-size:13px;font-weight:600;cursor:pointer;margin:0;user-select:none}
+.offday input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.offday.on{background:var(--accent,#0f766e);border-color:var(--accent,#0f766e);color:#fff}
 </style>
 </head>
 <body>
@@ -747,7 +751,7 @@ body.drawer-open .dr-panel{transform:none}
 import * as CFG from "./config.js";
 const { firebaseConfig, ADMIN_EMAIL } = CFG;
 import { BUILD } from "./build-info.js";
-import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport } from "./report.js";
+import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport, WEEKDAYS, offDayList, emptyWord } from "./report.js";
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, reauthenticateWithCredential, EmailAuthProvider, updatePassword, onAuthStateChanged, signOut }
@@ -2470,7 +2474,7 @@ function drActivityCard(section, title, hint) {
       <button type="button" data-act="dractmove" data-sec="${section}" data-i="${i}" data-dir="-1" ${i===0?"disabled":""}>${ic("up",16)}</button>
       <button type="button" data-act="dractmove" data-sec="${section}" data-i="${i}" data-dir="1" ${i===items.length-1?"disabled":""}>${ic("down",16)}</button>
       <button type="button" data-act="dractdel" data-sec="${section}" data-i="${i}">${ic("x",16)}</button>
-    </div>`).join("") : `<div class="muted" style="font-size:13px">No activities added yet${items.length?"":" — leave empty for NSTR"}</div>`;
+    </div>`).join("") : `<div class="muted" style="font-size:13px">No activities added yet — leave empty for ${esc(emptyWord(drDate, drTpl()))}</div>`;
   return `<div class="glass drcard"><h4>${title}</h4>
     <div class="muted" style="font-size:12px;margin-bottom:6px">${hint}</div>
     ${rows}
@@ -2495,7 +2499,7 @@ function drWingCard(section, label, parts) {
     ${drSaveBtn(section)}${drPersonLine(section)}</div>`;
 }
 function drHostelCard() { return drWingCard("hostel", "Student-Run Hostel", drConfig.hostelParts); }
-function drTomorrowCard() { return drActivityCard("tomorrow", "Tomorrow's Activities", "Add each planned activity — they appear as (a), (b)... in the report. Leave empty for NSTR (Nothing Special To Report)."); }
+function drTomorrowCard() { return drActivityCard("tomorrow", "Tomorrow's Activities", `Add each planned activity — they appear as (a), (b)... in the report. Leave empty for ${esc(emptyWord(drDate, drTpl()))}${emptyWord(drDate, drTpl()) === "NSTR" ? " (Nothing Special To Report)" : ""}.`); }
 function drPeopleCard(section, label) {
   if (!drCan(section)) return "";
   const d = drDraftFor(section);
@@ -2545,6 +2549,12 @@ function viewDailyFormat() {
       <h4>Headings</h4>
       ${f("daily", "1st heading")}${f("tomorrow", "2nd heading")}${f("state", "3rd heading")}${f("sickness", "4th heading")}${f("counselling", "5th heading")}
       ${f("nstr", "Word for empty activities")}${f("nil", "Word for none (Nil)")}
+    </div>
+    <div class="glass drcard">
+      <h4>Holidays (default: Friday &amp; Saturday)</h4>
+      <div class="muted" style="font-size:12px;margin-bottom:8px">On the days ticked below, empty activities show this word instead of “${esc(String(T.nstr))}”. Other days stay as they are.</div>
+      <div class="offdays">${WEEKDAYS.map((n, i) => `<label class="offday ${offDayList(T).includes(i) ? "on" : ""}"><input type="checkbox" data-offday="${i}" ${offDayList(T).includes(i) ? "checked" : ""}>${n}</label>`).join("")}</div>
+      ${f("offWord", "Word on these days")}
     </div>
     <div class="glass drcard">
       <h4>Wing names</h4>
@@ -3377,6 +3387,8 @@ function callStatusText() {
 }
 function startRing(outgoing) {
   stopRing();
+  // inside the Android app: the phone's real ringtone on the ring volume (not the music volume)
+  try { if (window.Android && Android.ringStart && Android.ringStart(!!outgoing)) { ringNative = true; return; } } catch (e) {}
   try {
     ringCtx = new (window.AudioContext || window.webkitAudioContext)();
     const beep = () => {
@@ -3389,7 +3401,8 @@ function startRing(outgoing) {
     beep(); ringT = setInterval(beep, outgoing ? 3000 : 1300);
   } catch (e) {}
 }
-function stopRing() { clearInterval(ringT); ringT = null; if (ringCtx) { ringCtx.close().catch(() => {}); ringCtx = null; } try { navigator.vibrate && navigator.vibrate(0); } catch (e) {} }
+let ringNative = false;
+function stopRing() { if (ringNative) { ringNative = false; try { Android.ringStop(); } catch (e) {} } clearInterval(ringT); ringT = null; if (ringCtx) { ringCtx.close().catch(() => {}); ringCtx = null; } try { navigator.vibrate && navigator.vibrate(0); } catch (e) {} }
 function newPc(id, mySide, otherSide) {
   const pc = new RTCPeerConnection(ICE), pending = [], seen = new Set();
   pc.onicecandidate = e => { if (e.candidate) addDoc(collection(db, "calls", id, mySide), e.candidate.toJSON()).catch(() => {}); };
@@ -3890,6 +3903,14 @@ $("#view").addEventListener("click", e => run(async () => {
 
 $("#view").addEventListener("input", e => {
   if (e.target.id === "q") { searchQ = e.target.value; $("#taskList").innerHTML = taskListHtml(); return; }
+  if (e.target.dataset.offday != null) {
+    const T = drTplDraftGet(), i = Number(e.target.dataset.offday), set = new Set(offDayList(T));
+    if (e.target.checked) set.add(i); else set.delete(i);
+    T.offDays = [...set].sort().join(",");
+    const lb = e.target.closest(".offday"); if (lb) lb.classList.toggle("on", e.target.checked);
+    const pv = $("#tplPreview"); if (pv) pv.textContent = drCompile(drDate, drSections, T);
+    return;
+  }
   if (e.target.dataset.tpl) {
     const T = drTplDraftGet(), k = e.target.dataset.tpl;
     T[k] = typeof DR_TPL[k] === "number" ? Number(e.target.value) || 0 : e.target.value;

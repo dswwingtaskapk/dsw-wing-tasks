@@ -359,6 +359,16 @@ public class MainActivity extends Activity {
     /** Called from the page: saves a file into the phone's Downloads folder. */
     private class Bridge {
 
+        /** ring with the phone's own ringtone on the ring volume (incoming) or the call tone (outgoing) */
+        @JavascriptInterface
+        public boolean ringStart(boolean outgoing) {
+            runOnUiThread(() -> CallRinger.start(MainActivity.this, outgoing));
+            return true;
+        }
+
+        @JavascriptInterface
+        public void ringStop() { runOnUiThread(CallRinger::stop); }
+
         @JavascriptInterface
         @SuppressWarnings("deprecation")
         public void callAudio(boolean active) {
