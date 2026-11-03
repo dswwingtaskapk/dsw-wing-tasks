@@ -16,14 +16,18 @@ import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
-import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.Person;
+import androidx.core.graphics.drawable.IconCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.Map;
 
@@ -154,25 +158,90 @@ public class PushService extends FirebaseMessagingService {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
         Bitmap lg = logo();
         if (lg != null) b.setLargeIcon(lg);
-        try {
-            RemoteViews small = new RemoteViews(getPackageName(), R.layout.notif_small);
-            small.setTextViewText(R.id.n_title, title);
-            small.setTextViewText(R.id.n_body, body);
-            RemoteViews big = new RemoteViews(getPackageName(), R.layout.notif_big);
-            big.setTextViewText(R.id.n_title, title);
-            big.setTextViewText(R.id.n_body, body);
-            b.setStyle(new NotificationCompat.DecoratedCustomViewStyle())
-                    .setCustomContentView(small)
-                    .setCustomHeadsUpContentView(small)
-                    .setCustomBigContentView(big);
-        } catch (Throwable ignored) {
-            // fall back to the standard large-text style set above
-        }
         return b;
     }
 
     private void post(int id, Notification n) {
         try { NotificationManagerCompat.from(this).notify(id, n); } catch (SecurityException ignored) {}
+    }
+
+    /* ---------- chat messages ---------- */
+    private static boolean empty(String s) { return s == null || s.trim().isEmpty(); }
+
+    private static boolean isMessage(String tab, Map<String, String> d) {
+        if ("dm".equals(tab)) return true;
+        if (!"chat".equals(tab)) return false;
+        if (!empty(d.get("msg"))) return true;
+        String b = d.get("body") == null ? "" : d.get("body");
+        return b.contains(" · ") && b.contains(": ") && !b.startsWith("New task from") && !b.contains(" completed: ");
+    }
+
+    private void showMessage(String tab, Map<String, String> d) {
+        String id = d.get("id") == null ? "" : d.get("id");
+        String conv = tab + ":" + id;
+        if (MainActivity.visible && conv.equals(MainActivity.activeConv)) return;   // that chat is open on screen
+        String sender = d.get("name"), text = d.get("msg"), title = d.get("conv");
+        if (empty(text)) {                     // older app versions send only "Name: message"
+            String b = d.get("body") == null ? "" : d.get("body");
+            if ("dm".equals(tab)) {
+                if (b.startsWith("DSW Wing · ")) { title = "DSW Wing"; b = b.substring(11); }
+                int k = b.indexOf(": ");
+                if (k > 0) { if (empty(sender)) sender = b.substring(0, k); text = b.substring(k + 2); } else text = b;
+            } else {
+                int k1 = b.indexOf(" · "), k2 = k1 < 0 ? -1 : b.indexOf(": ", k1);
+                if (k1 > 0 && k2 > k1) { if (empty(sender)) sender = b.substring(0, k1); title = b.substring(k1 + 3, k2); text = b.substring(k2 + 2); }
+                else text = b;
+            }
+        }
+        if ("dm".equals(tab) && "wing".equals(id) && empty(title)) title = "DSW Wing";
+        if (empty(sender)) sender = "Wing Tasks";
+        boolean group = !empty(title);
+        long at = System.currentTimeMillis();
+        JSONArray hist = ChatNotifs.add(this, conv, sender, text, at);
+
+        NotificationCompat.MessagingStyle st = new NotificationCompat.MessagingStyle(new Person.Builder().setName("You").setKey("me").build());
+        if (group) { st.setConversationTitle(title); st.setGroupConversation(true); }
+        for (int i = 0; i < hist.length(); i++) {
+            JSONObject m = hist.optJSONObject(i);
+            if (m == null) continue;
+            String n = m.optString("n", "Wing Tasks");
+            Person.Builder pb = new Person.Builder().setName(n).setKey(n);
+            Bitmap av = ChatNotifs.avatar(this, n);
+            if (av != null) pb.setIcon(IconCompat.createWithBitmap(av));
+            st.addMessage(new NotificationCompat.MessagingStyle.Message(m.optString("t", ""), m.optLong("at", at), pb.build()));
+        }
+        int nid = ChatNotifs.notifId(conv);
+        NotificationCompat.Builder b = new NotificationCompat.Builder(this, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat).setColor(TEAL)
+                .setStyle(st)
+                .setContentTitle(group ? title : sender)
+                .setContentText(group ? sender + ": " + text : text)
+                .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+                .setAutoCancel(true)
+                .setWhen(at).setShowWhen(true)
+                .setNumber(hist.length())
+                .setGroup(ChatNotifs.GROUP)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                .setContentIntent(open(tab, id, null, null, nid));
+        Bitmap large = group ? logo() : ChatNotifs.avatar(this, sender);
+        if (large != null) b.setLargeIcon(large);
+        if (Build.VERSION.SDK_INT < 26) b.setSound(chime(this)).setVibrate(new long[]{0, 250, 120, 250}).setLights(TEAL, 800, 1600);
+        post(nid, b.build());
+
+        // a quiet summary that bundles several chats together, like WhatsApp
+        int total = ChatNotifs.pending(this);
+        NotificationCompat.Builder sum = new NotificationCompat.Builder(this, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat).setColor(TEAL)
+                .setContentTitle("Wing Tasks")
+                .setContentText(total + " new message" + (total == 1 ? "" : "s"))
+                .setStyle(new NotificationCompat.InboxStyle().setSummaryText(total + " new message" + (total == 1 ? "" : "s")))
+                .setGroup(ChatNotifs.GROUP).setGroupSummary(true)
+                .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_CHILDREN)
+                .setAutoCancel(true)
+                .setContentIntent(open("", "", "", null, ChatNotifs.SUMMARY_ID));
+        post(ChatNotifs.SUMMARY_ID, sum.build());
     }
 
     @Override
@@ -246,11 +315,14 @@ public class PushService extends FirebaseMessagingService {
             return;
         }
 
-        if (MainActivity.visible) return;   // the app is open: the app itself shows calls and the bell shows alerts
         if (!canPost()) return;
+
+        // chat messages: WhatsApp style, one notification per chat with the messages stacked inside
+        if (isMessage(tab, d)) { showMessage(tab, d); return; }
 
         // someone is calling: ring like a phone call, full screen over the lock screen
         if ("call".equals(tab)) {
+            if (MainActivity.visible) return;   // the app is open: it shows the call screen itself
             String id = d.get("id");
             String who = d.get("name") != null && !d.get("name").isEmpty() ? d.get("name") : "Wing Tasks";
             int nid = callNotifId(id);

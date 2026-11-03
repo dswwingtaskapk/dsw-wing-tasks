@@ -185,7 +185,8 @@ async function sendToEmail(env, email, text, link) {
   const tok = await accessToken(env);
   let sent = 0; const errors = [];
   const L = link || {};
-  const data = { title: titleFor(String(L.tab || ""), String(text || "")), body: String(text || "").slice(0, 300), tab: String(L.tab || ""), id: String(L.id || ""), date: String(L.date || ""), name: String(L.name || "").slice(0, 80), dm: String(L.dm || "").slice(0, 300) };
+  const data = { title: titleFor(String(L.tab || ""), String(text || "")), body: String(text || "").slice(0, 300), tab: String(L.tab || ""), id: String(L.id || ""), date: String(L.date || ""), name: String(L.name || "").slice(0, 80), dm: String(L.dm || "").slice(0, 300),
+    conv: String(L.conv || "").slice(0, 80), msg: String(L.msg || "").slice(0, 300) };
   const isCall = data.tab === "call" || data.tab === "callend";
   const ttl = isCall ? "40s" : "86400s";   // a call that could not be delivered in time must not ring later
   for (const t of tokens) {

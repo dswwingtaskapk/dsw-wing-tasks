@@ -1500,6 +1500,7 @@ function render() {
   if (!user || !ready) return;
   baselineSeen();
   if (chatId && !refreshChat()) chatId = null;
+  syncActiveConv();
   if (isTyping()) { renderPending = true; return; }
   renderPending = false;
   if (tab !== "tasks" && tab !== "cal" && statFilter) { statFilter = null; tf = tfDefault(); }
@@ -1716,7 +1717,15 @@ function refreshChat(force) {
   markSeen(chatId);
   return true;
 }
-function closeChat() { chatId = null; chatFile = null; $("#sheetHost").innerHTML = ""; render(); }
+/* tell the phone which chat is on screen, so it does not pop up messages for that chat (like WhatsApp) */
+let activeConvSent = null;
+function syncActiveConv() {
+  const c = threadId ? "dm:" + threadId : chatId ? "chat:" + chatId : "";
+  if (c === activeConvSent) return;
+  activeConvSent = c;
+  try { window.Android && Android.setActiveChat && Android.setActiveChat(c); } catch (e) {}
+}
+function closeChat() { chatId = null; chatFile = null; $("#sheetHost").innerHTML = ""; syncActiveConv(); render(); }
 function renderChatPending() {
   const box = $("#chatPending"); if (!box) return;
   if (!chatFile) { box.classList.add("hidden"); box.innerHTML = ""; return; }
@@ -1748,13 +1757,14 @@ async function sendChat() {
     await updateDoc(doc(db, "tasks", chatId), { updates: arrayUnion(entry) });
     inp.value = ""; chatFile = null; renderChatPending();
     const who = new Set([t.creatorEmail, t.assigneeEmail]); who.delete(me);
-    for (const e of who) notify(e, `${myName()} · ${t.title}: ${text || "sent an attachment"}`.slice(0, 160), { tab: "chat", id: chatId }).catch(() => {});
+    const link = { tab: "chat", id: chatId, name: myName(), conv: String(t.title || "Task").slice(0, 80), msg: (text || "sent an attachment").slice(0, 300) };
+    for (const e of who) notify(e, `${myName()} · ${t.title}: ${text || "sent an attachment"}`.slice(0, 160), link).catch(() => {});
   } catch (e) { onErr(e); toast(String(e.message || e), "err"); }
   finally { chatSending = false; if ($("#chatSend")) $("#chatSend").disabled = false; }
 }
 function openChat(id) {
   const t = tasks.find(x => x.id === id); if (!t) return;
-  chatId = id; chatFile = null; markSeen(id);
+  chatId = id; chatFile = null; markSeen(id); syncActiveConv();
   const self = t.assigneeEmail === me && t.creatorEmail === me;
   const sub = self ? "Your own task" : t.assigneeEmail === me ? "Assigned by " + (t.creatorName || nameOf(t.creatorEmail)) : "Assigned to " + (t.assigneeName || nameOf(t.assigneeEmail));
   const quick = ["Working on it", "Not available right now", "Need more time", "Completed"];
@@ -3345,7 +3355,7 @@ function viewChats() {
 function openThread(id) {
   if (detailId) detailId = null;
   if (threadUnsub) { threadUnsub(); threadUnsub = null; }
-  threadId = id; threadMsgs = []; threadFile = null; document.body.classList.add("paged");
+  threadId = id; threadMsgs = []; threadFile = null; document.body.classList.add("paged"); syncActiveConv();
   const group = id === "wing", peer = group ? null : members.find(m => m.email === dmPeer(id));
   const name = group ? "DSW Wing" : (peer ? peer.name : nameOf(dmPeer(id)));
   const sub = group ? `${activeMembers().length} members` : (peer && peer.designation) || "";
@@ -3384,7 +3394,7 @@ function openThread(id) {
 }
 function closeThread() {
   if (threadUnsub) { threadUnsub(); threadUnsub = null; }
-  threadId = null; threadMsgs = []; threadFile = null;
+  threadId = null; threadMsgs = []; threadFile = null; syncActiveConv();
 }
 const threadFileMeta = {};
 function threadMsgsHtml() {
@@ -3476,7 +3486,8 @@ async function sendThread() {
     inp.value = ""; threadFile = null; const b = $("#thPending"); if (b) b.classList.add("hidden");
     const body = `${group ? "DSW Wing · " : ""}${myName()}: ${text || "sent a file"}`.slice(0, 160);
     const targets = group ? activeMembers().map(m => m.email).filter(e => e !== me) : [dmPeer(id)];
-    targets.forEach(e => notify(e, body, { tab: "dm", id }, { bell: false }).catch(() => {}));
+    const link = { tab: "dm", id, name: myName(), conv: group ? "DSW Wing" : "", msg: (text || "sent a file").slice(0, 300) };
+    targets.forEach(e => notify(e, body, link, { bell: false }).catch(() => {}));
   } catch (e) { onErr(e); toast(String(e.message || e), "err"); }
   finally { threadSending = false; const sb = $("#thSend"); if (sb) sb.disabled = false; }
 }

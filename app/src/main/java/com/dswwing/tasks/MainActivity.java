@@ -51,6 +51,7 @@ public class MainActivity extends Activity {
     private PermissionRequest pendingMic;
     private ValueCallback<Uri[]> filePathCallback;
     static volatile boolean visible = false;
+    static volatile String activeConv = "";   // the chat open on screen right now ("dm:<id>" / "chat:<taskId>")
     static String pushToken = null;
     private static MainActivity instance;
     private boolean pageLoaded = false;
@@ -92,6 +93,7 @@ public class MainActivity extends Activity {
             try { NotificationManagerCompat.from(this).cancel(PushService.callNotifId(id)); } catch (Throwable ignored) {}
             showOverLock(true);
         }
+        if (("dm".equals(tab) || "chat".equals(tab)) && !id.isEmpty()) ChatNotifs.clear(this, tab + ":" + id);
         if ("cmdt".equals(tab)) {
             // the "send to Commandant" alarm: show the big reminder screen, even over the lock screen
             if ("done".equals(act)) { try { NotificationManagerCompat.from(this).cancel(PushService.CMDT_ID); } catch (Throwable ignored) {} }
@@ -374,6 +376,13 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void ringStop() { runOnUiThread(CallRinger::stop); }
 
+        /** which chat is open on screen: its notifications are cleared and new ones for it are not shown */
+        @JavascriptInterface
+        public void setActiveChat(String conv) {
+            activeConv = conv == null ? "" : conv;
+            if (!activeConv.isEmpty()) ChatNotifs.clear(MainActivity.this, activeConv);
+        }
+
         /** silence a report alarm (late section / Commandant reminder) and stop showing over the lock screen */
         @JavascriptInterface
         public void alarmStop(String which) {
@@ -628,6 +637,7 @@ public class MainActivity extends Activity {
         super.onResume();
         visible = true;
         try { NotificationManagerCompat.from(this).cancelAll(); } catch (Throwable ignored) {}
+        ChatNotifs.clearAll(this);   // the shown chat notifications are gone, so start the next ones fresh
         notifyPermChange();   // back from a settings page: refresh the setup checklist
         web.onResume();
     }
