@@ -3,6 +3,7 @@ package com.dswwing.tasks;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.KeyguardManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -274,12 +275,35 @@ public class MainActivity extends Activity {
     }
 
     @SuppressWarnings("deprecation")
+    /* ---------- over the lock screen: only for a call or an alarm, never the rest of the app ---------- */
+    private boolean overLock = false;
+
+    private boolean phoneLocked() {
+        try { KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE); return km != null && km.isKeyguardLocked(); }
+        catch (Throwable t) { return false; }
+    }
+
     private void showOverLock(boolean on) {
+        overLock = on;
         if (Build.VERSION.SDK_INT >= 27) { setShowWhenLocked(on); setTurnScreenOn(on); }
         else {
             int f = android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
             if (on) getWindow().addFlags(f); else getWindow().clearFlags(f);
         }
+        pushLockMode();
+    }
+
+    /** tell the page whether it is showing on top of a locked phone (then it hides everything but the call / alarm) */
+    private void pushLockMode() {
+        final boolean lm = overLock && phoneLocked();
+        if (web != null) runOnUiThread(() -> web.evaluateJavascript("window.__lockMode=" + lm + ";window.dispatchEvent(new Event('lockmode'));", null));
+    }
+
+    /** the call or alarm is over: if the phone is still locked, go back behind the lock screen */
+    private void leaveLock() {
+        boolean locked = phoneLocked();
+        showOverLock(false);
+        if (locked) moveTaskToBack(true);
     }
 
     private static final int BG_LIGHT = 0xFFEEF2F2, BG_DARK = 0xFF0D1514, BAR_LIGHT = 0xFF1B625D, BAR_DARK = 0xFF102E2B;
@@ -392,7 +416,38 @@ public class MainActivity extends Activity {
                     if (!"daily".equals(which)) nm.cancel(PushService.CMDT_ID);
                     if (!"cmdt".equals(which)) nm.cancel(PushService.ALARM_ID);
                 } catch (Throwable ignored) {}
-                showOverLock(false);
+                leaveLock();
+            });
+        }
+
+        /** is the page on top of a locked phone right now? */
+        @JavascriptInterface
+        public boolean lockState() { return overLock && phoneLocked(); }
+
+        @JavascriptInterface
+        public boolean isLocked() { return phoneLocked(); }
+
+        /** call / alarm finished */
+        @JavascriptInterface
+        public void leaveLock() { runOnUiThread(MainActivity.this::leaveLock); }
+
+        /** the phone got unlocked meanwhile: no need to stay "over the lock screen" */
+        @JavascriptInterface
+        public void lockCleared() { runOnUiThread(() -> { if (!phoneLocked()) showOverLock(false); }); }
+
+        /** "Open app" on the lock screen: ask for the PIN / fingerprint first */
+        @JavascriptInterface
+        public void unlockApp() {
+            runOnUiThread(() -> {
+                if (!phoneLocked()) { showOverLock(false); return; }
+                KeyguardManager km = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
+                if (km != null && Build.VERSION.SDK_INT >= 26) {
+                    km.requestDismissKeyguard(MainActivity.this, new KeyguardManager.KeyguardDismissCallback() {
+                        @Override public void onDismissSucceeded() { showOverLock(false); }
+                    });
+                } else {
+                    getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+                }
             });
         }
 
@@ -405,7 +460,7 @@ public class MainActivity extends Activity {
                 am.setMode(active ? AudioManager.MODE_IN_COMMUNICATION : AudioManager.MODE_NORMAL);
                 am.setSpeakerphoneOn(false);
                 if (active) getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                else { getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON); showOverLock(false); }
+                else getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             });
         }
 
@@ -587,7 +642,7 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         // 1) close an open popup  2) let the app go to Home / the parent screen  3) on Home: leave the app
         web.evaluateJavascript(
-                "(function(){var d=document.querySelector('.dlg-wrap,.imgview');if(d){d.click();return 1;}var o=document.getElementById('ov');if(o){o.click();return 1;}if(document.body.classList.contains('navopen')){document.body.classList.remove('navopen');return 1;}if(window.__appBack&&window.__appBack())return 1;return 0;})()",
+                "(function(){if(window.__lockBack&&window.__lockBack())return 1;var d=document.querySelector('.dlg-wrap,.imgview');if(d){d.click();return 1;}var o=document.getElementById('ov');if(o){o.click();return 1;}if(document.body.classList.contains('navopen')){document.body.classList.remove('navopen');return 1;}if(window.__appBack&&window.__appBack())return 1;return 0;})()",
                 value -> {
                     if ("1".equals(value)) return;
                     finish();
@@ -638,6 +693,7 @@ public class MainActivity extends Activity {
         visible = true;
         try { NotificationManagerCompat.from(this).cancelAll(); } catch (Throwable ignored) {}
         ChatNotifs.clearAll(this);   // the shown chat notifications are gone, so start the next ones fresh
+        pushLockMode();              // unlocked meanwhile? the page shows the app again
         notifyPermChange();   // back from a settings page: refresh the setup checklist
         web.onResume();
     }

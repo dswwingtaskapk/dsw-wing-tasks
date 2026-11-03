@@ -731,6 +731,17 @@ body.drawer-open .dr-panel{transform:none}
 .cmdt-alarm button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:16px;cursor:pointer;font-family:inherit}
 .cmdt-alarm .ca-done{background:#fff;color:#b3261e;font-size:19px;font-weight:800;padding:18px}
 .cmdt-alarm .ca-sec{background:rgba(255,255,255,.14);color:#fff;font-size:15.5px;font-weight:600;padding:14px;border:1px solid rgba(255,255,255,.28)}
+#lockCover{display:none}
+body.overlock #lockCover{display:flex;position:fixed;inset:0;z-index:340;align-items:center;justify-content:center;text-align:center;color:#fff;
+  background:radial-gradient(120% 90% at 50% 0%,#1f6f6a 0%,#123f3c 60%,#0b2624 100%)}
+body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #sheetHost,body.overlock #toast{visibility:hidden!important}
+#lockCover .lc-in{display:flex;flex-direction:column;align-items:center;gap:6px;padding:24px}
+#lockCover .lc-ic{width:64px;height:64px;border-radius:18px;margin-bottom:8px;background:rgba(255,255,255,.14) center/30px no-repeat
+  url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4.5' y='10.5' width='15' height='10' rx='2.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/></svg>")}
+#lockCover b{font-size:20px}#lockCover small{font-size:14px;opacity:.8}
+#lockCover button{margin-top:18px;padding:12px 26px;border-radius:99px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font:600 15px/1 inherit;font-family:inherit}
+.callscr .c-unlock{position:absolute;z-index:5;top:calc(14px + var(--safe-t));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:600 13px/1 inherit;font-family:inherit;cursor:pointer}
 </style>
 </head>
 <body>
@@ -782,6 +793,7 @@ body.drawer-open .dr-panel{transform:none}
 <div id="pageHost"></div>
 <div id="sheetHost"></div>
 <div id="callHost"></div>
+<div id="lockCover" aria-hidden="true"><div class="lc-in"><div class="lc-ic"></div><b>Wing Tasks</b><small>Unlock your phone to open the app</small><button type="button" id="lcOpen">Open app</button></div></div>
 <audio id="remoteAudio" autoplay playsinline></audio>
 
 <script type="module">
@@ -1068,7 +1080,8 @@ function consumeOpen() {
         try { A().moveToBack && A().moveToBack(); } catch (e) {}
       }
       else if (live) { incoming = c; if (act === "accept") acceptCall(); else { callScreen(); startRing(false); } }
-      else if (c) { toast("Missed call from " + (c.fromName || nameOf(c.from))); tab = "chats"; render(); openThread(dmId(c.from)); try { A().callAudio && A().callAudio(false); } catch (e) {} }
+      else if (c && lockMode) lockDone();
+      else if (c) { toast("Missed call from " + (c.fromName || nameOf(c.from))); tab = "chats"; render(); openThread(dmId(c.from)); try { A().callAudio && A().callAudio(false); } catch (e) {} lockDone(); }
     }).catch(() => {});
     return true;
   }
@@ -2858,9 +2871,9 @@ async function openCmdtAlarm(date) {
       ${text ? `<button class="ca-sec" data-ca="copy">${ic("copy", 18)} Copy the report</button>` : ""}
       <button class="ca-sec" data-ca="later">Remind me later</button>
     </div></div>`;
-  const close = () => { host.innerHTML = ""; try { Android.alarmStop("cmdt"); } catch (e) {} };
+  const close = () => { host.innerHTML = ""; try { Android.alarmStop("cmdt"); } catch (e) {} setLockMode(false); };
   host.querySelector('[data-ca="later"]').onclick = () => { close(); toast("It will ring again in 5 minutes"); };
-  host.querySelector('[data-ca="done"]').onclick = () => run(async () => { await cmdtMarkDone(date); host.innerHTML = ""; toast("Marked as sent to the Commandant"); });
+  host.querySelector('[data-ca="done"]').onclick = () => run(async () => { await cmdtMarkDone(date); host.innerHTML = ""; setLockMode(false); toast("Marked as sent to the Commandant"); });
   const cp = host.querySelector('[data-ca="copy"]');
   if (cp) cp.onclick = async () => { try { await navigator.clipboard.writeText(text); toast("Report copied"); } catch (e) { toast("Could not copy", "err"); } };
 }
@@ -3528,18 +3541,59 @@ function openCallMenu(email) {
 const ICE = { iceServers: [{ urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] }] };
 let call = null, incoming = null, ringT = null, ringCtx = null;
 const A = () => window.Android || {};
+/* ---------- on top of a LOCKED phone: show only the call / alarm, never the rest of the app (like WhatsApp) ---------- */
+let lockMode = false, lockPoll = null, lockIdleT = null;
+function setLockMode(on) {
+  on = !!on;
+  if (on === lockMode) return;
+  lockMode = on;
+  document.body.classList.toggle("overlock", on);
+  clearInterval(lockPoll); lockPoll = null; clearTimeout(lockIdleT); lockIdleT = null;
+  if (on) {
+    // the phone may be unlocked meanwhile (PIN / fingerprint): then show the app normally
+    lockPoll = setInterval(() => { try { if (!Android.isLocked()) { Android.lockCleared(); setLockMode(false); } } catch (e) {} }, 1000);
+    // opened over the lock screen but nothing to show (e.g. the call already ended): go back
+    lockIdleT = setTimeout(() => lockDone(), 9000);
+  }
+  if ($("#callHost").innerHTML) callScreen();
+}
+const cmdtOpen = () => !!document.querySelector("#cmdtHost .cmdt-alarm");
+/* a call or alarm just finished: if nothing else is showing, leave (back to the lock screen if the phone is locked) */
+function lockDone() {
+  if (call || incoming || cmdtOpen()) return;
+  try { window.Android && Android.leaveLock && Android.leaveLock(); } catch (e) {}
+  setLockMode(false);
+}
+window.__lockBack = () => {
+  if (!lockMode) return 0;
+  if (incoming) return 1;                       // ringing: answer or decline
+  if (cmdtOpen()) { $("#cmdtHost").innerHTML = ""; }
+  try { Android.leaveLock(); } catch (e) {}      // an active call keeps going in the background
+  setLockMode(false);
+  return 1;
+};
+window.addEventListener("lockmode", () => setLockMode(window.__lockMode));
+try { if (window.Android && Android.lockState && Android.lockState()) setLockMode(true); } catch (e) {}
+$("#lcOpen").onclick = () => { try { Android.unlockApp(); } catch (e) {} };
 function callScreen() {
   const host = $("#callHost");
   if (!call && !incoming) { host.innerHTML = ""; return; }
   if (incoming && !call) {
     host.innerHTML = `<div class="callscr"><div class="c-top"><span class="c-avt">${esc(initials(incoming.fromName))}</span><h2>${esc(incoming.fromName || nameOf(incoming.from))}</h2><div class="c-st">Incoming audio call</div></div>
       <div class="c-btns two"><button data-call="decline" class="end">${ic("x", 26, 2.4)}<span>Decline</span></button><button data-call="accept" class="ok">${ic("phone", 26, 2.2)}<span>Accept</span></button></div></div>`;
+    lockOpenBtn(host);
     return;
   }
   host.innerHTML = `<div class="callscr"><div class="c-top"><span class="c-avt">${esc(initials(call.peerName))}</span><h2>${esc(call.peerName)}</h2><div class="c-st" id="cSt">${esc(callStatusText())}</div></div>
     <div class="c-btns"><button data-call="mute" class="${call.muted ? "on" : ""}">${ic(call.muted ? "micoff" : "mic", 24, 2)}<span>${call.muted ? "Unmute" : "Mute"}</span></button>
       <button data-call="spk" class="${call.speaker ? "on" : ""}">${ic("speaker", 24, 2)}<span>Speaker</span></button>
       <button data-call="end" class="end">${ic("phone", 26, 2.2)}<span>End</span></button></div></div>`;
+  lockOpenBtn(host);
+}
+function lockOpenBtn(host) {
+  if (!lockMode) return;
+  const scr = host.querySelector(".callscr"); if (!scr) return;
+  scr.insertAdjacentHTML("afterbegin", `<button class="c-unlock" data-call="unlock">${ic("shield", 15, 2)} Open app</button>`);
 }
 function callStatusText() {
   if (!call) return "";
@@ -3619,7 +3673,7 @@ function onIncomingCalls(s) {
   const list = s.docs.map(d => ({ id: d.id, ...d.data() })).filter(c => c.at > Date.now() - 50000).sort((a, b) => b.at - a.at);
   if (call) return;
   if (list.length && (!incoming || incoming.id !== list[0].id)) { incoming = list[0]; callScreen(); startRing(false); }
-  else if (!list.length && incoming) { incoming = null; stopRing(); callScreen(); }
+  else if (!list.length && incoming) { incoming = null; stopRing(); callScreen(); lockDone(); }
 }
 async function acceptCall() {
   const c = incoming; if (!c) return;
@@ -3641,6 +3695,7 @@ async function acceptCall() {
 }
 async function declineCall() {
   const c = incoming; incoming = null; stopRing(); callScreen();
+  lockDone();
   if (c) await updateDoc(doc(db, "calls", c.id), { status: "declined" }).catch(() => {});
 }
 async function hangup(msg) {
@@ -3666,6 +3721,7 @@ function endCallLocal(msg) {
   try { A().callAudio && A().callAudio(false); } catch (e) {}
   const a = $("#remoteAudio"); if (a) a.srcObject = null;
   callScreen();
+  lockDone();
   if (msg) toast(msg, /Could not|needed|not supported/.test(msg) ? "err" : "");
 }
 setInterval(() => { if (call && call.startAt) { const el = $("#cSt"); if (el) el.textContent = callStatusText(); } }, 1000);
@@ -3675,6 +3731,7 @@ $("#callHost").addEventListener("click", e => {
   if (k === "accept") acceptCall();
   else if (k === "decline") declineCall();
   else if (k === "end") hangup();
+  else if (k === "unlock") { try { Android.unlockApp(); } catch (e) {} }
   else if (k === "mute" && call && call.stream) { call.muted = !call.muted; call.stream.getAudioTracks().forEach(t => t.enabled = !call.muted); callScreen(); }
   else if (k === "spk" && call) { call.speaker = !call.speaker; try { A().setSpeaker && A().setSpeaker(call.speaker); } catch (e) {} callScreen(); }
 });
