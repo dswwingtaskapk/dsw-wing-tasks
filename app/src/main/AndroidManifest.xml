@@ -51,6 +51,6 @@
             android:resource="@color/notif_color" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="wingtasks_alerts" />
+            android:value="wingtasks_alerts_v2" />
     </application>
 </manifest>

@@ -693,6 +693,44 @@ body.drawer-open .dr-panel{transform:none}
 .offday{display:inline-flex;align-items:center;gap:0;padding:7px 12px;border-radius:999px;border:1px solid var(--line,#d6e2e1);font-size:13px;font-weight:600;cursor:pointer;margin:0;user-select:none}
 .offday input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
 .offday.on{background:var(--accent,#0f766e);border-color:var(--accent,#0f766e);color:#fff}
+.drmiss{display:flex;align-items:center;gap:5px;width:fit-content;max-width:100%;margin:5px 0 0;padding:3px 10px;border-radius:10px;background:#fdecc8;color:#8a5a00;
+  font:600 12px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;white-space:normal}
+.drmiss svg{flex:none}
+.dark .drmiss,[data-theme="dark"] .drmiss{background:#3d2f12;color:#f5c66a}
+.drview{padding:14px 16px}
+.drview .dv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.drview .dv-top b{display:block;font-size:16px}.drview .dv-top small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.drview .dv-num{font-size:26px;font-weight:800;color:var(--primary)}.drview .dv-num i{font-style:normal;font-size:15px;color:var(--muted);font-weight:600}
+.drview .dv-bar{height:7px;border-radius:99px;background:var(--line);margin:12px 0 8px;overflow:hidden}
+.drview .dv-bar span{display:block;height:100%;border-radius:99px;background:var(--primary);transition:width .4s}
+.drview .dv-sub{font-size:13px;color:var(--muted);line-height:1.45}
+.cmdt-st{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.cmdt-st .cs-ic{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
+.cmdt-st b{display:block;font-size:15.5px}.cmdt-st small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;line-height:1.4}
+.cmdt-st.ok .cs-ic{background:#dcf3e6;color:#1a7f4b}.cmdt-st.late .cs-ic{background:#fde2e2;color:#c62828}.cmdt-st.late b{color:#c62828}
+.cmdt-list{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.cmdt-p{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;margin:0}
+.cmdt-p input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.cmdt-p .av{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);font-size:12px;font-weight:700}
+.cmdt-p .nm b{display:block;font-size:14px;color:var(--text)}.cmdt-p .nm small{display:block;font-size:11.5px;color:var(--muted)}
+.cmdt-p.on{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 9%,transparent)}
+.cmdt-p.on .av{background:var(--primary);color:#fff}
+.cmdt-alarm{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:calc(env(safe-area-inset-top) + 24px) 24px calc(env(safe-area-inset-bottom) + 24px);color:#fff;
+  background:radial-gradient(120% 80% at 50% 0%,#e0463c 0%,#b3261e 55%,#7d1712 100%);animation:caIn .25s ease-out}
+@keyframes caIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:none}}
+.cmdt-alarm .ca-ring{width:104px;height:104px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16);
+  box-shadow:0 0 0 0 rgba(255,255,255,.5);animation:caPulse 1.4s infinite}
+.cmdt-alarm .ca-ring svg{animation:caShake 1.4s infinite}
+@keyframes caPulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.45)}70%{box-shadow:0 0 0 26px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+@keyframes caShake{0%,60%,100%{transform:rotate(0)}10%,30%,50%{transform:rotate(-14deg)}20%,40%{transform:rotate(14deg)}}
+.cmdt-alarm .ca-kick{margin-top:26px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.cmdt-alarm h1{margin:10px 0 0;font-size:31px;line-height:1.18;font-weight:800;max-width:420px}
+.cmdt-alarm p{margin:14px 0 0;font-size:16.5px;line-height:1.5;opacity:.92;max-width:400px}
+.cmdt-alarm .ca-btns{width:100%;max-width:400px;margin-top:34px;display:flex;flex-direction:column;gap:10px}
+.cmdt-alarm button{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:16px;cursor:pointer;font-family:inherit}
+.cmdt-alarm .ca-done{background:#fff;color:#b3261e;font-size:19px;font-weight:800;padding:18px}
+.cmdt-alarm .ca-sec{background:rgba(255,255,255,.14);color:#fff;font-size:15.5px;font-weight:600;padding:14px;border:1px solid rgba(255,255,255,.28)}
 </style>
 </head>
 <body>
@@ -801,7 +839,8 @@ let drConfig = { maleParts: [286, 95], femaleParts: [285], hostelParts: [95], de
 let drEditText = false;
 let drDate = null;                       // selected date "YYYY-MM-DD" (Asia/Dhaka)
 let drReport = null;                     // report meta doc for drDate
-let waCfg = {}, waState = {}, waSrv = null, waSrvAt = 0, waDraft = null;   // WhatsApp auto-send settings / server status
+let waCfg = {}, waState = {}, waSrv = null, waSrvAt = 0, waDraft = null;
+let cmdtCfg = {}, cmdtDraft = null;   // reminder to pass the report on to the Commandant   // WhatsApp auto-send settings / server status
 let drSections = {};                     // sectionId -> saved data for drDate
 let drDraft = {};                        // sectionId -> in-progress edits (not yet saved)
 let drSub = "entry";                     // entry | preview | history
@@ -846,6 +885,7 @@ const ICONS = {
   doc: "<path d=\"M7 3h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z\"/><path d=\"M14 3v4h4\"/><path d=\"M9 12.5h6M9 16h6\"/>",
   clip: "<path d=\"M21 11.5l-8.5 8.5a5 5 0 01-7-7L14 4.5a3.5 3.5 0 015 5L10.5 18a2 2 0 01-3-3L15 7.5\"/>",
   image: "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"1.6\"/><path d=\"M4 17l5-4.5 3.5 3 3-2.5 4.5 4\"/>",
+  copy:'<rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   bell: "<path d=\"M18 16v-5a6 6 0 10-12 0v5l-2 2.2h16L18 16z\"/><path d=\"M9.5 20.8a2.5 2.5 0 005 0\"/>",
   up: "<path d=\"M5 15l7-7 7 7\"/>",
   down: "<path d=\"M5 9l7 7 7-7\"/>",
@@ -1008,6 +1048,12 @@ function consumeOpen() {
   if (p.tab === "chat" && p.id) {
     if (!tasks.find(t => t.id === p.id)) return false;
     window.__pendingOpen = null; tab = "home"; render(); openChat(p.id); return true;
+  }
+  if (p.tab === "cmdt") {
+    window.__pendingOpen = null;
+    if (p.act === "done") run(async () => { await cmdtMarkDone(p.date || dhakaDateStr()); toast("Marked as sent to the Commandant"); });
+    else openCmdtAlarm(p.date);
+    return true;
   }
   if (p.tab === "daily") { window.__pendingOpen = null; tab = "daily"; drEnsureSubFor(p.date); drSub = p.act === "alarm" ? "entry" : "preview"; render(); return true; }
   if (p.tab === "dm" && p.id) { if (!members.length) return false; window.__pendingOpen = null; tab = "chats"; render(); openThread(p.id); return true; }
@@ -1185,6 +1231,7 @@ function listen() {
   sub(userDoc(), s => { settings = { ...settings, ...((s.data() || {}).settings || {}) }; renderSoon(); });
   sub(doc(db, "config", "dailyReport"), s => { if (s.exists()) drConfig = { ...drConfig, ...s.data() }; renderSoon(); });
   sub(doc(db, "config", "whatsapp"), s => { waCfg = s.exists() ? s.data() : {}; renderSoon(); });
+  sub(doc(db, "config", "commandant"), s => { cmdtCfg = s.exists() ? s.data() : {}; renderSoon(); });
   sub(doc(db, "config", "waState"), s => { waState = s.exists() ? s.data() : {}; renderSoon(); });
   sub(doc(db, "config", "push"), s => { pushCfg = s.exists() ? s.data() : {}; renderSoon(); });
   // chats: one small listener per person (the chat name says who may read it), so nothing needs a list query
@@ -1271,6 +1318,8 @@ const HALL_SECTIONS = ["hallActivities", "maleWing", "femaleWing", "sickness"];
 const DSW_SECTIONS = ["dswActivities", "tomorrow", "counselling"];
 function drRole() { if (isAdmin) return "full"; return (myMember && myMember.reportRole) || "none"; }
 function drHasAccess() { return isAdmin || drRole() !== "none"; }
+const drViewer = () => !isAdmin && drRole() === "viewer";
+const drHomeSub = () => drViewer() ? "preview" : "entry";
 function drCan(section) {
   if (isAdmin) return true;
   const role = drRole();
@@ -1392,9 +1441,9 @@ async function notify(targetEmail, text, link, opts = {}) {
   ]);
   if (rs[0].status === "fulfilled") pingPush(rs[0].value.id, at);   // the server also sweeps the queue every minute, so nothing is lost
 }
-async function notifyReportAudience(text, link, excludeEmail) {
+async function notifyReportAudience(text, link, excludeEmail, viewers = false) {
   const targets = new Set();
-  members.forEach(m => { if (m.active !== false && (m.isAdmin || (m.reportRole && m.reportRole !== "none"))) targets.add(m.email); });
+  members.forEach(m => { if (m.active !== false && (m.isAdmin || (m.reportRole && m.reportRole !== "none" && (viewers || m.reportRole !== "viewer")))) targets.add(m.email); });
   for (const e of targets) if (e !== excludeEmail) await notify(e, text, link);
 }
 
@@ -1510,7 +1559,7 @@ window.__appBack = function () {
     if (detailId || threadId) { closePage(); return 1; }
     if (tab === "tasks" && tf.open) { tf.open = false; render(); return 1; }
     const prim = primaryTabs(navItems()).map(p => p[0]);
-    if (tab === "daily" && drSub !== "entry") { drSub = "entry"; drEditText = false; drTplDraft = null; render(); return 1; }
+    if (tab === "daily" && drSub !== drHomeSub()) { drSub = drHomeSub(); drEditText = false; drTplDraft = null; render(); return 1; }
     if (tab === "admin" && adminSub !== "members") { adminSub = "members"; render(); return 1; }
     if (tab === "tasks" && searchQ && !statFilter) { searchQ = ""; render(); return 1; }
     if (tab !== "home") { tab = "home"; if (statFilter) tf = tfDefault(); statFilter = null; render(); return 1; }
@@ -2051,7 +2100,7 @@ function viewOverview() {
 }
 
 function viewAdminDaily() {
-  const roleLabel = m => m.isAdmin ? "Admin (full access)" : ({full:"Full access", hallManager:"Hall Manager", contributor:"Report Contributor"}[m.reportRole] || "No access");
+  const roleLabel = m => m.isAdmin ? "Admin (full access)" : ({full:"Full access", hallManager:"Hall Manager", contributor:"Report Contributor", viewer:"Report Viewer"}[m.reportRole] || "No access");
   const rows = activeMembers().filter(m => !m.isAdmin).map(m => `<div class="crow glass">
       <span class="avt">${esc((m.name||"?").charAt(0).toUpperCase())}</span>
       <div class="nm"><div style="font-weight:600">${esc(m.name)}</div><div class="muted" style="font-size:12px">${esc(roleLabel(m))}</div></div>
@@ -2577,8 +2626,8 @@ function viewDailyFormat() {
 
 
 function drTabs() {
-  const tabs = [["entry","Entry"],["preview","Preview & Send"],["history","History"]];
-  if (isAdmin || drRole() === "full") { tabs.splice(2, 0, ["wa", "WhatsApp"]); tabs.push(["format", "Format"]); }
+  const tabs = drViewer() ? [["preview","Report"],["history","History"]] : [["entry","Entry"],["preview","Preview & Send"],["history","History"]];
+  if (isAdmin || drRole() === "full") { tabs.splice(2, 0, ["wa", "WhatsApp"], ["cmdt", "Commandant"]); tabs.push(["format", "Format"]); }
   return `<div class="filters">${tabs.map(([k,l]) => `<button class="fchip ${drSub===k?"on":""}" data-act="drtab" data-v="${k}">${l}</button>`).join("")}</div>`;
 }
 function viewDailyEntry() {
@@ -2605,8 +2654,8 @@ function viewDailyPreview() {
   const paper = drEditText
     ? `<textarea id="drTextEdit" class="drtextarea" spellcheck="false">${esc(text)}</textarea>
        <div class="row"><button class="btn" data-act="drtextsave">Save text</button><button class="btn ghost" data-act="drtextcancel">Cancel</button></div>`
-    : `<div class="drpaper">${esc(text)}</div>`;
-  return `<div class="sec">Status <span class="drbadge ${drStatusCls(status)}" style="margin-left:4px">${status}</span></div>
+    : `<div class="drpaper">${drPaperHtml(text)}</div>`;
+  return `${drViewer() ? drViewerHead() : ""}<div class="sec">Status <span class="drbadge ${drStatusCls(status)}" style="margin-left:4px">${status}</span></div>
     ${warnings.map(w => `<div class="drwarn">${esc(w)}</div>`).join("")}
     ${edited ? `<div class="drwarn">This text was edited by hand, so changes in the sections will not update it. ${canFinal ? `<button class="link" data-act="drtextreset">Reset to automatic</button>` : ""}</div>` : ""}
     ${paper}
@@ -2619,6 +2668,38 @@ function viewDailyPreview() {
     ${canFinal && !drWaNumber() ? `<div class="muted" style="font-size:12px;margin-top:10px">To send the report to WhatsApp, the Admin saves the number under Daily Reports › WhatsApp.</div>` : ""}
     ${canFinal && waAuto() && !(drReport && drReport.wa && drReport.wa.sentAt) ? `<div class="muted" style="font-size:12px;margin-top:10px">This report goes to WhatsApp by itself at ${esc(waTimeTxt())}. See Daily Reports › WhatsApp.</div>` : ""}
     <div class="muted" style="font-size:12px;margin-top:10px">The copied text keeps the asterisks WhatsApp uses for bold, so paste it directly into the chat.</div>`}`;
+}
+/* the report text with small "not submitted yet" notes next to the parts still missing.
+   Only on screen: Copy and WhatsApp always use the clean text. */
+const DR_LINE_SECS = T => [
+  [`*${T.daily}`, ["dswActivities", "hallActivities"]], [`*${T.tomorrow}`, ["tomorrow"]],
+  [`*(a) ${T.maleLabel}`, ["maleWing"]], [`*(b) ${T.femaleLabel}`, ["femaleWing"]],
+  [`*${T.sickness}`, ["sickness"]], [`*${T.counselling}`, ["counselling"]]];
+function drMissingNow() { return REQ_SECS.filter(k => drSections[k] === undefined); }
+function drPaperHtml(text) {
+  const auto = !(drReport && (drReport.finalized || drReport.manualText));
+  const missing = auto ? drMissingNow() : [];
+  if (!missing.length) return esc(text);
+  const T = drTpl(), map = DR_LINE_SECS(T), today = drDate === dhakaDateStr();
+  const done = new Set();
+  return text.split("\n").map(line => {
+    const hit = map.find(([p]) => line.startsWith(p));
+    if (!hit) return esc(line);
+    const miss = hit[1].filter(k => missing.includes(k) && !done.has(k));
+    miss.forEach(k => done.add(k));
+    if (!miss.length) return esc(line);
+    return esc(line) + `<span class="drmiss">${ic("clock", 13)} ${esc(miss.map(k => SEC_NAME[k]).join(" & "))}: not submitted yet${today ? " today" : ""}</span>\u0000`;
+  }).join("\n").replace(/\u0000\n?/g, "");
+}
+function drViewerHead() {
+  const miss = drMissingNow(), total = REQ_SECS.length, fin = !!(drReport && drReport.finalized);
+  const pct = Math.round(((total - miss.length) / total) * 100);
+  return `<div class="glass drcard drview">
+    <div class="dv-top"><div><b>${esc(fmtReportDate(drDate))}</b><small>${fin ? "Final report" : drDate === dhakaDateStr() ? "Today's report so far" : "Report"}</small></div>
+      <span class="dv-num">${total - miss.length}<i>/${total}</i></span></div>
+    <div class="dv-bar"><span style="width:${fin ? 100 : pct}%"></span></div>
+    <div class="dv-sub">${fin ? "All parts are in and the report is final." : miss.length ? `Waiting for: ${esc(miss.map(k => SEC_NAME[k]).join(", "))}` : "All parts are in."}</div>
+  </div>`;
 }
 function drWaNumber() { return bdPhone(waCfg.number || drConfig.waNumber || ""); }
 const waAuto = () => waCfg.autoSend !== false && !!waState.ready && !!drWaNumber();
@@ -2706,6 +2787,73 @@ function viewDailyWhatsApp() {
     </div>`;
   return `<div class="sec">${esc(fmtReportDate(drDate))}</div>` + waStatusBlock() + actions + settings + conn;
 }
+function cmdtDraftGet() {
+  const src = JSON.stringify([cmdtCfg.on, cmdtCfg.time, cmdtCfg.to, cmdtCfg.afterSent]);
+  if (!cmdtDraft || (!cmdtDraft.dirty && cmdtDraft.src !== src))
+    cmdtDraft = { on: !!cmdtCfg.on, time: cmdtCfg.time || "22:45", to: [...(cmdtCfg.to || [])], afterSent: cmdtCfg.afterSent !== false, dirty: false, src };
+  return cmdtDraft;
+}
+function cmdtStatusHtml() {
+  const k = (drReport && drReport.cmdt) || {}, r = drReport || {};
+  const sent = (r.wa && r.wa.sentAt) || r.finalized || r.waOpenedAt;
+  const at = dhakaDeadlineMs(drDate, cmdtCfg.time || "22:45"), now = Date.now();
+  let cls = "wait", big = "Waiting", sub = "";
+  if (k.doneAt) { cls = "ok"; big = "Sent to the Commandant"; sub = `${esc(k.doneBy || "")} tapped Done at ${clock(k.doneAt)}`; }
+  else if (!cmdtCfg.on) { cls = "off"; big = "Reminder is off"; sub = "Switch it on below to ring the chosen people."; }
+  else if (Number(k.count)) { cls = "late"; big = "Not sent yet"; sub = `Alarm rang ${k.count} time${k.count > 1 ? "s" : ""} · last at ${clock(k.lastAt)}`; }
+  else if (now < at) { sub = `Alarm at ${esc(hhmmTxt(cmdtCfg.time || "22:45"))} if nobody taps Done`; }
+  else if (cmdtCfg.afterSent !== false && !sent) { sub = "Starts as soon as the report is sent"; }
+  else sub = "Alarm starts within a minute";
+  return `<div class="glass drcard cmdt-st ${cls}"><div class="cs-ic">${ic(k.doneAt ? "check" : "bell", 22)}</div>
+      <div><b>${big}</b><small>${sub}</small></div></div>
+    ${!k.doneAt && cmdtCfg.on ? `<button class="btn ghost" data-act="cmdtdone" style="width:100%;margin-top:10px">Mark as sent to the Commandant</button>` : ""}`;
+}
+function viewDailyCmdt() {
+  if (!(isAdmin || drRole() === "full")) return `<div class="empty">Only the Admin and people with Full Access can see this.</div>`;
+  const d = cmdtDraftGet(), ro = !isAdmin;
+  const people = members.filter(m => m.active !== false);
+  const list = people.map(m => `<label class="cmdt-p ${d.to.includes(m.email) ? "on" : ""}"><input type="checkbox" data-cmdtto="${esc(m.email)}" ${d.to.includes(m.email) ? "checked" : ""} ${ro ? "disabled" : ""}>
+      <span class="av">${esc(initials(m.name || m.email))}</span><span class="nm"><b>${esc(m.name || m.email)}</b><small>${esc(m.email)}</small></span></label>`).join("");
+  return `<div class="sec">${esc(fmtReportDate(drDate))}</div>${cmdtStatusHtml()}
+    <div class="sec">Reminder to send the report to the Commandant</div>
+    <div class="glass drcard wa-set">
+      <div class="muted" style="font-size:12.5px;line-height:1.5">The chosen people get a loud alarm with a big screen until one of them taps <b>Done</b>. It rings every 5 minutes, up to 6 times.</div>
+      <label class="wa-sw"><span><b>Reminder on</b><small>Every day</small></span><input type="checkbox" id="cmdtOn" ${d.on ? "checked" : ""} ${ro ? "disabled" : ""}></label>
+      <label>Alarm time</label><input id="cmdtTime" type="time" value="${esc(d.time)}" ${ro ? "disabled" : ""}>
+      <label class="wa-sw"><span><b>Only after the report is sent</b><small>If the report is late, the alarm waits for it</small></span><input type="checkbox" id="cmdtAfter" ${d.afterSent ? "checked" : ""} ${ro ? "disabled" : ""}></label>
+      <label style="margin-top:16px">Who gets the alarm</label>
+      <div class="cmdt-list">${list || `<div class="muted">No members yet.</div>`}</div>
+      ${ro ? `<div class="muted" style="font-size:12px;margin-top:10px">Only the Admin can change these.</div>` : `<button class="btn" data-act="cmdtsave" style="width:100%;margin-top:14px" ${d.dirty ? "" : "disabled"}>Save</button>`}
+    </div>`;
+}
+async function cmdtMarkDone(date) {
+  const k = (drReport && drReport.id === date && drReport.cmdt) || {};
+  await setDoc(doc(db, "dailyReports", date), { cmdt: { ...k, doneAt: Date.now(), doneBy: myName(), doneEmail: me } }, { merge: true });
+  try { window.Android && Android.alarmStop && Android.alarmStop("cmdt"); } catch (e) {}
+  if (norm(me) !== norm(ADMIN_EMAIL)) addDoc(collection(db, "notifications", norm(ADMIN_EMAIL), "items"), { text: `${myName()} sent the daily report of ${fmtReportDate(date)} to the Commandant.`, link: { tab: "daily", date }, at: Date.now(), read: false }).catch(() => {});
+}
+/* the big alarm screen: "report not sent to the Commandant yet" */
+async function openCmdtAlarm(date) {
+  date = date || dhakaDateStr();
+  let text = "";
+  try { const s = await getDoc(doc(db, "dailyReports", date)); const r = s.exists() ? s.data() : {}; if (r.cmdt && r.cmdt.doneAt) { try { Android.alarmStop("cmdt"); } catch (e) {} toast(`Already done by ${r.cmdt.doneBy || "someone"}`); return; } text = r.finalText || r.manualText || ""; } catch (e) {}
+  const host = $("#cmdtHost") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "cmdtHost" }));
+  host.innerHTML = `<div class="cmdt-alarm" role="alertdialog" aria-label="Report not sent to the Commandant">
+    <div class="ca-ring">${ic("bell", 46)}</div>
+    <div class="ca-kick">Reminder · ${esc(fmtReportDate(date))}</div>
+    <h1>Report not yet sent to Commandant Sir</h1>
+    <p>The daily report has not been sent to the Commandant yet. Please send it now, then tap Done.</p>
+    <div class="ca-btns">
+      <button class="ca-done" data-ca="done">${ic("check", 22)} Done — report sent</button>
+      ${text ? `<button class="ca-sec" data-ca="copy">${ic("copy", 18)} Copy the report</button>` : ""}
+      <button class="ca-sec" data-ca="later">Remind me later</button>
+    </div></div>`;
+  const close = () => { host.innerHTML = ""; try { Android.alarmStop("cmdt"); } catch (e) {} };
+  host.querySelector('[data-ca="later"]').onclick = () => { close(); toast("It will ring again in 5 minutes"); };
+  host.querySelector('[data-ca="done"]').onclick = () => run(async () => { await cmdtMarkDone(date); host.innerHTML = ""; toast("Marked as sent to the Commandant"); });
+  const cp = host.querySelector('[data-ca="copy"]');
+  if (cp) cp.onclick = async () => { try { await navigator.clipboard.writeText(text); toast("Report copied"); } catch (e) { toast("Could not copy", "err"); } };
+}
 function viewDailyHistory() {
   const rows = drHist;
   const body = !rows ? `<div class="empty">Loading history…</div>` : !rows.length ? `<div class="empty">No reports found for this filter.</div>` :
@@ -2723,7 +2871,8 @@ function viewDailyHistory() {
 }
 function viewDaily() {
   drEnsureSub();
-  return drDateRow() + drTabs() + (drSub === "entry" ? viewDailyEntry() : drSub === "history" ? viewDailyHistory() : drSub === "format" ? viewDailyFormat() : drSub === "wa" ? viewDailyWhatsApp() : viewDailyPreview());
+  if (drViewer() && drSub !== "preview" && drSub !== "history") drSub = "preview";
+  return drDateRow() + drTabs() + (drSub === "entry" ? viewDailyEntry() : drSub === "history" ? viewDailyHistory() : drSub === "format" ? viewDailyFormat() : drSub === "wa" ? viewDailyWhatsApp() : drSub === "cmdt" ? viewDailyCmdt() : viewDailyPreview());
 }
 
 async function drLoadHistory() {
@@ -2767,6 +2916,7 @@ function openNotifications() {
     const n = notifs.find(x => x.id === el.dataset.id); if (!n) return;
     if (!n.read) await updateDoc(doc(db, "notifications", me, "items", n.id), { read: true });
     if (n.link && n.link.tab === "daily") { tab = "daily"; drEnsureSubFor(n.link.date); drSub = "preview"; }
+    else if (n.link && n.link.tab === "cmdt") { close(); openCmdtAlarm(n.link.date); return; }
     else if (n.link && n.link.tab === "alarm") { tab = "daily"; drEnsureSubFor(n.link.date); drSub = "entry"; }
     else if (n.link && n.link.tab === "chat" && n.link.id) { tab = "home"; close(); render(); openChat(n.link.id); return; }
     else if (n.link && n.link.tab === "dm" && n.link.id) { tab = "chats"; close(); render(); openThread(n.link.id); return; }
@@ -3595,6 +3745,7 @@ function openMemberSheet(m) {
       <option value="hallManager" ${d.reportRole==="hallManager"?"selected":""}>Hall Manager (hall activities, student state, sickness)</option>
       <option value="contributor" ${d.reportRole==="contributor"?"selected":""}>Report Contributor (selected sections only)</option>
       <option value="full" ${d.reportRole==="full"?"selected":""}>Full Access (all sections, review, finalize)</option>
+      <option value="viewer" ${d.reportRole==="viewer"?"selected":""}>Viewer (sees the finished report only)</option>
     </select>
     <div id="mHallHostel" class="${d.reportRole==="hallManager"?"":"hidden"}">
       <label class="toggle"><input type="checkbox" id="mReportHostel" ${d.reportHostel?"checked":""}> Also authorized for the Student-Run Hostel section</label>
@@ -3834,7 +3985,7 @@ $("#view").addEventListener("click", e => run(async () => {
     if (!(await uiConfirm("Finalize this report? It will be locked for editing.", "Finalize"))) return;
     const text = drCompile(drDate, drSections);
     await setDoc(doc(db, "dailyReports", drDate), { date: drDate, finalized: true, finalText: text, finalizedBy: myName(), finalizedByEmail: me, finalizedAt: Date.now() }, { merge: true });
-    await notifyReportAudience(`Daily report for ${fmtReportDate(drDate)} has been finalized.`, { tab: "daily", date: drDate }, me);
+    await notifyReportAudience(`Daily report for ${fmtReportDate(drDate)} has been finalized.`, { tab: "daily", date: drDate }, me, true);
     if (waAuto()) toast(`Report finalized — it goes to WhatsApp at ${waTimeTxt()}`);
     else if (drWaNumber()) { toast("Report finalized — opening WhatsApp"); drSendWhatsApp(text); }
     else toast("Report finalized");
@@ -3854,6 +4005,17 @@ $("#view").addEventListener("click", e => run(async () => {
   else if (act === "drtextreset") { await setDoc(doc(db, "dailyReports", drDate), { manualText: null }, { merge: true }); toast("Back to automatic text"); }
   else if (act === "drwa" || act === "waopen") drSendWhatsApp(drCurrentText());
   else if (act === "warefresh") { waSrvRefresh(true); toast("Checking…"); }
+  else if (act === "cmdtsave") {
+    const d = cmdtDraftGet();
+    if (d.on && !d.to.length) { toast("Choose at least one person for the alarm.", "err"); return; }
+    const since = d.on && (!cmdtCfg.on || d.time !== cmdtCfg.time) ? Date.now() : (cmdtCfg.since || Date.now());
+    await setDoc(doc(db, "config", "commandant"), { on: !!d.on, time: d.time || "22:45", to: d.to, afterSent: !!d.afterSent, since, by: myName(), at: Date.now() }, { merge: true });
+    cmdtDraft = null; toast("Saved");
+  }
+  else if (act === "cmdtdone") {
+    if (!(await uiConfirm("Mark today's report as sent to the Commandant? The alarm stops.", "Mark as sent"))) return;
+    await cmdtMarkDone(drDate); toast("Marked as sent to the Commandant");
+  }
   else if (act === "wasave") {
     const d = waDraftGet(), num = bdPhone(d.number);
     if (d.number && num.length < 10) { toast("That number looks too short. Include the country code for numbers outside Bangladesh, e.g. +81…", "err"); return; }
@@ -3920,6 +4082,18 @@ $("#view").addEventListener("input", e => {
   if (e.target.dataset.cfgparts) { const d = drCfgDraftGet(); d[e.target.dataset.cfgparts][+e.target.dataset.i] = Math.max(0, Math.floor(Number(e.target.value) || 0)); d.dirty = true; return; }
   if (e.target.id === "drCfgDeadline") { const d = drCfgDraftGet(); d.deadline = e.target.value; d.dirty = true; return; }
   if (e.target.id === "drCfgWa") { const d = drCfgDraftGet(); d.waNumber = e.target.value; d.dirty = true; return; }
+  const cmF = { cmdtOn: "on", cmdtTime: "time", cmdtAfter: "afterSent" }[e.target.id];
+  if (cmF || e.target.dataset.cmdtto) {
+    const d = cmdtDraftGet();
+    if (cmF) d[cmF] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    else {
+      const em = e.target.dataset.cmdtto, set = new Set(d.to);
+      if (e.target.checked) set.add(em); else set.delete(em);
+      d.to = [...set]; e.target.closest(".cmdt-p")?.classList.toggle("on", e.target.checked);
+    }
+    if (!d.dirty) { d.dirty = true; const b = $('[data-act="cmdtsave"]'); if (b) b.disabled = false; }
+    return;
+  }
   const waF = { waNum: "number", waTime: "sendTime", waRemind: "deadline", waAuto: "autoSend", waAlarm: "alarmOn" }[e.target.id];
   if (waF) { const d = waDraftGet(); d[waF] = e.target.type === "checkbox" ? e.target.checked : e.target.value; if (!d.dirty) { d.dirty = true; const b = $('[data-act="wasave"]'); if (b) b.disabled = false; } return; }
   if (e.target.id === "drCfgReminders") { const d = drCfgDraftGet(); d.remindersOn = e.target.checked; d.dirty = true; return; }

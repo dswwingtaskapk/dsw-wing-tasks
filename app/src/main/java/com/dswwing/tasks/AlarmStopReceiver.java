@@ -6,10 +6,11 @@ import android.content.Intent;
 
 import androidx.core.app.NotificationManagerCompat;
 
-/** "Stop" on the daily-report alarm: silence it without opening the app. It rings again in 5 minutes if the section is still missing. */
+/** "Stop" on a report alarm: silence it without opening the app. It rings again in 5 minutes if it is still not done. */
 public class AlarmStopReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context c, Intent i) {
-        try { NotificationManagerCompat.from(c).cancel(PushService.ALARM_ID); } catch (Exception ignored) {}
+        int id = i == null ? PushService.ALARM_ID : i.getIntExtra("nid", PushService.ALARM_ID);
+        try { NotificationManagerCompat.from(c).cancel(id); } catch (Exception ignored) {}
     }
 }

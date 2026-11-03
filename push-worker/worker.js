@@ -62,6 +62,7 @@ export default {
       try { await sweepQueue(env); } catch (e) { console.log("sweep failed", e); }
       try { await deadlineReminders(env); } catch (e) { console.log("reminders failed", e); }
       try { await dailyFlow(env); } catch (e) { console.log("daily flow failed", e); }
+      try { await cmdtFlow(env); } catch (e) { console.log("commandant reminder failed", e); }
     })());
   },
 };
@@ -168,13 +169,23 @@ async function addDoc(env, collPath, obj) {
 }
 
 /* ---------------- sending ---------------- */
+/* a clear heading for the phone notification, so it is understood at a glance */
+function titleFor(tab, text) {
+  if (tab === "chat") return /^New task from /.test(text) ? "New task" : / completed: /.test(text) ? "Task completed" : "Task message";
+  if (tab === "dm") return "New message";
+  if (tab === "daily") return /logged out/i.test(text) ? "WhatsApp disconnected" : "Daily report";
+  if (tab === "alarm") return "Daily report is late";
+  if (tab === "cmdt") return "Send the report to Commandant Sir";
+  if (tab === "callend") return "Missed call";
+  return "Wing Tasks";
+}
 async function sendToEmail(env, email, text, link) {
   const tokens = await queryEq(env, "fcmTokens", "email", email);
   if (!tokens.length) return { sent: 0, errors: [], note: "this person has no phone registered yet" };
   const tok = await accessToken(env);
   let sent = 0; const errors = [];
   const L = link || {};
-  const data = { title: "Wing Tasks", body: String(text || "").slice(0, 300), tab: String(L.tab || ""), id: String(L.id || ""), date: String(L.date || ""), name: String(L.name || "").slice(0, 80), dm: String(L.dm || "").slice(0, 300) };
+  const data = { title: titleFor(String(L.tab || ""), String(text || "")), body: String(text || "").slice(0, 300), tab: String(L.tab || ""), id: String(L.id || ""), date: String(L.date || ""), name: String(L.name || "").slice(0, 80), dm: String(L.dm || "").slice(0, 300) };
   const isCall = data.tab === "call" || data.tab === "callend";
   const ttl = isCall ? "40s" : "86400s";   // a call that could not be delivered in time must not ring later
   for (const t of tokens) {
@@ -464,6 +475,37 @@ async function dailyFlow(env) {
     const last = Math.max(0, ...secs.map(x => Number(x.updatedAt) || 0), Number(rep && rep.manualAt) || 0, Number(rep && rep.finalEditedAt) || 0);
     if (last >= sendAt && now - last < GRACE) continue;      // a late section just came in: give 2-3 minutes for corrections
     await sendDaily(env, date, rep, secs, wa, "Auto");
+  }
+}
+
+/* ---------- reminder: the report must also be passed on to the Commandant ----------
+   config/commandant = { on, time "HH:MM", to: [emails], afterSent (default true), since }
+   Rings the chosen people every 5 minutes (6 times at most) from the set time until someone taps Done. */
+const CMDT_EVERY = 5 * 60000, CMDT_TIMES = 6;
+async function cmdtFlow(env) {
+  if (!env.SERVICE_ACCOUNT) return;
+  const c = await getDoc(env, "/config/commandant");
+  if (!c || !c.on) return;
+  const to = (Array.isArray(c.to) ? c.to : []).map(x => String(x || "").trim().toLowerCase()).filter(Boolean);
+  if (!to.length) return;
+  const now = Date.now(), date = dhakaDate(now), at = atTime(date, c.time, "22:45");
+  if (now < at || now > at + 3 * 3600000) return;
+  if (Number(c.since) && at < Number(c.since) - 60000) return;          // switched on after today's time: start tomorrow
+  const rep = await getDoc(env, `/dailyReports/${date}`);
+  const sent = rep && ((rep.wa && rep.wa.sentAt) || rep.finalized || rep.waOpenedAt);
+  if (c.afterSent !== false && !sent) return;                            // nothing to pass on yet
+  const k = (rep && rep.cmdt) || {};
+  if (k.doneAt) return;
+  const count = Number(k.count) || 0;
+  if (count >= CMDT_TIMES) return;
+  if (k.lastAt && now - k.lastAt < CMDT_EVERY - 20000) return;
+  try { await patchPaths(env, `/dailyReports/${date}`, { "cmdt.count": count + 1, "cmdt.lastAt": now }, rep ? rep._updateTime : "exists=false"); }
+  catch (e) { if ([400, 409, 412].includes(e.status)) return; throw e; }
+  const text = `The daily report of ${fmtReportDate(date)} has not been sent to the Commandant yet. Please send it now and tap Done.`;
+  const link = { tab: "cmdt", date };
+  for (const email of to) {
+    if (count === 0) await addDoc(env, `/notifications/${encodeURIComponent(email)}/items`, { text, link, at: now, read: false }).catch(() => {});
+    await sendToEmail(env, email, text, link).catch(() => {});
   }
 }
 

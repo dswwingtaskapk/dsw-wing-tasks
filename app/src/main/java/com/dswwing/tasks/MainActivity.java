@@ -92,6 +92,11 @@ public class MainActivity extends Activity {
             try { NotificationManagerCompat.from(this).cancel(PushService.callNotifId(id)); } catch (Throwable ignored) {}
             showOverLock(true);
         }
+        if ("cmdt".equals(tab)) {
+            // the "send to Commandant" alarm: show the big reminder screen, even over the lock screen
+            if ("done".equals(act)) { try { NotificationManagerCompat.from(this).cancel(PushService.CMDT_ID); } catch (Throwable ignored) {} }
+            else showOverLock(true);
+        }
         pendingOpenJs = "window.__pendingOpen={tab:'" + tab + "',id:'" + id + "',date:'" + date + "',act:'" + act + "'};window.dispatchEvent(new Event('nativeopen'));";
         deliverOpen();
     }
@@ -368,6 +373,19 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void ringStop() { runOnUiThread(CallRinger::stop); }
+
+        /** silence a report alarm (late section / Commandant reminder) and stop showing over the lock screen */
+        @JavascriptInterface
+        public void alarmStop(String which) {
+            runOnUiThread(() -> {
+                try {
+                    NotificationManagerCompat nm = NotificationManagerCompat.from(MainActivity.this);
+                    if (!"daily".equals(which)) nm.cancel(PushService.CMDT_ID);
+                    if (!"cmdt".equals(which)) nm.cancel(PushService.ALARM_ID);
+                } catch (Throwable ignored) {}
+                showOverLock(false);
+            });
+        }
 
         @JavascriptInterface
         @SuppressWarnings("deprecation")

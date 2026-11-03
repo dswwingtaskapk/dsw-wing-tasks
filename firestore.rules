@@ -14,6 +14,13 @@ service cloud.firestore {
     }
     function reportRole() { return get(memberPath()).data.get('reportRole', 'none'); }
     function canReport() { return isAdmin() || (isMember() && reportRole() != 'none'); }
+    function editReport() { return isAdmin() || (isMember() && !(reportRole() in ['none', 'viewer'])); }   // viewers only read
+    function cmdtPerson() {
+      return isMember() && me() in get(/databases/$(database)/documents/config/commandant).data.get('to', []);
+    }
+    function onlyCmdt() {
+      return request.resource.data.diff(resource == null ? {} : resource.data).affectedKeys().hasOnly(['cmdt']);
+    }
     function fullReport() { return isAdmin() || (isMember() && reportRole() == 'full'); }
     function involved(d) { return d.assigneeEmail == me() || d.creatorEmail == me() || d.giverEmail == me(); }
 
@@ -58,13 +65,15 @@ service cloud.firestore {
     }
 
     // ---- daily reports ----
+    // Viewers can read everything here; the people who pass the report on to the Commandant
+    // can read the report and tick "Done" (the 'cmdt' field) and nothing else.
     match /dailyReports/{date} {
-      allow read: if canReport();
-      allow create, update: if canReport();
+      allow read: if canReport() || cmdtPerson();
+      allow create, update: if editReport() || ((canReport() || cmdtPerson()) && onlyCmdt());
       allow delete: if isAdmin();
       match /sections/{section} {
         allow read: if canReport();
-        allow create, update: if canReport();
+        allow create, update: if editReport();
         allow delete: if isAdmin();
       }
     }
