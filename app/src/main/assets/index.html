@@ -739,9 +739,9 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 #lockCover .lc-ic{width:64px;height:64px;border-radius:18px;margin-bottom:8px;background:rgba(255,255,255,.14) center/30px no-repeat
   url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='4.5' y='10.5' width='15' height='10' rx='2.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/></svg>")}
 #lockCover b{font-size:20px}#lockCover small{font-size:14px;opacity:.8}
-#lockCover button{margin-top:18px;padding:12px 26px;border-radius:99px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font:600 15px/1 inherit;font-family:inherit}
+#lockCover button{margin-top:18px;padding:12px 26px;border-radius:99px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font-weight:600;font-size:15px;line-height:1;font-family:inherit}
 .callscr .c-unlock{position:absolute;z-index:5;top:calc(14px + var(--safe-t));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
-  padding:8px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:600 13px/1 inherit;font-family:inherit;cursor:pointer}
+  padding:8px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font-weight:600;font-size:13px;line-height:1;font-family:inherit;cursor:pointer}
 /* ---------- chat media (WhatsApp style) ---------- */
 .cb.isimg{padding:3px}
 .cb.isimg .ctx{padding:6px 8px 4px}
@@ -751,7 +751,7 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 .cimg .cph.err{animation:none;display:grid;place-items:center;font-size:12px;color:var(--faint)}
 @keyframes mshim{from{background-position:100% 0}to{background-position:0 0}}
 .cfile{display:flex;align-items:center;gap:11px;width:min(260px,70vw);min-width:0;padding:9px 6px 9px 9px;border-radius:13px;cursor:pointer}
-.cfile .cfi{width:42px;height:46px;border-radius:9px;font:800 11px/1 inherit;font-family:inherit;letter-spacing:.02em;color:#fff;background:#6b7280}
+.cfile .cfi{width:42px;height:46px;border-radius:9px;font-weight:800;font-size:11px;line-height:1;font-family:inherit;letter-spacing:.02em;color:#fff;background:#6b7280}
 .cfile.k-pdf .cfi{background:#e5484d}.cfile.k-doc .cfi{background:#2f6fde}.cfile.k-xls .cfi{background:#1f9d55}.cfile.k-ppt .cfi{background:#e8590c}
 .cm.me .cfile .cfi{color:#fff}
 .cm.me .cfile.k-file .cfi{background:rgba(255,255,255,.3)}
@@ -775,7 +775,7 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 .amenu-wrap{position:fixed;inset:0;z-index:260;background:rgba(10,14,20,.38);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s}
 .amenu{width:100%;max-width:520px;background:var(--surface);border-radius:22px 22px 0 0;padding:20px 16px calc(22px + var(--safe-b));display:grid;grid-template-columns:repeat(3,1fr);gap:8px;animation:amUp .22s ease-out}
 @keyframes amUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
-.amenu button{display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:none;color:var(--text);font:600 13px/1.2 inherit;font-family:inherit;padding:6px 0;cursor:pointer}
+.amenu button{display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:none;color:var(--text);font-weight:600;font-size:13px;line-height:1.2;font-family:inherit;padding:6px 0;cursor:pointer}
 .amenu .ai{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;color:#fff}
 .amenu .ai.cam{background:#e11d74}.amenu .ai.gal{background:#7c3aed}.amenu .ai.doc{background:#4f46e5}
 .amenu.small{grid-template-columns:1fr;gap:2px;padding-top:12px}
@@ -794,7 +794,7 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 @keyframes mspin{to{transform:rotate(360deg)}}
 /* ---------- report photos ---------- */
 .dract .drcam{position:relative;color:var(--primary)}
-.dract .drcam em{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--primary);color:#fff;font:700 10px/16px inherit;font-family:inherit;font-style:normal}
+.dract .drcam em{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--primary);color:#fff;font-weight:700;font-size:10px;line-height:16px;font-family:inherit;font-style:normal}
 .drpics{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 10px 4px}
 .drp{position:relative;width:62px;height:62px;border-radius:11px;overflow:hidden;background:var(--surface2)}
 .drp .drpv{display:block;width:100%;height:100%;padding:0;border:0;background:none}
@@ -824,6 +824,23 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 .wa-tst .wt-row>div{flex:1;min-width:0}.wa-tst b{display:block;font-size:14.5px}.wa-tst small{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
 .wa-tst.ok b{color:var(--ok)}.wa-tst.bad b{color:var(--bad)}
 .wa-tst .btn{flex:none;padding:10px 14px;font-size:13.5px}
+#updWall{position:fixed;inset:0;z-index:330;display:flex;align-items:center;justify-content:center;padding:calc(24px + var(--safe-t)) 24px calc(24px + var(--safe-b));
+  background:radial-gradient(120% 90% at 50% 0%,#1f6f6a 0%,#164f4b 55%,#0e3532 100%);color:#fff;text-align:center;animation:fade .2s}
+body.updlock{overflow:hidden}
+#updWall .uw-in{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center}
+#updWall .uw-ic{width:84px;height:84px;border-radius:26px;display:grid;place-items:center;background:rgba(255,255,255,.14)}
+#updWall .uw-kick{margin-top:22px;font-size:12.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.8}
+#updWall h1{margin:8px 0 0;font-size:27px;line-height:1.2;font-weight:800}
+#updWall p{margin:12px 0 0;font-size:15.5px;line-height:1.5;opacity:.9}
+#updWall .uw-go{margin-top:28px;width:100%;padding:17px;border:0;border-radius:16px;background:#fff;color:#164f4b;font-weight:800;font-size:17.5px;line-height:1;font-family:inherit;cursor:pointer}
+#updWall .uw-alt{margin-top:10px;width:100%;padding:13px;border:1px solid rgba(255,255,255,.3);border-radius:14px;background:transparent;color:#fff;font-weight:600;font-size:14px;line-height:1;font-family:inherit}
+#updWall .uw-prog{margin-top:30px;width:100%}
+#updWall .uw-prog i{display:block;height:9px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden}
+#updWall .uw-prog em{display:block;height:100%;border-radius:99px;background:#fff;transition:width .3s}
+#updWall .uw-prog span{display:block;margin-top:10px;font-size:14px;font-weight:600}
+#updWall .uw-msg{margin-top:26px;padding:13px 15px;border-radius:14px;background:rgba(255,255,255,.12);font-size:14.5px;line-height:1.5}
+#updWall .uw-msg.err{background:rgba(229,72,77,.3)}
+#updWall .uw-ver{margin-top:22px;font-size:12px;opacity:.65}
 </style>
 </head>
 <body>
@@ -1253,6 +1270,7 @@ function setupItems() {
     { k: "battery", title: "Run in background", sub: "So alerts and calls arrive on time. Tap Allow on the next screen.", ok: st.battery, act: () => A.openBatterySettings() },
   ];
   if (st.sdk >= 34) items.push({ k: "fullscreen", title: "Full-screen calls", sub: "Calls ring on the full screen, even when the phone is locked. Turn the switch on.", ok: st.fullscreen, act: () => A.openFullScreenSettings() });
+  if (st.install === false) items.push({ k: "install", title: "Install updates", sub: "So new versions install inside the app. Turn on “Allow from this source”.", ok: false, act: () => A.openInstallSettings() });
   if (st.callChannel === false) items.push({ k: "callch", title: "Call sound", sub: "Calls are set to silent. Turn on Sound / Pop on screen.", ok: false, act: () => A.openCallChannel() });
   const mk = MAKER_STEPS.find(([re]) => re.test(st.brand || ""));
   if (mk && A.openMaker) items.push({ k: "maker", title: "Lock screen & auto-start", sub: mk[1] + " Then come back here.", ok: lsGet("su_maker") === "1", act: () => { lsSet("su_maker_opened", "1"); A.openMaker(); }, manual: true });
@@ -1651,6 +1669,7 @@ function navPush() { const top = navStack[navStack.length - 1]; if (top && top.t
    5) on Home -> leave the app */
 window.__appBack = function () {
   try {
+    if ($("#updWall")) return 1;
     if (call || incoming) return 1;
     if (document.body.classList.contains("drawer-open")) { closeDrawer(); return 1; }
     if (chatId) { closeChat(); return 1; }
@@ -2324,7 +2343,7 @@ function viewHome() {
   const body = grp("g-in", "inbox", "Assigned to me", "Given to you by others", toMe)
     + grp("g-own", "user", "My own tasks", "Made by you for you", own)
     + grp("g-out", "send", "Assigned by me", "You gave to others", out);
-  const upd = updInfo ? `<div class="upd"><div><b>New version ${esc(updInfo)} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" data-act="updgo">Update</button></div>` : "";
+  const upd = updInfo ? `<div class="upd"><div><b>New version ${esc(updInfo)} is ready</b><small>Update to keep using the app.</small></div><button class="btn" data-act="updgo">Update</button></div>` : "";
   return heroHtml() + upd + digestHtml() + `<div class="stats">
       <div class="stat glass" role="button" data-act="statgo" data-v="today"><b>${dueToday}</b><span>Due today</span></div>
       <div class="stat glass" role="button" data-act="statgo" data-v="overdue"><b style="color:var(--bad)">${overdueAll}</b><span>Overdue</span></div>
@@ -2571,15 +2590,71 @@ async function checkUpdate(manual) {
     const b = $("#updBanner");
     updInfo = latest > BUILD.versionCode ? String(j.tag_name).replace(/^v/, "") : "";
     updTag = latest > BUILD.versionCode && (j.assets || []).some(a => /^WingTasks-/.test(a.name || "")) ? String(j.tag_name) : "";
+    updCheckedAt = Date.now();
     if (tab === "home") render();
     if (latest > BUILD.versionCode) {
       b.className = "upd";
-      b.innerHTML = `<div><b>New version ${esc(String(j.tag_name).replace(/^v/, ""))} is ready</b><small>Tap Update, then Install.</small></div><button class="btn" id="updGo">Update</button>`;
-      $("#updGo").onclick = () => window.open(updUrl(), "_blank");
-      if (manual) window.scrollTo({ top: 0, behavior: "smooth" });
-    } else { b.className = "hidden"; if (manual) toast("You have the newest version (" + BUILD.versionName + ")."); }
-  } catch (e) { if (manual) toast("Could not check for updates. Check the internet connection.", "err"); }
+      b.innerHTML = `<div><b>New version ${esc(String(j.tag_name).replace(/^v/, ""))} is ready</b><small>Update to keep using the app.</small></div><button class="btn" id="updGo">Update</button>`;
+      $("#updGo").onclick = startUpdate;
+      showUpdateWall();
+    } else { b.className = "hidden"; hideUpdateWall(); if (manual) toast("You have the newest version (" + BUILD.versionName + ")."); }
+  } catch (e) { if (manual) toast("Could not check for updates. Check the internet connection.", "err"); }   // no internet: the app keeps working
 }
+
+/* ---------- UPDATE REQUIRED: a new version must be installed before the app can be used ----------
+   The update downloads inside the app and the phone's own installer asks once: "Update this app?". */
+let updCheckedAt = 0, updState = { s: "idle" };
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && user && Date.now() - updCheckedAt > 10 * 60000) checkUpdate(false);
+});
+function hideUpdateWall() { const w = $("#updWall"); if (w) w.remove(); document.body.classList.remove("updlock"); }
+function showUpdateWall() {
+  if (!updInfo) return;
+  if (call || incoming || lockMode) { setTimeout(showUpdateWall, 5000); return; }   // never in the middle of a call or over the lock screen
+  let w = $("#updWall");
+  if (!w) { w = document.createElement("div"); w.id = "updWall"; w.setAttribute("role", "alertdialog"); document.body.appendChild(w); }
+  document.body.classList.add("updlock");
+  renderUpdateWall();
+}
+function renderUpdateWall() {
+  const w = $("#updWall"); if (!w) return;
+  const st = updState, native = !!(window.Android && Android.downloadUpdate);
+  let body = "";
+  if (st.s === "dl") body = `<div class="uw-prog"><i><em style="width:${st.p || 0}%"></em></i><span>Downloading… ${st.p || 0}%</span></div>`;
+  else if (st.s === "perm") body = `<div class="uw-msg">One-time step: allow <b>Install unknown apps</b> for <b>Wing Tasks</b>, then come back here.</div>
+      <button class="uw-go" data-uw="perm">Open the setting</button>`;
+  else if (st.s === "install") body = `<div class="uw-msg">Tap <b>Update</b> on the next screen. When it finishes, tap <b>Open</b>.</div>
+      <button class="uw-go" data-uw="install">Install again</button>`;
+  else if (st.s === "error") body = `<div class="uw-msg err">${esc(st.msg || "The download did not finish.")}</div>
+      <button class="uw-go" data-uw="go">Try again</button><button class="uw-alt" data-uw="browser">Download in the browser instead</button>`;
+  else body = `<button class="uw-go" data-uw="go">${native ? "Update now" : "Download the update"}</button>`;
+  w.innerHTML = `<div class="uw-in">
+      <div class="uw-ic">${ic("download", 34, 2)}</div>
+      <div class="uw-kick">Update required</div>
+      <h1>New version ${esc(updInfo)} is ready</h1>
+      <p>Please update Wing Tasks to keep using it. Your tasks, chats and reports stay as they are.</p>
+      ${body}
+      <small class="uw-ver">You have ${esc(BUILD.versionName || "")} · new ${esc(updInfo)}</small>
+    </div>`;
+  w.onclick = e => {
+    const b = e.target.closest("[data-uw]"); if (!b) return;
+    const k = b.dataset.uw;
+    if (k === "go") startUpdate();
+    else if (k === "perm") { try { Android.openInstallSettings(); } catch (e2) {} }
+    else if (k === "install") { try { Android.installUpdate(); } catch (e2) {} }
+    else if (k === "browser") window.open(updUrl(), "_blank");
+  };
+}
+function startUpdate() {
+  if (window.Android && Android.downloadUpdate) { updState = { s: "dl", p: 0 }; renderUpdateWall(); Android.downloadUpdate(updUrl()); }
+  else window.open(updUrl(), "_blank");
+}
+/* the phone reports how the download / install is going */
+window.__updProg = (p, s, msg) => {
+  updState = s === "dl" ? { s: "dl", p: Math.max(0, Math.min(100, Math.round(p) || 0)) } : { s, msg };
+  if (s === "dl") { const em = document.querySelector("#updWall .uw-prog em"), sp = document.querySelector("#updWall .uw-prog span"); if (em && sp) { em.style.width = updState.p + "%"; sp.textContent = `Downloading… ${updState.p}%`; return; } }
+  renderUpdateWall();
+};
 function shareLink() {
   const u = apkUrl(), text = "Install Wing Tasks (DSW Wing): " + u;
   try { if (window.Android && window.Android.share) { window.Android.share(text); return; } } catch (e) {}
@@ -4409,7 +4484,7 @@ $("#view").addEventListener("click", e => run(async () => {
     }
   }
   else if (act === "pushcheck") { await runPushCheck(); }
-  else if (act === "updgo") window.open(updUrl(), "_blank");
+  else if (act === "updgo") startUpdate();
   else if (act === "theme") { try { localStorage.setItem("wt_theme", v); } catch (e) {} applyTheme(); render(); }
   else if (act === "sharelink") shareLink();
   else if (act === "checkupd") { el.disabled = true; await checkUpdate(true); el.disabled = false; }

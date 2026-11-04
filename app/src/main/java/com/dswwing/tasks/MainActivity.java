@@ -314,6 +314,81 @@ public class MainActivity extends Activity {
     }
 
     @SuppressWarnings("deprecation")
+    /* ---------- in-app update: download -> check it is Wing Tasks -> the phone's installer ---------- */
+    private volatile boolean updateRunning = false;
+    private volatile boolean updateWaitingPerm = false;
+    private File pendingUpdate = null;
+
+    private boolean canInstallUpdates() {
+        try { return Build.VERSION.SDK_INT < 26 || getPackageManager().canRequestPackageInstalls(); } catch (Throwable t) { return true; }
+    }
+
+    private void updJs(String state, int pct, String msg) {
+        final String js = "window.__updProg&&window.__updProg(" + pct + ",'" + state + "'," + (msg == null ? "null" : "'" + msg.replaceAll("[^A-Za-z0-9 .,:()%/-]", " ") + "'") + ")";
+        runOnUiThread(() -> { if (web != null) web.evaluateJavascript(js, null); });
+    }
+
+    private void startUpdateDownload(final String url) {
+        if (updateRunning) return;
+        updateRunning = true;
+        new Thread(() -> {
+            java.net.HttpURLConnection c = null;
+            try {
+                File dir = new File(getCacheDir(), "update"); dir.mkdirs();
+                File[] old = dir.listFiles(); if (old != null) for (File f : old) f.delete();
+                File out = new File(dir, "WingTasks-update.apk");
+                String u = url;
+                for (int hop = 0; ; hop++) {               // GitHub sends the file from another address: follow it
+                    if (hop > 6) throw new Exception("Too many redirects");
+                    c = (java.net.HttpURLConnection) new java.net.URL(u).openConnection();
+                    c.setInstanceFollowRedirects(false);
+                    c.setConnectTimeout(20000); c.setReadTimeout(30000);
+                    c.setRequestProperty("User-Agent", "WingTasks-Android");
+                    int code = c.getResponseCode();
+                    if (code >= 300 && code < 400) { String loc = c.getHeaderField("Location"); c.disconnect(); if (loc == null) throw new Exception("Bad redirect"); u = new java.net.URL(new java.net.URL(u), loc).toString(); continue; }
+                    if (code != 200) throw new Exception("The server answered " + code);
+                    break;
+                }
+                long total = c.getContentLengthLong(), got = 0; int last = -1;
+                try (java.io.InputStream in = c.getInputStream(); FileOutputStream os = new FileOutputStream(out)) {
+                    byte[] buf = new byte[64 * 1024]; int n;
+                    while ((n = in.read(buf)) > 0) {
+                        os.write(buf, 0, n); got += n;
+                        int pct = total > 0 ? (int) (got * 100 / total) : -1;
+                        if (pct >= 0 && pct != last) { last = pct; updJs("dl", pct, null); }
+                    }
+                }
+                if (total > 0 && got < total) throw new Exception("The download was cut off. Check the internet and try again.");
+                // make sure it really is Wing Tasks before offering to install it
+                android.content.pm.PackageInfo pi = getPackageManager().getPackageArchiveInfo(out.getPath(), 0);
+                if (pi == null || !getPackageName().equals(pi.packageName)) throw new Exception("The downloaded file is not Wing Tasks.");
+                pendingUpdate = out;
+                runOnUiThread(this::installPendingUpdate);
+            } catch (Exception e) {
+                updJs("error", 0, e.getMessage() == null ? "The download did not finish. Check the internet and try again." : e.getMessage());
+            } finally {
+                if (c != null) try { c.disconnect(); } catch (Exception ignored) {}
+                updateRunning = false;
+            }
+        }).start();
+    }
+
+    private void installPendingUpdate() {
+        if (pendingUpdate == null || !pendingUpdate.exists()) { updJs("error", 0, "Please download the update again."); return; }
+        if (!canInstallUpdates()) { updateWaitingPerm = true; updJs("perm", 100, null); return; }
+        updateWaitingPerm = false;
+        try {
+            Uri uri = androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".files", pendingUpdate);
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(uri, "application/vnd.android.package-archive");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(i);
+            updJs("install", 100, null);
+        } catch (Exception e) {
+            updJs("error", 0, "The phone could not open the installer.");
+        }
+    }
+
     /* ---------- chat files handed to other apps (open / share) live in the app's cache for a day ---------- */
     private Uri sharedFile(String base64, String name) throws Exception {
         byte[] data = Base64.decode(base64, Base64.DEFAULT);
@@ -326,7 +401,7 @@ public class MainActivity extends Activity {
 
     private void cleanCache() {
         long old = System.currentTimeMillis() - 24L * 3600 * 1000;
-        for (String sub : new String[]{"shared", "camera"}) {
+        for (String sub : new String[]{"shared", "camera", "update"}) {
             File[] list = new File(getCacheDir(), sub).listFiles();
             if (list != null) for (File f : list) if (f.lastModified() < old) { try { f.delete(); } catch (Exception ignored) {} }
         }
@@ -483,6 +558,25 @@ public class MainActivity extends Activity {
             } catch (Exception e) {
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not share the file", Toast.LENGTH_LONG).show());
             }
+        }
+
+        /** update required: download the new version inside the app, then hand it to the phone's installer */
+        @JavascriptInterface
+        public void downloadUpdate(String url) { startUpdateDownload(url); }
+
+        @JavascriptInterface
+        public void installUpdate() { runOnUiThread(MainActivity.this::installPendingUpdate); }
+
+        /** the one-time "Install unknown apps" switch for Wing Tasks */
+        @JavascriptInterface
+        public void openInstallSettings() {
+            runOnUiThread(() -> {
+                updateWaitingPerm = true;
+                try {
+                    if (Build.VERSION.SDK_INT >= 26) startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
+                    else startActivity(new Intent(Settings.ACTION_SECURITY_SETTINGS));
+                } catch (Exception e) { openAppDetails(); }
+            });
         }
 
         /** share several photos at once (the report's photos), e.g. to WhatsApp */
@@ -643,7 +737,7 @@ public class MainActivity extends Activity {
                 }
             } catch (Throwable ignored) {}
             return "{\"notif\":" + notif + ",\"mic\":" + mic + ",\"battery\":" + battery + ",\"fullscreen\":" + canFullScreenCalls()
-                    + ",\"callChannel\":" + callsOn + ",\"sdk\":" + Build.VERSION.SDK_INT + ",\"brand\":\"" + clean(brand()) + "\"}";
+                    + ",\"callChannel\":" + callsOn + ",\"install\":" + canInstallUpdates() + ",\"sdk\":" + Build.VERSION.SDK_INT + ",\"brand\":\"" + clean(brand()) + "\"}";
         }
 
         @JavascriptInterface
@@ -841,6 +935,7 @@ public class MainActivity extends Activity {
         try { NotificationManagerCompat.from(this).cancelAll(); } catch (Throwable ignored) {}
         ChatNotifs.clearAll(this);   // the shown chat notifications are gone, so start the next ones fresh
         pushLockMode();              // unlocked meanwhile? the page shows the app again
+        if (updateWaitingPerm && pendingUpdate != null && canInstallUpdates()) installPendingUpdate();   // the install switch was just turned on
         notifyPermChange();   // back from a settings page: refresh the setup checklist
         web.onResume();
     }
