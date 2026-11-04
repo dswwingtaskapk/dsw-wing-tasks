@@ -5,6 +5,14 @@
 export const HALL_SECTIONS = ["hallActivities", "maleWing", "femaleWing", "sickness"];
 export const DSW_SECTIONS = ["dswActivities", "tomorrow", "counselling"];
 export const REQUIRED_SECTIONS = [...HALL_SECTIONS, ...DSW_SECTIONS];
+/* every part of the report, in the order the Admin sees them */
+export const ALL_SECTIONS = ["dswActivities", "hallActivities", "tomorrow", "maleWing", "femaleWing", "hostel", "sickness", "counselling"];
+/* the parts that must be saved before the report goes (set by the Admin; until then all of them, the hostel too) */
+export const DEFAULT_REQUIRED = [...REQUIRED_SECTIONS, "hostel"];
+export function requiredOf(cfg) {
+  const r = cfg && Array.isArray(cfg.required) ? cfg.required.filter(k => ALL_SECTIONS.includes(k)) : null;
+  return r ? ALL_SECTIONS.filter(k => r.includes(k)) : ALL_SECTIONS.filter(k => DEFAULT_REQUIRED.includes(k));
+}
 export const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 export function fmtReportDate(dateStr) {
   const [y, m, d] = dateStr.split("-").map(Number);

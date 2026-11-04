@@ -20,7 +20,7 @@
        WA_TOKEN, WA_PHONE_ID, WA_WABA_ID
      WA_VERIFY      a secret word the app's setup command uses; also guards the webhook
    ===================================================================== */
-import { compileReport, fmtReportDate, REQUIRED_SECTIONS, reportPics, PIC_DEFAULTS } from "../app/src/main/assets/report.js";
+import { compileReport, fmtReportDate, requiredOf, reportPics, PIC_DEFAULTS } from "../app/src/main/assets/report.js";
 
 const SCOPES = "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging";
 const DHK = 6 * 3600000;
@@ -261,7 +261,7 @@ async function deadlineReminders(env) {
   const report = await getDoc(env, `/dailyReports/${today}`);
   if (report && report.finalized) return;
   const done = new Set((await listDocs(env, `/dailyReports/${today}/sections`, 20)).map(s => s._id));
-  const missing = [...HALL, ...DSW].filter(k => !done.has(k));
+  const missing = requiredOf(cfg).filter(k => !done.has(k));
 
   const members = (await listDocs(env, "/members", 300)).filter(x => x.active !== false);
   const link = { tab: "daily", date: today };
@@ -283,7 +283,7 @@ async function deadlineReminders(env) {
     const role = mem.isAdmin ? "full" : (mem.reportRole || "none");
     let mine = [];
     if (role === "full") mine = missing;
-    else if (role === "hallManager") mine = missing.filter(k => HALL.includes(k));
+    else if (role === "hallManager") mine = missing.filter(k => HALL.includes(k) || (k === "hostel" && mem.reportHostel));
     else if (role === "contributor") mine = missing.filter(k => (mem.reportSections || []).includes(k));
     if (!mine.length) continue;
     const text = role === "full"
@@ -434,7 +434,7 @@ async function sendDaily(env, date, rep, secs, wa, who) {
 function owesAlarm(mem, missing) {
   if (mem.isAdmin) return missing;
   const role = mem.reportRole || "none";
-  if (role === "hallManager") return missing.filter(k => HALL.includes(k));
+  if (role === "hallManager") return missing.filter(k => HALL.includes(k) || (k === "hostel" && mem.reportHostel));
   if (role === "contributor") return missing.filter(k => (mem.reportSections || []).includes(k));
   return [];   // Full Access people do not get the alarm
 }
@@ -461,7 +461,8 @@ async function alarms(env, date, rep, missing, sendAt) {
 async function dailyFlow(env) {
   if (!env.SERVICE_ACCOUNT) return;
   const wa = (await getDoc(env, "/config/whatsapp")) || {};
-  const legacy = wa.number ? null : await getDoc(env, "/config/dailyReport");
+  const drCfg = (await getDoc(env, "/config/dailyReport")) || {};   // which parts must be in (Admin's choice)
+  const legacy = wa.number ? null : drCfg;
   if (!wa.number && legacy && legacy.waNumber) wa.number = legacy.waNumber;
   const now = Date.now(), today = dhakaDate(now);
   // Auto-send only starts from the moment it is first switched on: old, still-pending days are never sent by themselves.
@@ -478,7 +479,7 @@ async function dailyFlow(env) {
     }
     const secs = await listDocs(env, `/dailyReports/${date}/sections`, 20);
     const have = new Set(secs.map(x => x._id));
-    const missing = REQUIRED_SECTIONS.filter(k => !have.has(k));
+    const missing = requiredOf(drCfg).filter(k => !have.has(k));
     const canSend = waReady(env) && wa.number;
     if (manual) { if (canSend) await sendDaily(env, date, rep, secs, wa, rep.sendNowBy || "Manual"); continue; }
     if (missing.length) { if (wa.alarmOn !== false) await alarms(env, date, rep, missing, sendAt); continue; }

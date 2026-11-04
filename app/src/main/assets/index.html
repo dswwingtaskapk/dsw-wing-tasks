@@ -847,6 +847,9 @@ body.updlock{overflow:hidden}
 #alarmBar .ab-ic{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18)}
 #alarmBar div{flex:1;min-width:0}#alarmBar b{display:block;font-size:14.5px}#alarmBar small{display:block;font-size:12px;opacity:.85}
 #alarmBar button{flex:none;border:0;border-radius:12px;padding:10px 16px;background:#fff;color:#b3261e;font-weight:800;font-size:14px;font-family:inherit}
+.grp.g-msg .link{margin-left:auto;font-size:13px}
+.readall-row{display:flex;justify-content:flex-end;margin:-4px 2px 6px}
+.readall-row .link{font-size:13px}
 </style>
 </head>
 <body>
@@ -906,7 +909,7 @@ body.updlock{overflow:hidden}
 import * as CFG from "./config.js";
 const { firebaseConfig, ADMIN_EMAIL } = CFG;
 import { BUILD } from "./build-info.js";
-import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport, WEEKDAYS, offDayList, emptyWord, reportPics, PIC_DEFAULTS } from "./report.js";
+import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport, WEEKDAYS, offDayList, emptyWord, reportPics, PIC_DEFAULTS, requiredOf, ALL_SECTIONS } from "./report.js";
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, reauthenticateWithCredential, EmailAuthProvider, updatePassword, onAuthStateChanged, signOut }
@@ -1511,8 +1514,9 @@ function drWarnings(sec) {
 }
 function drStatus(report, sec) {
   if (report && report.finalized) return "Finalized";
-  const hallDone = HALL_SECTIONS.every(k => sec[k] !== undefined);
-  const dswDone = DSW_SECTIONS.every(k => sec[k] !== undefined);
+  const req = reqSecs();
+  const hallDone = [...HALL_SECTIONS, "hostel"].filter(k => req.includes(k)).every(k => sec[k] !== undefined);
+  const dswDone = DSW_SECTIONS.filter(k => req.includes(k)).every(k => sec[k] !== undefined);
   if (!hallDone) return "Awaiting Hall Report";
   if (!dswDone) return "Awaiting DSW Wing Information";
   return "Ready for Review";
@@ -1630,7 +1634,7 @@ function render() {
   if (detailId) renderDetail(false);
   const prim = primaryTabs(items);
   const activeK = tab === "cal" ? "tasks" : prim.some(p => p[0] === tab) ? tab : "more";
-  const unreadTaskChats = tasks.reduce((n, t) => n + (canChat(t) ? unreadOf(t) : 0), 0), unreadC = unreadChats();
+  const unreadTaskChats = tasks.reduce((n, t) => n + (inMyChat(t) ? unreadOf(t) : 0), 0), unreadC = unreadChats();
   renderDrawerState(unreadTaskChats, unreadC);
   if (false) $("#navBar").innerHTML = prim.map(([k,i,l]) => `<button data-tab="${k}" class="${activeK===k?"on":""}" aria-label="${l}"><span class="nicw"><span class="nic">${ic(i,22)}</span>${k==="home" && unreadTaskChats ? `<i class="nb">${unreadTaskChats > 9 ? "9+" : unreadTaskChats}</i>` : k==="chats" && unreadC ? `<i class="nb">${unreadC > 9 ? "9+" : unreadC}</i>` : ""}</span><span>${l}</span></button>`).join("");
   const h = new Date().getHours();
@@ -1731,6 +1735,9 @@ function baselineSeen() {            // first time we see a task, older messages
   tasks.forEach(t => { if (o[t.id] === undefined) { o[t.id] = Date.now(); ch = true; } });
   if (ch) writeSeen(o);
 }
+const lastMsgAt = t => Math.max(0, ...(t.updates || []).filter(isMsg).map(u => u.at || 0));
+/* the red number counts only chats you are part of (the Admin can open every task, but other people's chats are theirs) */
+const inMyChat = t => t.creatorEmail === me || t.assigneeEmail === me || t.giverEmail === me;
 function unreadOf(t) {
   const seen = readSeen()[t.id] || 0;
   return (t.updates || []).filter(u => isMsg(u) && u.byEmail !== me && u.at > seen).length;
@@ -2346,7 +2353,15 @@ function viewHome() {
   const toMe = pending.filter(t => t.creatorEmail !== me).sort(cmp);
   const own = pending.filter(t => t.creatorEmail === me).sort(cmp);
   const out = outTasks().filter(t => t.status !== "done").sort(cmp);
-  const body = grp("g-in", "inbox", "Assigned to me", "Given to you by others", toMe)
+  // messages in tasks that are not listed below (finished tasks) — so the red number on Home can always be cleared
+  const shown = new Set([...toMe, ...own, ...out].map(t => t.id));
+  const unreadElse = tasks.filter(t => !shown.has(t.id) && inMyChat(t) && unreadOf(t) > 0).sort((a, b) => lastMsgAt(b) - lastMsgAt(a));
+  const unreadAll = tasks.filter(t => inMyChat(t) && unreadOf(t) > 0).length;
+  const msgGrp = unreadElse.length ? `<div class="grp g-msg"><div class="gt"><b>Unread messages</b><small>In finished tasks</small></div>
+      <button class="link" data-act="readall">Mark all as read</button></div>${unreadElse.map(taskCard).join("")}`
+    : unreadAll > 1 ? `<div class="readall-row"><button class="link" data-act="readall">Mark all messages as read</button></div>` : "";
+  const body = msgGrp
+    + grp("g-in", "inbox", "Assigned to me", "Given to you by others", toMe)
     + grp("g-own", "user", "My own tasks", "Made by you for you", own)
     + grp("g-out", "send", "Assigned by me", "You gave to others", out);
   const upd = updInfo ? `<div class="upd"><div><b>New version ${esc(updInfo)} is ready</b><small>Update to keep using the app.</small></div><button class="btn" data-act="updgo">Update</button></div>` : "";
@@ -3132,6 +3147,7 @@ function viewDailyFormat() {
 function drTabs() {
   const tabs = drViewer() ? [["preview","Report"],["history","History"]] : [["entry","Entry"],["preview","Preview & Send"],["history","History"]];
   if (isAdmin || drRole() === "full") { tabs.splice(2, 0, ["wa", "WhatsApp"], ["cmdt", "Commandant"]); tabs.push(["format", "Format"]); }
+  if (isAdmin) tabs.push(["req", "Required"]);
   return `<div class="filters">${tabs.map(([k,l]) => `<button class="fchip ${drSub===k?"on":""}" data-act="drtab" data-v="${k}">${l}</button>`).join("")}</div>`;
 }
 function viewDailyEntry() {
@@ -3192,9 +3208,9 @@ function drPhotosHtml() {
    Only on screen: Copy and WhatsApp always use the clean text. */
 const DR_LINE_SECS = T => [
   [`*${T.daily}`, ["dswActivities", "hallActivities"]], [`*${T.tomorrow}`, ["tomorrow"]],
-  [`*(a) ${T.maleLabel}`, ["maleWing"]], [`*(b) ${T.femaleLabel}`, ["femaleWing"]],
+  [`*(a) ${T.maleLabel}`, ["maleWing"]], [`*(b) ${T.femaleLabel}`, ["femaleWing"]], [`*(c) ${T.hostelLabel}`, ["hostel"]],
   [`*${T.sickness}`, ["sickness"]], [`*${T.counselling}`, ["counselling"]]];
-function drMissingNow() { return REQ_SECS.filter(k => drSections[k] === undefined); }
+function drMissingNow() { return reqSecs().filter(k => drSections[k] === undefined); }
 function drPaperHtml(text) {
   const auto = !(drReport && (drReport.finalized || drReport.manualText));
   const missing = auto ? drMissingNow() : [];
@@ -3211,7 +3227,7 @@ function drPaperHtml(text) {
   }).join("\n").replace(/\u0000\n?/g, "");
 }
 function drViewerHead() {
-  const miss = drMissingNow(), total = REQ_SECS.length, fin = !!(drReport && drReport.finalized);
+  const miss = drMissingNow(), total = reqSecs().length, fin = !!(drReport && drReport.finalized);
   const pct = Math.round(((total - miss.length) / total) * 100);
   return `<div class="glass drcard drview">
     <div class="dv-top"><div><b>${esc(fmtReportDate(drDate))}</b><small>${fin ? "Final report" : drDate === dhakaDateStr() ? "Today's report so far" : "Report"}</small></div>
@@ -3228,9 +3244,10 @@ function drSendWhatsApp(text) {
   setDoc(doc(db, "dailyReports", drDate), { waOpenedAt: Date.now(), waBy: myName() }, { merge: true }).catch(() => {});
 }
 /* ---------- DAILY REPORTS › WHATSAPP: automatic sending ---------- */
-const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
+const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities", hostel: "Student-Run Hostel state",
   maleWing: "Male Wing state", femaleWing: "Female Wing state", sickness: "Sickness", counselling: "Counselling" };
-const REQ_SECS = ["hallActivities", "maleWing", "femaleWing", "sickness", "dswActivities", "tomorrow", "counselling"];
+/* the parts that must be saved before the report goes — the Admin chooses them (Daily Reports › Required) */
+const reqSecs = () => requiredOf(drConfig);
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 function hhmmTxt(hhmm) { const [h, m] = String(hhmm).split(":").map(Number); const d = new Date(2000, 0, 1, h || 0, m || 0); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 const waTimeTxt = () => hhmmTxt(waCfg.sendTime || "22:25");
@@ -3249,7 +3266,7 @@ function waDraftGet() {
 }
 function waStatusBlock() {
   const r = drReport || {}, w = r.wa || {};
-  const missing = REQ_SECS.filter(k => drSections[k] === undefined);
+  const missing = reqSecs().filter(k => drSections[k] === undefined);
   const sendAt = dhakaDeadlineMs(drDate, waCfg.sendTime || "22:25"), now = Date.now();
   const connected = waSrv ? waSrv.ready : !!waState.ready;
   let tone = "", title, sub = "";
@@ -3324,6 +3341,24 @@ function viewDailyWhatsApp() {
       <button class="link" data-act="warefresh" style="margin-top:6px">Check again</button>
     </div>`;
   return `<div class="sec">${esc(fmtReportDate(drDate))}</div>` + waStatusBlock() + actions + testBox + settings + conn;
+}
+/* ---------- Daily Reports › Required: the Admin decides which parts must be in before the report goes ---------- */
+const SEC_WHO = { dswActivities: "DSW Wing", hallActivities: "Hall Manager", tomorrow: "DSW Wing", maleWing: "Hall Manager", femaleWing: "Hall Manager",
+  hostel: "Hall Manager (with hostel) or Full Access", sickness: "Hall Manager", counselling: "DSW Wing" };
+let reqDraft = null;
+function viewDailyRequired() {
+  if (!isAdmin) return `<div class="empty">Only the Admin can change this.</div>`;
+  if (!reqDraft) reqDraft = { list: reqSecs(), dirty: false };
+  const d = reqDraft;
+  return `<div class="sec">Required parts</div>
+    <div class="info" style="margin-bottom:10px">The report goes to WhatsApp only when every ticked part is saved. At the send time, the alarm rings for the people who still owe a ticked part. Unticked parts can be left empty.</div>
+    <div class="glass drcard">
+      <div class="cmdt-list">${ALL_SECTIONS.map(k => `<label class="cmdt-p ${d.list.includes(k) ? "on" : ""}"><input type="checkbox" data-reqsec="${k}" ${d.list.includes(k) ? "checked" : ""}>
+        <span class="av">${d.list.includes(k) ? ic("check", 15, 3) : ""}</span><span class="nm"><b>${esc(SECTION_LABEL[k] || k)}</b><small>${esc(SEC_WHO[k] || "")}</small></span></label>`).join("")}</div>
+      <div class="muted" style="font-size:12px;margin-top:10px">${d.list.length} of ${ALL_SECTIONS.length} required${d.list.length ? "" : " — the report will go at the send time even if everything is empty"}.</div>
+      <button class="btn" data-act="reqsave" style="width:100%;margin-top:12px" ${d.dirty ? "" : "disabled"}>Save</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin:8px 2px 0">Buildings and allocations are set under Admin › Daily report. Who fills which part is set on each member (Admin › Members).</div>`;
 }
 function cmdtDraftGet() {
   const src = JSON.stringify([cmdtCfg.on, cmdtCfg.time, cmdtCfg.to, cmdtCfg.afterSent]);
@@ -3421,7 +3456,7 @@ function viewDailyHistory() {
 function viewDaily() {
   drEnsureSub();
   if (drViewer() && drSub !== "preview" && drSub !== "history") drSub = "preview";
-  return drDateRow() + drTabs() + (drSub === "entry" ? viewDailyEntry() : drSub === "history" ? viewDailyHistory() : drSub === "format" ? viewDailyFormat() : drSub === "wa" ? viewDailyWhatsApp() : drSub === "cmdt" ? viewDailyCmdt() : viewDailyPreview());
+  return drDateRow() + drTabs() + (drSub === "entry" ? viewDailyEntry() : drSub === "history" ? viewDailyHistory() : drSub === "format" ? viewDailyFormat() : drSub === "wa" ? viewDailyWhatsApp() : drSub === "cmdt" ? viewDailyCmdt() : drSub === "req" ? viewDailyRequired() : viewDailyPreview());
 }
 
 async function drLoadHistory() {
@@ -4519,7 +4554,7 @@ $("#view").addEventListener("click", e => run(async () => {
     if (fcmSaved) { await deleteDoc(doc(db, "fcmTokens", fcmSaved)).catch(() => {}); fcmSaved = null; }
     await signOut(auth);
   }
-  else if (act === "drtab") { drSub = v; drTplDraft = null; drEditText = false; if (v === "history") drLoadHistory(); render(); }
+  else if (act === "drtab") { if (v !== "req") reqDraft = null; drSub = v; drTplDraft = null; drEditText = false; if (v === "history") drLoadHistory(); render(); }
   else if (act === "drtplsave") {
     const T = drTplDraftGet(), clean = {};
     Object.keys(DR_TPL).forEach(k => { clean[k] = typeof DR_TPL[k] === "number" ? Math.max(0, Math.min(20, Number(T[k]) || 0)) : String(T[k]); });
@@ -4568,6 +4603,10 @@ $("#view").addEventListener("click", e => run(async () => {
     await setDoc(doc(db, "config", "dailyReport"), v, { merge: true });
     drConfig = { ...drConfig, ...v }; toast("Photo settings saved");
   }
+  else if (act === "readall") {
+    const o = readSeen(), now = Date.now(); tasks.forEach(t => { o[t.id] = now; }); writeSeen(o);
+    toast("All task messages marked as read"); render();
+  }
   else if (act === "dractdel") { const sec = el.dataset.sec; const d = drEdit(sec); d.items.splice(+el.dataset.i, 1); render(); }
   else if (act === "dractmove") {
     const sec = el.dataset.sec; const d = drEdit(sec); const i = +el.dataset.i, j = i + +el.dataset.dir;
@@ -4611,6 +4650,11 @@ $("#view").addEventListener("click", e => run(async () => {
   else if (act === "drtextreset") { await setDoc(doc(db, "dailyReports", drDate), { manualText: null }, { merge: true }); toast("Back to automatic text"); }
   else if (act === "drwa" || act === "waopen") drSendWhatsApp(drCurrentText());
   else if (act === "warefresh") { waSrvRefresh(true); toast("Checking…"); }
+  else if (act === "reqsave") {
+    const list = ALL_SECTIONS.filter(k => reqDraft && reqDraft.list.includes(k));
+    await setDoc(doc(db, "config", "dailyReport"), { required: list, requiredBy: myName(), requiredAt: Date.now() }, { merge: true });
+    drConfig = { ...drConfig, required: list }; reqDraft = null; toast("Required parts saved");
+  }
   else if (act === "cmdtsave") {
     const d = cmdtDraftGet();
     if (d.on && !d.to.length) { toast("Choose at least one person for the alarm.", "err"); return; }
@@ -4650,7 +4694,7 @@ $("#view").addEventListener("click", e => run(async () => {
   }
   else if (act === "wasend") {
     const sent = !!(drReport && drReport.wa && drReport.wa.sentAt);
-    const missing = REQ_SECS.filter(k => drSections[k] === undefined);
+    const missing = reqSecs().filter(k => drSections[k] === undefined);
     const np = reportPics(drSections).length;
     const msg = (sent ? "Send this report to WhatsApp again?" : "Send this report to WhatsApp now?") + (np ? ` It sends the report and ${np} photo${np > 1 ? "s" : ""}.` : "") + (missing.length ? ` ${missing.length} section${missing.length > 1 ? "s are" : " is"} still missing.` : "");
     if (!(await uiConfirm(msg, sent ? "Send again" : "Send now"))) return;
@@ -4708,6 +4752,15 @@ $("#view").addEventListener("input", e => {
   if (e.target.dataset.cfgparts) { const d = drCfgDraftGet(); d[e.target.dataset.cfgparts][+e.target.dataset.i] = Math.max(0, Math.floor(Number(e.target.value) || 0)); d.dirty = true; return; }
   if (e.target.id === "drCfgDeadline") { const d = drCfgDraftGet(); d.deadline = e.target.value; d.dirty = true; return; }
   if (e.target.id === "drCfgWa") { const d = drCfgDraftGet(); d.waNumber = e.target.value; d.dirty = true; return; }
+  if (e.target.dataset.reqsec) {
+    if (!reqDraft) reqDraft = { list: reqSecs(), dirty: false };
+    const k = e.target.dataset.reqsec, set = new Set(reqDraft.list);
+    if (e.target.checked) set.add(k); else set.delete(k);
+    reqDraft.list = ALL_SECTIONS.filter(x => set.has(x)); reqDraft.dirty = true;
+    const lb = e.target.closest(".cmdt-p"); if (lb) { lb.classList.toggle("on", e.target.checked); const av = lb.querySelector(".av"); if (av) av.innerHTML = e.target.checked ? ic("check", 15, 3) : ""; }
+    const b = $('[data-act="reqsave"]'); if (b) b.disabled = false;
+    return;
+  }
   const cmF = { cmdtOn: "on", cmdtTime: "time", cmdtAfter: "afterSent" }[e.target.id];
   if (cmF || e.target.dataset.cmdtto) {
     const d = cmdtDraftGet();
