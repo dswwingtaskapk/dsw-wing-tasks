@@ -312,6 +312,7 @@ public class PushService extends FirebaseMessagingService {
             Notification n = b.build();
             n.flags |= Notification.FLAG_INSISTENT;
             post(CMDT_ID, n);
+            MainActivity.showAlarmInApp("cmdt", date);     // app open: its big screen appears too, the sound keeps going
             return;
         }
 

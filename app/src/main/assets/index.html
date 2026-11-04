@@ -841,6 +841,12 @@ body.updlock{overflow:hidden}
 #updWall .uw-msg{margin-top:26px;padding:13px 15px;border-radius:14px;background:rgba(255,255,255,.12);font-size:14.5px;line-height:1.5}
 #updWall .uw-msg.err{background:rgba(229,72,77,.3)}
 #updWall .uw-ver{margin-top:22px;font-size:12px;opacity:.65}
+#alarmBar{position:fixed;left:12px;right:12px;bottom:calc(14px + var(--safe-b));z-index:240;display:none;align-items:center;gap:12px;padding:12px 12px 12px 14px;
+  border-radius:16px;background:#b3261e;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#alarmBar.on{display:flex;animation:fade .2s}
+#alarmBar .ab-ic{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.18)}
+#alarmBar div{flex:1;min-width:0}#alarmBar b{display:block;font-size:14.5px}#alarmBar small{display:block;font-size:12px;opacity:.85}
+#alarmBar button{flex:none;border:0;border-radius:12px;padding:10px 16px;background:#fff;color:#b3261e;font-weight:800;font-size:14px;font-family:inherit}
 </style>
 </head>
 <body>
@@ -1167,7 +1173,7 @@ function consumeOpen() {
     else openCmdtAlarm(p.date);
     return true;
   }
-  if (p.tab === "daily") { window.__pendingOpen = null; tab = "daily"; drEnsureSubFor(p.date); drSub = p.act === "alarm" ? "entry" : "preview"; render(); return true; }
+  if (p.tab === "daily") { window.__pendingOpen = null; tab = "daily"; drEnsureSubFor(p.date); drSub = p.act === "alarm" ? "entry" : "preview"; render(); if (p.act === "alarm") showAlarmBar(); return true; }
   if (p.tab === "dm" && p.id) { if (!members.length) return false; window.__pendingOpen = null; tab = "chats"; render(); openThread(p.id); return true; }
   if (p.tab === "call" && p.id) {
     window.__pendingOpen = null;
@@ -3338,7 +3344,8 @@ function cmdtStatusHtml() {
   else sub = "Alarm starts within a minute";
   return `<div class="glass drcard cmdt-st ${cls}"><div class="cs-ic">${ic(k.doneAt ? "check" : "bell", 22)}</div>
       <div><b>${big}</b><small>${sub}</small></div></div>
-    ${!k.doneAt && cmdtCfg.on ? `<button class="btn ghost" data-act="cmdtdone" style="width:100%;margin-top:10px">Mark as sent to the Commandant</button>` : ""}`;
+    ${!k.doneAt && cmdtCfg.on ? `<button class="btn ghost" data-act="cmdtdone" style="width:100%;margin-top:10px">Mark as sent to the Commandant</button>` : ""}
+    ${isAdmin && (k.doneAt || Number(k.count)) && drDate === dhakaDateStr() ? `<button class="link" data-act="cmdtreset" style="margin-top:10px">Ring again today (for testing)</button>` : ""}`;
 }
 function viewDailyCmdt() {
   if (!(isAdmin || drRole() === "full")) return `<div class="empty">Only the Admin and people with Full Access can see this.</div>`;
@@ -3363,6 +3370,16 @@ async function cmdtMarkDone(date) {
   await setDoc(doc(db, "dailyReports", date), { cmdt: { ...k, doneAt: Date.now(), doneBy: myName(), doneEmail: me } }, { merge: true });
   try { window.Android && Android.alarmStop && Android.alarmStop("cmdt"); } catch (e) {}
   if (norm(me) !== norm(ADMIN_EMAIL)) addDoc(collection(db, "notifications", norm(ADMIN_EMAIL), "items"), { text: `${myName()} sent the daily report of ${fmtReportDate(date)} to the Commandant.`, link: { tab: "daily", date }, at: Date.now(), read: false }).catch(() => {});
+}
+/* the late-section alarm keeps ringing while the app is open: a bar to stop it */
+function showAlarmBar() {
+  let b = $("#alarmBar");
+  if (!b) { b = document.createElement("div"); b.id = "alarmBar"; document.body.appendChild(b); }
+  b.innerHTML = `<span class="ab-ic">${ic("bell", 19)}</span><div><b>Daily report alarm</b><small>Submit your section to stop it for good</small></div><button type="button" id="abStop">Stop</button>`;
+  b.classList.add("on");
+  const hide = () => { b.classList.remove("on"); clearTimeout(b._t); };
+  $("#abStop").onclick = () => { try { Android.alarmStop("daily"); } catch (e) {} hide(); };
+  clearTimeout(b._t); b._t = setTimeout(hide, 65000);     // the phone stops ringing after about a minute anyway
 }
 /* the big alarm screen: "report not sent to the Commandant yet" */
 async function openCmdtAlarm(date) {
@@ -4600,6 +4617,11 @@ $("#view").addEventListener("click", e => run(async () => {
     const since = d.on && (!cmdtCfg.on || d.time !== cmdtCfg.time) ? Date.now() : (cmdtCfg.since || Date.now());
     await setDoc(doc(db, "config", "commandant"), { on: !!d.on, time: d.time || "22:45", to: d.to, afterSent: !!d.afterSent, since, by: myName(), at: Date.now() }, { merge: true });
     cmdtDraft = null; toast("Saved");
+  }
+  else if (act === "cmdtreset") {
+    if (!(await uiConfirm("Clear today's Commandant reminder so it can ring again today? Use this only for testing.", "Ring again"))) return;
+    await setDoc(doc(db, "dailyReports", dhakaDateStr()), { cmdt: { count: 0, lastAt: 0, doneAt: null, doneBy: null, doneEmail: null } }, { merge: true });
+    toast("Done — it rings again at the alarm time (set a time later than now)");
   }
   else if (act === "cmdtdone") {
     if (!(await uiConfirm("Mark today's report as sent to the Commandant? The alarm stops.", "Mark as sent"))) return;

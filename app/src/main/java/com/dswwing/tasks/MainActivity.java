@@ -58,6 +58,7 @@ public class MainActivity extends Activity {
     static volatile String activeConv = "";   // the chat open on screen right now ("dm:<id>" / "chat:<taskId>")
     static String pushToken = null;
     private static MainActivity instance;
+    private boolean alarmLaunch = false;      // opened by a report alarm: keep it ringing
     private boolean pageLoaded = false;
     private String pendingOpenJs = null;
     private WebView web;
@@ -98,6 +99,7 @@ public class MainActivity extends Activity {
             showOverLock(true);
         }
         if (("dm".equals(tab) || "chat".equals(tab)) && !id.isEmpty()) ChatNotifs.clear(this, tab + ":" + id);
+        if (("daily".equals(tab) && "alarm".equals(act)) || ("cmdt".equals(tab) && !"done".equals(act))) alarmLaunch = true;
         if ("cmdt".equals(tab)) {
             // the "send to Commandant" alarm: show the big reminder screen, even over the lock screen
             if ("done".equals(act)) { try { NotificationManagerCompat.from(this).cancel(PushService.CMDT_ID); } catch (Throwable ignored) {} }
@@ -314,6 +316,41 @@ public class MainActivity extends Activity {
     }
 
     @SuppressWarnings("deprecation")
+    /* Opening the app clears the message notifications, but NEVER a ringing report alarm:
+       its sound belongs to the notification, so clearing it would silence the alarm the moment
+       its full screen opens. The alarm stops with Done / Remind me later / Stop. */
+    private void clearNotifications() {
+        boolean cmdtOn = false;
+        try {
+            android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            for (android.service.notification.StatusBarNotification sb : nm.getActiveNotifications()) {
+                int id = sb.getId();
+                if (id == PushService.CMDT_ID) { cmdtOn = true; continue; }
+                if (id == PushService.ALARM_ID) { if (!alarmLaunch) nm.cancel(id); continue; }   // the app was opened on its own: the late-section alarm is seen
+                nm.cancel(sb.getTag(), id);
+            }
+        } catch (Throwable t) {
+            try { NotificationManagerCompat.from(this).cancelAll(); } catch (Throwable ignored) {}
+        }
+        // the Commandant alarm is still ringing and the app was opened another way: show its big screen
+        if (cmdtOn && !alarmLaunch && pendingOpenJs == null) {
+            pendingOpenJs = "window.__pendingOpen={tab:'cmdt',id:'',date:'',act:'show'};window.dispatchEvent(new Event('nativeopen'));";
+            deliverOpen();
+        }
+        alarmLaunch = false;
+    }
+
+    /** a report alarm arrived while the app is open: show its screen straight away */
+    static void showAlarmInApp(final String tab, final String date) {
+        final MainActivity a = instance;
+        if (a == null || !visible) return;
+        a.runOnUiThread(() -> {
+            a.pendingOpenJs = "window.__pendingOpen={tab:'" + clean(tab) + "',id:'',date:'" + clean(date) + "',act:'" + ("cmdt".equals(tab) ? "show" : "alarm") + "'};window.dispatchEvent(new Event('nativeopen'));";
+            a.deliverOpen();
+        });
+    }
+
     /* ---------- in-app update: download -> check it is Wing Tasks -> the phone's installer ---------- */
     private volatile boolean updateRunning = false;
     private volatile boolean updateWaitingPerm = false;
@@ -932,7 +969,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         visible = true;
-        try { NotificationManagerCompat.from(this).cancelAll(); } catch (Throwable ignored) {}
+        clearNotifications();
         ChatNotifs.clearAll(this);   // the shown chat notifications are gone, so start the next ones fresh
         pushLockMode();              // unlocked meanwhile? the page shows the app again
         if (updateWaitingPerm && pendingUpdate != null && canInstallUpdates()) installPendingUpdate();   // the install switch was just turned on
