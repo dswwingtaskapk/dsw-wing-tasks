@@ -2,7 +2,7 @@
    Daily report text - shared by the app (index.html) and the push server
    (push-worker/worker.js), so the WhatsApp message is exactly the same text.
    ===================================================================== */
-export const HALL_SECTIONS = ["hallActivities", "maleWing", "femaleWing", "sickness"];
+export const HALL_SECTIONS = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness"];
 export const DSW_SECTIONS = ["dswActivities", "tomorrow", "counselling"];
 export const REQUIRED_SECTIONS = [...HALL_SECTIONS, ...DSW_SECTIONS];
 export const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -86,8 +86,9 @@ export function compileReport(dateStr, sec, cfg, over) {
   const hall = (sec.hallActivities && sec.hallActivities.items) || [];
   const all = [...dsw, ...hall].filter(x => x && String(x.text || "").trim());
   const line1 = all.length ? `*${T.daily}*\n\n${all.map((a, i) => `${all.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.daily} ${E}*`;
-  const tm = sec.tomorrow || {};
-  const tmItems = (Array.isArray(tm.items) ? tm.items : (String(tm.text || "").trim() && !isEmptyWord(tm.text) ? [{ text: String(tm.text).trim() }] : [])).filter(x => x && String(x.text || "").trim());
+  // tomorrow: DSW Wing first, then the Hall, numbered together (a), (b)...
+  const tmOf = tm => (Array.isArray(tm.items) ? tm.items : (String(tm.text || "").trim() && !isEmptyWord(tm.text) ? [{ text: String(tm.text).trim() }] : [])).filter(x => x && String(x.text || "").trim());
+  const tmItems = [...tmOf(sec.tomorrow || {}), ...tmOf(sec.hallTomorrow || {})];
   const line2 = tmItems.length ? `*${T.tomorrow}*\n\n${tmItems.map((a, i) => `${tmItems.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.tomorrow} ${E}*`;
   const male = sec.maleWing || wingDefault(cfg.maleParts);
   const female = sec.femaleWing || wingDefault(cfg.femaleParts);

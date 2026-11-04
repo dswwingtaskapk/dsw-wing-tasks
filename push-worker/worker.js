@@ -24,9 +24,9 @@ import { compileReport, fmtReportDate, REQUIRED_SECTIONS } from "../app/src/main
 
 const SCOPES = "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging";
 const DHK = 6 * 3600000;
-const HALL = ["hallActivities", "maleWing", "femaleWing", "sickness"];
+const HALL = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness"];
 const DSW = ["dswActivities", "tomorrow", "counselling"];
-const LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
+const LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities (DSW Wing)", hallActivities: "Hall activities", hallTomorrow: "Tomorrow's activities (Hall)",
   maleWing: "Male Wing state", femaleWing: "Female Wing state", hostel: "Hostel state", sickness: "Sickness", counselling: "Counselling" };
 
 const CORS = {
@@ -424,7 +424,7 @@ async function sendDaily(env, date, rep, secs, wa, who) {
 function owesAlarm(mem, missing) {
   if (mem.isAdmin) return missing;
   const role = mem.reportRole || "none";
-  if (role === "hallManager") return missing.filter(k => ["hallActivities", "maleWing", "femaleWing", "sickness"].includes(k));
+  if (role === "hallManager") return missing.filter(k => HALL.includes(k));
   if (role === "contributor") return missing.filter(k => (mem.reportSections || []).includes(k));
   return [];   // Full Access people do not get the alarm
 }

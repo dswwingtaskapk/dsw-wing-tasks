@@ -860,7 +860,7 @@ let drUnsubs = [];
 let drSubscribed = null;
 let drHist = null, drHistFrom = "", drHistTo = "", drHistQ = "";
 let notifs = [];
-const SECTION_LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
+const SECTION_LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities (DSW Wing)", hallActivities: "Hall activities", hallTomorrow: "Tomorrow's activities (Hall)",
   maleWing: "Male Wing student state", femaleWing: "Female Wing student state", hostel: "Student-Run Hostel state",
   sickness: "Sickness", counselling: "Counselling" };
 
@@ -1327,7 +1327,7 @@ function shiftDate(dateStr, days) {
   return d.toISOString().slice(0, 10);
 }
 
-const HALL_SECTIONS = ["hallActivities", "maleWing", "femaleWing", "sickness"];
+const HALL_SECTIONS = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness"];
 const DSW_SECTIONS = ["dswActivities", "tomorrow", "counselling"];
 function drRole() { if (isAdmin) return "full"; return (myMember && myMember.reportRole) || "none"; }
 function drHasAccess() { return isAdmin || drRole() !== "none"; }
@@ -1342,7 +1342,7 @@ function drCan(section) {
   return false;
 }
 function drEditableSections() {
-  const all = ["dswActivities", "hallActivities", "tomorrow", "maleWing", "femaleWing", "hostel", "sickness", "counselling"];
+  const all = ["dswActivities", "hallActivities", "tomorrow", "hallTomorrow", "maleWing", "femaleWing", "hostel", "sickness", "counselling"];
   return all.filter(drCan);
 }
 
@@ -1352,7 +1352,7 @@ function hostelDefault(parts) { return wingDefault(parts); }
 function drSectionDefault(section) {
   switch (section) {
     case "dswActivities": case "hallActivities": return { items: [] };
-    case "tomorrow": return { items: [] };
+    case "tomorrow": case "hallTomorrow": return { items: [] };
     case "maleWing": return wingDefault(drConfig.maleParts);
     case "femaleWing": return wingDefault(drConfig.femaleParts);
     case "hostel": return hostelDefault(drConfig.hostelParts);
@@ -1364,7 +1364,7 @@ function drDraftFor(section) {
   if (!drDraft[section]) {
     const saved = drSections[section];
     drDraft[section] = saved ? JSON.parse(JSON.stringify(saved)) : drSectionDefault(section);
-    if (section === "tomorrow" && !Array.isArray(drDraft[section].items)) {
+    if ((section === "tomorrow" || section === "hallTomorrow") && !Array.isArray(drDraft[section].items)) {
       const tx = String(drDraft[section].text || "").trim();
       drDraft[section].items = tx && tx.toUpperCase() !== "NSTR" ? [{ text: tx }] : [];
     }
@@ -2571,7 +2571,11 @@ function drWingCard(section, label, parts) {
     ${drSaveBtn(section)}${drPersonLine(section)}</div>`;
 }
 function drHostelCard() { return drWingCard("hostel", "Student-Run Hostel", drConfig.hostelParts); }
-function drTomorrowCard() { return drActivityCard("tomorrow", "Tomorrow's Activities", `Add each planned activity — they appear as (a), (b)... in the report. Leave empty for ${esc(emptyWord(drDate, drTpl()))}${emptyWord(drDate, drTpl()) === "NSTR" ? " (Nothing Special To Report)" : ""}.`); }
+function drTomorrowCard() {
+  const w = esc(emptyWord(drDate, drTpl())) + (emptyWord(drDate, drTpl()) === "NSTR" ? " (Nothing Special To Report)" : "");
+  return drActivityCard("tomorrow", "Tomorrow's Activities — DSW Wing", `Add each planned activity — they appear as (a), (b)... in the report, before the Hall's. Leave empty for ${w}.`)
+    + drActivityCard("hallTomorrow", "Tomorrow's Activities — Hall", `Submitted by the Hall Manager; appears after the DSW Wing's. Nothing planned? Just tap Save — the report shows ${esc(emptyWord(drDate, drTpl()))}.`);
+}
 function drPeopleCard(section, label) {
   if (!drCan(section)) return "";
   const d = drDraftFor(section);
@@ -2695,7 +2699,7 @@ function viewDailyPreview() {
 /* the report text with small "not submitted yet" notes next to the parts still missing.
    Only on screen: Copy and WhatsApp always use the clean text. */
 const DR_LINE_SECS = T => [
-  [`*${T.daily}`, ["dswActivities", "hallActivities"]], [`*${T.tomorrow}`, ["tomorrow"]],
+  [`*${T.daily}`, ["dswActivities", "hallActivities"]], [`*${T.tomorrow}`, ["tomorrow", "hallTomorrow"]],
   [`*(a) ${T.maleLabel}`, ["maleWing"]], [`*(b) ${T.femaleLabel}`, ["femaleWing"]],
   [`*${T.sickness}`, ["sickness"]], [`*${T.counselling}`, ["counselling"]]];
 function drMissingNow() { return REQ_SECS.filter(k => drSections[k] === undefined); }
@@ -2732,9 +2736,9 @@ function drSendWhatsApp(text) {
   setDoc(doc(db, "dailyReports", drDate), { waOpenedAt: Date.now(), waBy: myName() }, { merge: true }).catch(() => {});
 }
 /* ---------- DAILY REPORTS › WHATSAPP: automatic sending ---------- */
-const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
+const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities (DSW Wing)", hallActivities: "Hall activities", hallTomorrow: "Tomorrow's activities (Hall)",
   maleWing: "Male Wing state", femaleWing: "Female Wing state", sickness: "Sickness", counselling: "Counselling" };
-const REQ_SECS = ["hallActivities", "maleWing", "femaleWing", "sickness", "dswActivities", "tomorrow", "counselling"];
+const REQ_SECS = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness", "dswActivities", "tomorrow", "counselling"];
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 function hhmmTxt(hhmm) { const [h, m] = String(hhmm).split(":").map(Number); const d = new Date(2000, 0, 1, h || 0, m || 0); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 const waTimeTxt = () => hhmmTxt(waCfg.sendTime || "22:25");
@@ -3820,7 +3824,7 @@ function openMemberSheet(m) {
     </div>
     <div id="mContribSecs" class="${d.reportRole==="contributor"?"":"hidden"}">
       <label>Sections this contributor can submit</label>
-      ${[["dswActivities","DSW Wing activities"],["tomorrow","Tomorrow's activities"],["counselling","Counselling"]].map(([k,l]) => `<label class="srow" style="margin:0;font-size:14px;color:var(--text)"><input type="checkbox" data-reportsec="${k}" ${(d.reportSections||[]).includes(k)?"checked":""}><span>${l}</span></label>`).join("")}
+      ${[["dswActivities","DSW Wing activities"],["tomorrow","Tomorrow's activities (DSW Wing)"],["hallTomorrow","Tomorrow's activities (Hall)"],["counselling","Counselling"]].map(([k,l]) => `<label class="srow" style="margin:0;font-size:14px;color:var(--text)"><input type="checkbox" data-reportsec="${k}" ${(d.reportSections||[]).includes(k)?"checked":""}><span>${l}</span></label>`).join("")}
     </div>`}
     <div class="row">
       <button class="btn ghost" id="mCancel">Cancel</button>
