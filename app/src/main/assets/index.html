@@ -817,6 +817,13 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 .wa-pics.ok{color:var(--ok)}.wa-pics.bad{color:var(--bad)}
 .amenu.two{grid-template-columns:repeat(2,1fr)}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.wa-test{margin-top:18px;padding-top:14px;border-top:1px dashed var(--line2)}
+.wa-test .wt-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px;color:var(--text)}
+.wa-test .wt-h b{font-size:14.5px}.wa-test .wt-h small{flex-basis:100%;font-size:12px;color:var(--muted);line-height:1.4}
+.wa-tst .wt-row{display:flex;align-items:center;gap:12px}
+.wa-tst .wt-row>div{flex:1;min-width:0}.wa-tst b{display:block;font-size:14.5px}.wa-tst small{display:block;font-size:12px;color:var(--muted);margin-top:2px;line-height:1.4}
+.wa-tst.ok b{color:var(--ok)}.wa-tst.bad b{color:var(--bad)}
+.wa-tst .btn{flex:none;padding:10px 14px;font-size:13.5px}
 </style>
 </head>
 <body>
@@ -935,7 +942,7 @@ let drUnsubs = [];
 let drSubscribed = null;
 let drHist = null, drHistFrom = "", drHistTo = "", drHistQ = "";
 let notifs = [];
-const SECTION_LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities (DSW Wing)", hallActivities: "Hall activities", hallTomorrow: "Tomorrow's activities (Hall)",
+const SECTION_LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
   maleWing: "Male Wing student state", femaleWing: "Female Wing student state", hostel: "Student-Run Hostel state",
   sickness: "Sickness", counselling: "Counselling" };
 
@@ -1403,7 +1410,7 @@ function shiftDate(dateStr, days) {
   return d.toISOString().slice(0, 10);
 }
 
-const HALL_SECTIONS = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness"];
+const HALL_SECTIONS = ["hallActivities", "maleWing", "femaleWing", "sickness"];
 const DSW_SECTIONS = ["dswActivities", "tomorrow", "counselling"];
 function drRole() { if (isAdmin) return "full"; return (myMember && myMember.reportRole) || "none"; }
 function drHasAccess() { return isAdmin || drRole() !== "none"; }
@@ -1418,7 +1425,7 @@ function drCan(section) {
   return false;
 }
 function drEditableSections() {
-  const all = ["dswActivities", "hallActivities", "tomorrow", "hallTomorrow", "maleWing", "femaleWing", "hostel", "sickness", "counselling"];
+  const all = ["dswActivities", "hallActivities", "tomorrow", "maleWing", "femaleWing", "hostel", "sickness", "counselling"];
   return all.filter(drCan);
 }
 
@@ -1428,7 +1435,7 @@ function hostelDefault(parts) { return wingDefault(parts); }
 function drSectionDefault(section) {
   switch (section) {
     case "dswActivities": case "hallActivities": return { items: [] };
-    case "tomorrow": case "hallTomorrow": return { items: [] };
+    case "tomorrow": return { items: [] };
     case "maleWing": return wingDefault(drConfig.maleParts);
     case "femaleWing": return wingDefault(drConfig.femaleParts);
     case "hostel": return hostelDefault(drConfig.hostelParts);
@@ -1440,7 +1447,7 @@ function drDraftFor(section) {
   if (!drDraft[section]) {
     const saved = drSections[section];
     drDraft[section] = saved ? JSON.parse(JSON.stringify(saved)) : drSectionDefault(section);
-    if ((section === "tomorrow" || section === "hallTomorrow") && !Array.isArray(drDraft[section].items)) {
+    if (section === "tomorrow" && !Array.isArray(drDraft[section].items)) {
       const tx = String(drDraft[section].text || "").trim();
       drDraft[section].items = tx && tx.toUpperCase() !== "NSTR" ? [{ text: tx }] : [];
     }
@@ -2950,11 +2957,7 @@ function drWingCard(section, label, parts) {
     ${drSaveBtn(section)}${drPersonLine(section)}</div>`;
 }
 function drHostelCard() { return drWingCard("hostel", "Student-Run Hostel", drConfig.hostelParts); }
-function drTomorrowCard() {
-  const w = esc(emptyWord(drDate, drTpl())) + (emptyWord(drDate, drTpl()) === "NSTR" ? " (Nothing Special To Report)" : "");
-  return drActivityCard("tomorrow", "Tomorrow's Activities — DSW Wing", `Add each planned activity — they appear as (a), (b)... in the report, before the Hall's. Leave empty for ${w}.`)
-    + drActivityCard("hallTomorrow", "Tomorrow's Activities — Hall", `Submitted by the Hall Manager; appears after the DSW Wing's. Nothing planned? Just tap Save — the report shows ${esc(emptyWord(drDate, drTpl()))}.`);
-}
+function drTomorrowCard() { return drActivityCard("tomorrow", "Tomorrow's Activities", `Add each planned activity — they appear as (a), (b)... in the report. Leave empty for ${esc(emptyWord(drDate, drTpl()))}${emptyWord(drDate, drTpl()) === "NSTR" ? " (Nothing Special To Report)" : ""}.`); }
 function drPeopleCard(section, label) {
   if (!drCan(section)) return "";
   const d = drDraftFor(section);
@@ -3107,7 +3110,7 @@ function drPhotosHtml() {
 /* the report text with small "not submitted yet" notes next to the parts still missing.
    Only on screen: Copy and WhatsApp always use the clean text. */
 const DR_LINE_SECS = T => [
-  [`*${T.daily}`, ["dswActivities", "hallActivities"]], [`*${T.tomorrow}`, ["tomorrow", "hallTomorrow"]],
+  [`*${T.daily}`, ["dswActivities", "hallActivities"]], [`*${T.tomorrow}`, ["tomorrow"]],
   [`*(a) ${T.maleLabel}`, ["maleWing"]], [`*(b) ${T.femaleLabel}`, ["femaleWing"]],
   [`*${T.sickness}`, ["sickness"]], [`*${T.counselling}`, ["counselling"]]];
 function drMissingNow() { return REQ_SECS.filter(k => drSections[k] === undefined); }
@@ -3144,9 +3147,9 @@ function drSendWhatsApp(text) {
   setDoc(doc(db, "dailyReports", drDate), { waOpenedAt: Date.now(), waBy: myName() }, { merge: true }).catch(() => {});
 }
 /* ---------- DAILY REPORTS › WHATSAPP: automatic sending ---------- */
-const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities (DSW Wing)", hallActivities: "Hall activities", hallTomorrow: "Tomorrow's activities (Hall)",
+const SEC_NAME = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
   maleWing: "Male Wing state", femaleWing: "Female Wing state", sickness: "Sickness", counselling: "Counselling" };
-const REQ_SECS = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness", "dswActivities", "tomorrow", "counselling"];
+const REQ_SECS = ["hallActivities", "maleWing", "femaleWing", "sickness", "dswActivities", "tomorrow", "counselling"];
 const clock = ms => new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 function hhmmTxt(hhmm) { const [h, m] = String(hhmm).split(":").map(Number); const d = new Date(2000, 0, 1, h || 0, m || 0); return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); }
 const waTimeTxt = () => hhmmTxt(waCfg.sendTime || "22:25");
@@ -3156,10 +3159,11 @@ function waSrvRefresh(force) {
   fetch(u + "/wa/status").then(r => r.json()).then(j => { waSrv = j; renderSoon(); }).catch(() => { waSrv = { ready: false, error: "Could not reach the server" }; renderSoon(); });
 }
 function waDraftGet() {
-  const src = JSON.stringify([waCfg.number, waCfg.autoSend, waCfg.sendTime, waCfg.alarmOn, drConfig.deadline]);
+  const src = JSON.stringify([waCfg.number, waCfg.autoSend, waCfg.sendTime, waCfg.alarmOn, drConfig.deadline, waCfg.testOn, waCfg.testTime, waCfg.testNumber]);
   const n0 = waCfg.number || drConfig.waNumber || "";
   if (!waDraft || (!waDraft.dirty && waDraft.src !== src))
-    waDraft = { number: n0 ? "+" + bdPhone(n0) : "", autoSend: waCfg.autoSend !== false, sendTime: waCfg.sendTime || "22:25", alarmOn: waCfg.alarmOn !== false, deadline: drConfig.deadline || "22:15", dirty: false, src };
+    waDraft = { number: n0 ? "+" + bdPhone(n0) : "", autoSend: waCfg.autoSend !== false, sendTime: waCfg.sendTime || "22:25", alarmOn: waCfg.alarmOn !== false, deadline: drConfig.deadline || "22:15",
+      testOn: !!waCfg.testOn, testTime: waCfg.testTime || "12:00", testNumber: waCfg.testNumber ? "+" + bdPhone(waCfg.testNumber) : "", dirty: false, src };
   return waDraft;
 }
 function waStatusBlock() {
@@ -3210,8 +3214,23 @@ function viewDailyWhatsApp() {
         <div><label>Send time</label><input id="waTime" type="time" value="${esc(d.sendTime)}" ${ro ? "disabled" : ""}></div>
       </div>
       <label class="wa-sw"><span><b>Alarm if a section is late</b><small>Rings for the person who owes it and the Admin, every 5 minutes for 30 minutes</small></span><input type="checkbox" id="waAlarm" ${d.alarmOn ? "checked" : ""} ${ro ? "disabled" : ""}></label>
+      <div class="wa-test">
+        <div class="wt-h">${ic("send", 15)} <b>Testing</b><small>Goes only to the test number. The real report to Sir, the reminder and the alarm are not affected.</small></div>
+        <label>Test number (yours)</label>
+        <input id="waTestNum" type="tel" inputmode="tel" value="${esc(d.testNumber)}" placeholder="e.g. 01812345678" ${ro ? "disabled" : ""}>
+        <label class="wa-sw"><span><b>Test every day at</b><small>Switch off when you finish testing</small></span><input type="checkbox" id="waTestOn" ${d.testOn ? "checked" : ""} ${ro ? "disabled" : ""}></label>
+        <input id="waTestTime" type="time" value="${esc(d.testTime)}" ${ro || !d.testOn ? "disabled" : ""} style="margin-top:8px">
+      </div>
       ${ro ? `<div class="muted" style="font-size:12px;margin-top:10px">Only the Admin can change these.</div>` : `<button class="btn" data-act="wasave" style="width:100%;margin-top:14px" ${d.dirty ? "" : "disabled"}>Save</button>`}
     </div>`;
+  const tst = (drReport && drReport.waTest) || {};
+  const tpl = Array.isArray(tst.picList) ? tst.picList.length : 0, tpd = Math.min(tpl, Number(tst.picsDone) || 0);
+  const testBox = waCfg.testNumber ? `<div class="sec">Test</div>
+    <div class="glass drcard wa-tst ${tst.status === "failed" ? "bad" : tst.status === "sent" ? "ok" : ""}">
+      <div class="wt-row"><div><b>${tst.status === "sent" ? `Test sent at ${clock(tst.sentAt)}` : tst.status === "sending" ? "Sending the test…" : tst.status === "failed" ? "Test could not be sent" : "No test sent today"}</b>
+        <small>${tst.status === "failed" ? esc(tst.error || "") : `To +${esc(bdPhone(waCfg.testNumber))}${waCfg.testOn ? ` · every day at ${esc(hhmmTxt(waCfg.testTime || "12:00"))}` : " · test time is off"}`}${tst.status === "sent" ? ` · ${tst.readAt ? "Read" : tst.deliveredAt ? "Delivered" : "Sent"}` : ""}${tpl ? ` · photos ${tpd}/${tpl}` : ""}</small></div>
+        <button class="btn ghost" data-act="watest" ${connected ? "" : "disabled"}>Send test now</button></div>
+    </div>` : "";
   const meta = waSrv && waSrv.provider === "meta";
   const from = waSrv && waSrv.phone ? `${esc(waSrv.phone.name || "")} ${esc(waSrv.phone.number || "")}`.trim() : "";
   const conn = `<div class="sec">Connection</div>
@@ -3223,7 +3242,7 @@ function viewDailyWhatsApp() {
       : `<div><b style="color:var(--warn)">Not connected</b></div><div class="muted" style="margin-top:4px">${esc((waSrv && waSrv.error) || "WhatsApp is not linked to the server yet.")}<br>Setup: on console.green-api.com scan the QR code with the WhatsApp of the DSW Wing number, then on the computer run npm run wa:secret and npm run wa:setup.</div>`}
       <button class="link" data-act="warefresh" style="margin-top:6px">Check again</button>
     </div>`;
-  return `<div class="sec">${esc(fmtReportDate(drDate))}</div>` + waStatusBlock() + actions + settings + conn;
+  return `<div class="sec">${esc(fmtReportDate(drDate))}</div>` + waStatusBlock() + actions + testBox + settings + conn;
 }
 function cmdtDraftGet() {
   const src = JSON.stringify([cmdtCfg.on, cmdtCfg.time, cmdtCfg.to, cmdtCfg.afterSent]);
@@ -4217,7 +4236,7 @@ function openMemberSheet(m) {
     </div>
     <div id="mContribSecs" class="${d.reportRole==="contributor"?"":"hidden"}">
       <label>Sections this contributor can submit</label>
-      ${[["dswActivities","DSW Wing activities"],["tomorrow","Tomorrow's activities (DSW Wing)"],["hallTomorrow","Tomorrow's activities (Hall)"],["counselling","Counselling"]].map(([k,l]) => `<label class="srow" style="margin:0;font-size:14px;color:var(--text)"><input type="checkbox" data-reportsec="${k}" ${(d.reportSections||[]).includes(k)?"checked":""}><span>${l}</span></label>`).join("")}
+      ${[["dswActivities","DSW Wing activities"],["tomorrow","Tomorrow's activities"],["counselling","Counselling"]].map(([k,l]) => `<label class="srow" style="margin:0;font-size:14px;color:var(--text)"><input type="checkbox" data-reportsec="${k}" ${(d.reportSections||[]).includes(k)?"checked":""}><span>${l}</span></label>`).join("")}
     </div>`}
     <div class="row">
       <button class="btn ghost" id="mCancel">Cancel</button>
@@ -4514,9 +4533,23 @@ $("#view").addEventListener("click", e => run(async () => {
   else if (act === "wasave") {
     const d = waDraftGet(), num = bdPhone(d.number);
     if (d.number && num.length < 10) { toast("That number looks too short. Include the country code for numbers outside Bangladesh, e.g. +81…", "err"); return; }
-    await setDoc(doc(db, "config", "whatsapp"), { number: num, autoSend: !!d.autoSend, sendTime: d.sendTime || "22:25", alarmOn: !!d.alarmOn, by: myName(), at: Date.now() }, { merge: true });
+    const tnum = bdPhone(d.testNumber || "");
+    if (d.testNumber && tnum.length < 10) { toast("The test number looks too short.", "err"); return; }
+    if (d.testOn && !tnum) { toast("Add the test number first.", "err"); return; }
+    if (tnum && tnum === num) { toast("The test number must be different from the report number.", "err"); return; }
+    const testSince = d.testOn && (!waCfg.testOn || d.testTime !== waCfg.testTime) ? Date.now() : (waCfg.testSince || Date.now());
+    await setDoc(doc(db, "config", "whatsapp"), { number: num, autoSend: !!d.autoSend, sendTime: d.sendTime || "22:25", alarmOn: !!d.alarmOn,
+      testNumber: tnum, testOn: !!d.testOn && !!tnum, testTime: d.testTime || "12:00", testSince, by: myName(), at: Date.now() }, { merge: true });
     if (d.deadline && d.deadline !== drConfig.deadline) await setDoc(doc(db, "config", "dailyReport"), { deadline: d.deadline }, { merge: true });
     waDraft = null; toast("Saved");
+  }
+  else if (act === "watest") {
+    if (!waCfg.testNumber) { toast("Save a test number first.", "err"); return; }
+    const np = reportPics(drSections).length;
+    if (!(await uiConfirm(`Send a test to +${bdPhone(waCfg.testNumber)}${np ? ` with ${np} photo${np > 1 ? "s" : ""}` : ""}? Sir does not get it, and tonight's report is not affected.`, "Send test"))) return;
+    await setDoc(doc(db, "dailyReports", dhakaDateStr()), { testNowAt: Date.now(), testNowBy: myName() }, { merge: true });
+    const u = pushUrl(); if (u) fetch(u + "/wa/kick", { method: "POST" }).catch(() => {});
+    toast("Sending the test… it shows here in a few seconds");
   }
   else if (act === "wasend") {
     const sent = !!(drReport && drReport.wa && drReport.wa.sentAt);
@@ -4590,8 +4623,13 @@ $("#view").addEventListener("input", e => {
     if (!d.dirty) { d.dirty = true; const b = $('[data-act="cmdtsave"]'); if (b) b.disabled = false; }
     return;
   }
-  const waF = { waNum: "number", waTime: "sendTime", waRemind: "deadline", waAuto: "autoSend", waAlarm: "alarmOn" }[e.target.id];
-  if (waF) { const d = waDraftGet(); d[waF] = e.target.type === "checkbox" ? e.target.checked : e.target.value; if (!d.dirty) { d.dirty = true; const b = $('[data-act="wasave"]'); if (b) b.disabled = false; } return; }
+  const waF = { waNum: "number", waTime: "sendTime", waRemind: "deadline", waAuto: "autoSend", waAlarm: "alarmOn", waTestNum: "testNumber", waTestOn: "testOn", waTestTime: "testTime" }[e.target.id];
+  if (waF) {
+    const d = waDraftGet(); d[waF] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+    if (waF === "testOn") { const t = $("#waTestTime"); if (t) t.disabled = !e.target.checked; }
+    if (!d.dirty) { d.dirty = true; const b = $('[data-act="wasave"]'); if (b) b.disabled = false; }
+    return;
+  }
   if (e.target.id === "drCfgReminders") { const d = drCfgDraftGet(); d.remindersOn = e.target.checked; d.dirty = true; return; }
   const sec = e.target.dataset.drsec;
   if (sec && e.target.dataset.drpart !== undefined) {

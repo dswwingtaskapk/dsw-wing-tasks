@@ -24,9 +24,9 @@ import { compileReport, fmtReportDate, REQUIRED_SECTIONS, reportPics, PIC_DEFAUL
 
 const SCOPES = "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging";
 const DHK = 6 * 3600000;
-const HALL = ["hallActivities", "hallTomorrow", "maleWing", "femaleWing", "sickness"];
+const HALL = ["hallActivities", "maleWing", "femaleWing", "sickness"];
 const DSW = ["dswActivities", "tomorrow", "counselling"];
-const LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities (DSW Wing)", hallActivities: "Hall activities", hallTomorrow: "Tomorrow's activities (Hall)",
+const LABEL = { dswActivities: "DSW Wing activities", tomorrow: "Tomorrow's activities", hallActivities: "Hall activities",
   maleWing: "Male Wing state", femaleWing: "Female Wing state", hostel: "Hostel state", sickness: "Sickness", counselling: "Counselling" };
 
 const CORS = {
@@ -343,10 +343,10 @@ async function green(env, method, body) {
   if (!r.ok) { const e = new Error((j && (j.message || j.error)) || (r.status === 401 || r.status === 403 ? "Green-API: wrong idInstance or token" : "Green-API " + r.status)); e.status = r.status; throw e; }
   return j;
 }
-async function greenSend(env, to, date, text) {
+async function greenSend(env, to, date, text, kind) {
   const r = await green(env, "sendMessage", { chatId: to + "@c.us", message: text.slice(0, 20000), linkPreview: false, typingTime: 2000 });
   if (!r.idMessage) throw new Error("WhatsApp did not accept the message");
-  await remember(env, r.idMessage, date);
+  await remember(env, r.idMessage, date, kind);
   return [r.idMessage];
 }
 const digits = s => String(s || "").replace(/\D/g, "");
@@ -374,7 +374,7 @@ async function graph(env, path, body, method) {
 const waMsg = (env, to, msg) => graph(env, `/${env.WA_PHONE_ID}/messages`, { messaging_product: "whatsapp", recipient_type: "individual", to, ...msg });
 const okButton = (date, text) => ({ type: "interactive", interactive: { type: "button", body: { text }, action: { buttons: [{ type: "reply", reply: { id: "ok:" + date, title: "OK ✓" } }] } } });
 
-async function remember(env, wamid, date) { if (wamid) await setDocFields(env, `/waMsgs/${encodeURIComponent(wamid)}`, { date, at: Date.now() }).catch(() => {}); }
+async function remember(env, wamid, date, kind) { if (wamid) await setDocFields(env, `/waMsgs/${encodeURIComponent(wamid)}`, { date, at: Date.now(), kind: kind || "final" }).catch(() => {}); }
 
 /* the full report in our own format, with an OK button at the end (needs the 24-hour window) */
 async function sendReportText(env, to, date, text) {
@@ -487,6 +487,40 @@ async function dailyFlow(env) {
     if (last >= sendAt && now - last < GRACE) continue;      // a late section just came in: give 2-3 minutes for corrections
     await sendDaily(env, date, rep, secs, wa, "Auto");
   }
+  try { await testFlow(env, wa); } catch (e) { console.log("test send failed", e); }
+}
+
+/* ---------- TEST sending: to a separate test number, never counts as the real report ----------
+   config/whatsapp: testOn, testTime "HH:MM", testNumber, testSince. "Send test now" = dailyReports/<date>.testNowAt.
+   The real report, the 10:15 reminder and the late alarm are not affected in any way. */
+async function testFlow(env, wa) {
+  if (!waReady(env)) return;
+  const tn = bdNum(wa.testNumber || ""); if (tn.length < 10) return;
+  const now = Date.now(), date = dhakaDate(now);
+  const rep = await getDoc(env, `/dailyReports/${date}`);
+  const t = (rep && rep.waTest) || {};
+  if (t.status === "sending" && now - (Number(t.at) || 0) < 120000) return;
+  const manual = !!(rep && rep.testNowAt && (!t.sentAt || rep.testNowAt > t.sentAt));
+  const at = atTime(date, wa.testTime, "12:00");
+  const auto = !!wa.testOn && now >= at && now < at + 3 * 3600000 && at >= (Number(wa.testSince) || 0) - 60000 && Number(t.autoFor) !== at;
+  if (!manual && !auto) return;
+  const path = `/dailyReports/${date}`;
+  try { await patchPaths(env, path, { "waTest.status": "sending", "waTest.at": now }, rep ? rep._updateTime : "exists=false"); }
+  catch (e) { if ([400, 409, 412].includes(e.status)) return; throw e; }
+  const who = manual ? (rep.testNowBy || "Manual") : "Test time";
+  try {
+    const secs = await listDocs(env, `/dailyReports/${date}/sections`, 20);
+    const text = await reportTextFor(env, date, rep, secs);
+    if (provider(env) === "green") await greenSend(env, tn, date, text, "test");
+    else await waMsg(env, tn, { type: "text", text: { body: text.slice(0, 4096), preview_url: false } });
+    const secMap = {}; secs.forEach(x => { secMap[x._id] = x; });
+    const picList = provider(env) === "green" ? reportPics(secMap).map(p => p.id) : [];
+    await patchPaths(env, path, { "waTest.status": "sent", "waTest.sentAt": Date.now(), "waTest.to": tn, "waTest.by": who, "waTest.error": null,
+      "waTest.deliveredAt": null, "waTest.readAt": null, "waTest.okAt": null, ...(auto && !manual ? { "waTest.autoFor": at } : {}),
+      "waTest.picList": picList, "waTest.picsDone": 0, "waTest.picsError": null, "waTest.picsBusy": null, testNowAt: null });
+  } catch (e) {
+    await patchPaths(env, path, { "waTest.status": "failed", "waTest.error": String(e.message || e).slice(0, 300), ...(auto && !manual ? { "waTest.autoFor": at } : {}), testNowAt: null }).catch(() => {});
+  }
 }
 
 /* ---------- report photos: sent after the text, without captions, in report order ----------
@@ -532,13 +566,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function picsFlow(env) {
   if (!env.SERVICE_ACCOUNT || provider(env) !== "green") return false;
   const today = dhakaDate(Date.now());
-  for (const date of [prevDate(today), today]) {
+  for (const date of [prevDate(today), today]) for (const F of ["wa", "waTest"]) {
     const rep = await getDoc(env, `/dailyReports/${date}`);
-    const w = (rep && rep.wa) || {}, list = Array.isArray(w.picList) ? w.picList : [];
+    const w = (rep && rep[F]) || {}, list = Array.isArray(w.picList) ? w.picList : [];
     const done = Number(w.picsDone) || 0;
     if (w.status !== "sent" || done >= list.length) continue;
     if (w.picsBusy && Date.now() - w.picsBusy < 120000) return true;          // another run is sending them
-    try { await patchPaths(env, `/dailyReports/${date}`, { "wa.picsBusy": Date.now() }, rep._updateTime); }
+    try { await patchPaths(env, `/dailyReports/${date}`, { [F + ".picsBusy"]: Date.now() }, rep._updateTime); }
     catch (e) { if ([400, 409, 412].includes(e.status)) return true; throw e; }
     const origin = await myOrigin(env), to = w.to || bdNum(((await getDoc(env, "/config/whatsapp")) || {}).number);
     let i = done, err = null;
@@ -550,7 +584,7 @@ async function picsFlow(env) {
       } catch (e) { err = `Photo ${i + 1}: ` + String(e.message || e).slice(0, 200); }
       if (i + 1 < list.length) await sleep(700);
     }
-    await patchPaths(env, `/dailyReports/${date}`, { "wa.picsDone": err && !origin ? done : i, "wa.picsBusy": null, ...(err ? { "wa.picsError": err } : {}) }).catch(() => {});
+    await patchPaths(env, `/dailyReports/${date}`, { [F + ".picsDone"]: err && !origin ? done : i, [F + ".picsBusy"]: null, ...(err ? { [F + ".picsError"]: err } : {}) }).catch(() => {});
     return true;
   }
   return false;
@@ -666,10 +700,11 @@ async function handleGreen(env, b) {
     if (!b.idMessage || !b.status) return;
     const m = await getDoc(env, `/waMsgs/${encodeURIComponent(b.idMessage)}`); if (!m || !m.date) return;
     const at = (Number(b.timestamp) || Date.now() / 1000) * 1000, path = `/dailyReports/${m.date}`;
-    if (b.status === "delivered") await patchPaths(env, path, { "wa.deliveredAt": at }).catch(() => {});
-    else if (b.status === "read") await patchPaths(env, path, { "wa.readAt": at }).catch(() => {});
+    const F = m.kind === "test" ? "waTest" : "wa";
+    if (b.status === "delivered") await patchPaths(env, path, { [F + ".deliveredAt"]: at }).catch(() => {});
+    else if (b.status === "read") await patchPaths(env, path, { [F + ".readAt"]: at }).catch(() => {});
     else if (["failed", "noAccount", "suspended"].includes(b.status))
-      await patchPaths(env, path, { "wa.status": "failed", "wa.error": b.status === "noAccount" ? "That number has no WhatsApp" : String(b.description || "Not delivered").slice(0, 300) }).catch(() => {});
+      await patchPaths(env, path, { [F + ".status"]: "failed", [F + ".error"]: b.status === "noAccount" ? "That number has no WhatsApp" : String(b.description || "Not delivered").slice(0, 300) }).catch(() => {});
     return;
   }
   if (t === "stateInstanceChanged") {
@@ -684,6 +719,11 @@ async function handleGreen(env, b) {
   if (t === "incomingMessageReceived") {
     const wa = (await getDoc(env, "/config/whatsapp")) || {};
     const from = digits((b.senderData && (b.senderData.sender || b.senderData.chatId)) || "");
+    if (from && wa.testNumber && from === bdNum(wa.testNumber) && from !== bdNum(wa.number)) {   // a reply to a test
+      const today = dhakaDate(Date.now()), rep = await getDoc(env, `/dailyReports/${today}`);
+      if (rep && rep.waTest && rep.waTest.sentAt && !rep.waTest.okAt) await patchPaths(env, `/dailyReports/${today}`, { "waTest.okAt": Date.now() }).catch(() => {});
+      return;
+    }
     if (!from || from !== bdNum(wa.number)) return;     // only the report receiver counts
     await setDocFields(env, "/config/waState", { lastInboundAt: Date.now(), lastFrom: from, ready: true, state: "authorized" }).catch(() => {});
     // any reply (text, 👍, "ok") marks the latest sent report as acknowledged
