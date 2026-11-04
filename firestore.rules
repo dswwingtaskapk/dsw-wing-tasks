@@ -76,6 +76,11 @@ service cloud.firestore {
         allow create, update: if editReport();
         allow delete: if isAdmin();
       }
+      // photos of the day's activities (removed by the server some days later)
+      match /files/{fileId} {
+        allow read: if canReport();
+        allow create, update, delete: if editReport();
+      }
     }
 
     // ---- in-app notifications (bell icon) ----

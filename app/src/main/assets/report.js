@@ -29,7 +29,8 @@ export const DR_TPL = {
   counselling: "5. Counselling:",
   nstr: "NSTR",
   nil: "Nil",
-  offWord: "Nil", offDays: "5,6",           // on these weekdays (0=Sun … 5=Fri, 6=Sat) empty activities show offWord instead of NSTR
+  offWord: "Nil", offDays: "5,6",
+  picAtt: "Pic Att.",                        // written on the line under an activity that has photos           // on these weekdays (0=Sun … 5=Fri, 6=Sat) empty activities show offWord instead of NSTR
   maleLabel: "Male Wg", femaleLabel: "Female Wg", hostelLabel: "Student Run Hostel",
   lAlot: "Alot:", gAlot: 1,
   lPresent: "Present:", gPresent: 2,
@@ -85,7 +86,9 @@ export function compileReport(dateStr, sec, cfg, over) {
   const dsw = (sec.dswActivities && sec.dswActivities.items) || [];
   const hall = (sec.hallActivities && sec.hallActivities.items) || [];
   const all = [...dsw, ...hall].filter(x => x && String(x.text || "").trim());
-  const line1 = all.length ? `*${T.daily}*\n\n${all.map((a, i) => `${all.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}`).join("\n\n")}` : `*${T.daily} ${E}*`;
+  const att = String(T.picAtt || "").trim();
+  const picLine = a => att && Array.isArray(a.pics) && a.pics.length ? "\n" + att : "";
+  const line1 = all.length ? `*${T.daily}*\n\n${all.map((a, i) => `${all.length > 1 ? `(${letterAt(i)}) ` : ""}${a.text.trim()}${picLine(a)}`).join("\n\n")}` : `*${T.daily} ${E}*`;
   // tomorrow: DSW Wing first, then the Hall, numbered together (a), (b)...
   const tmOf = tm => (Array.isArray(tm.items) ? tm.items : (String(tm.text || "").trim() && !isEmptyWord(tm.text) ? [{ text: String(tm.text).trim() }] : [])).filter(x => x && String(x.text || "").trim());
   const tmItems = [...tmOf(sec.tomorrow || {}), ...tmOf(sec.hallTomorrow || {})];
@@ -101,3 +104,14 @@ export function compileReport(dateStr, sec, cfg, over) {
   const closing = String(T.closing || "").replace(/^\s+|\s+$/g, "");
   return [T.greeting, `*${T.subject}*`, `${T.dateLabel} ${fmtReportDate(dateStr)}`, line1, line2, line3, line4, line5, closing].filter(x => String(x).length).join("\n\n");
 }
+
+/* the photos of the day's activities, in report order (DSW Wing first, then the Hall) */
+export function reportPics(sec) {
+  const out = [];
+  for (const k of ["dswActivities", "hallActivities"]) {
+    const items = (sec[k] && Array.isArray(sec[k].items)) ? sec[k].items : [];
+    items.forEach((a, i) => { if (a && String(a.text || "").trim() && Array.isArray(a.pics)) a.pics.forEach(p => { if (p && p.id) out.push({ ...p, sec: k, item: i }); }); });
+  }
+  return out;
+}
+export const PIC_DEFAULTS = { picMax: 5, picTotal: 20, picKeepDays: 30 };

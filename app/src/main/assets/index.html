@@ -742,6 +742,81 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 #lockCover button{margin-top:18px;padding:12px 26px;border-radius:99px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font:600 15px/1 inherit;font-family:inherit}
 .callscr .c-unlock{position:absolute;z-index:5;top:calc(14px + var(--safe-t));left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;
   padding:8px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff;font:600 13px/1 inherit;font-family:inherit;cursor:pointer}
+/* ---------- chat media (WhatsApp style) ---------- */
+.cb.isimg{padding:3px}
+.cb.isimg .ctx{padding:6px 8px 4px}
+.cimg{display:block;position:relative;width:min(240px,66vw);min-width:0;max-width:none;padding:0;border:0;border-radius:15px;overflow:hidden;background:var(--surface2);cursor:pointer}
+.cimg img{display:block;width:100%;height:100%;max-height:none;object-fit:cover}
+.cimg .cph{display:block;width:100%;height:100%;min-height:120px;background:linear-gradient(100deg,var(--surface2) 30%,var(--line) 50%,var(--surface2) 70%);background-size:300% 100%;animation:mshim 1.3s linear infinite}
+.cimg .cph.err{animation:none;display:grid;place-items:center;font-size:12px;color:var(--faint)}
+@keyframes mshim{from{background-position:100% 0}to{background-position:0 0}}
+.cfile{display:flex;align-items:center;gap:11px;width:min(260px,70vw);min-width:0;padding:9px 6px 9px 9px;border-radius:13px;cursor:pointer}
+.cfile .cfi{width:42px;height:46px;border-radius:9px;font:800 11px/1 inherit;font-family:inherit;letter-spacing:.02em;color:#fff;background:#6b7280}
+.cfile.k-pdf .cfi{background:#e5484d}.cfile.k-doc .cfi{background:#2f6fde}.cfile.k-xls .cfi{background:#1f9d55}.cfile.k-ppt .cfi{background:#e8590c}
+.cm.me .cfile .cfi{color:#fff}
+.cm.me .cfile.k-file .cfi{background:rgba(255,255,255,.3)}
+.cfile .cfa{flex:none;width:34px;height:34px;border-radius:50%;border:0;display:grid;place-items:center;background:transparent;color:inherit;opacity:.75}
+.cfile.busy{opacity:.65;pointer-events:none}
+.cfile.busy .cft small{font-size:0}.cfile.busy .cft small::after{content:"Opening…";font-size:11.5px}
+.chat-pending{display:block;padding:8px 10px 7px;background:var(--surface2);color:var(--text)}
+.chat-pending .trow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.chat-pending .tp{position:relative;flex:none;border-radius:11px;overflow:hidden;background:var(--surface)}
+.chat-pending .tp.img{width:64px;height:64px}
+.chat-pending .tp.img img{width:100%;height:100%;object-fit:cover;display:block}
+.chat-pending .tp.doc{display:flex;align-items:center;gap:7px;max-width:170px;height:64px;padding:0 26px 0 8px;border:1px solid var(--line)}
+.chat-pending .tp.doc b{flex:none;width:30px;height:34px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:9.5px;background:#6b7280}
+.chat-pending .tp.doc b.k-pdf{background:#e5484d}.chat-pending .tp.doc b.k-doc{background:#2f6fde}.chat-pending .tp.doc b.k-xls{background:#1f9d55}.chat-pending .tp.doc b.k-ppt{background:#e8590c}
+.chat-pending .tp.doc i{font-style:normal;font-size:12px;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-all}
+.chat-pending .tp button{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:0;display:grid;place-items:center;background:rgba(0,0,0,.55);color:#fff;padding:0}
+.chat-pending .tnote{font-size:11.5px;color:var(--muted);margin-top:2px}
+.chat-pending .tprog{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--primary);font-weight:600;margin-top:2px}
+.chat-pending .tprog i{flex:1;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.chat-pending .tprog em{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .2s}
+.amenu-wrap{position:fixed;inset:0;z-index:260;background:rgba(10,14,20,.38);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s}
+.amenu{width:100%;max-width:520px;background:var(--surface);border-radius:22px 22px 0 0;padding:20px 16px calc(22px + var(--safe-b));display:grid;grid-template-columns:repeat(3,1fr);gap:8px;animation:amUp .22s ease-out}
+@keyframes amUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.amenu button{display:flex;flex-direction:column;align-items:center;gap:8px;border:0;background:none;color:var(--text);font:600 13px/1.2 inherit;font-family:inherit;padding:6px 0;cursor:pointer}
+.amenu .ai{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;color:#fff}
+.amenu .ai.cam{background:#e11d74}.amenu .ai.gal{background:#7c3aed}.amenu .ai.doc{background:#4f46e5}
+.amenu.small{grid-template-columns:1fr;gap:2px;padding-top:12px}
+.amenu.small .am-t{font-size:13px;color:var(--muted);padding:2px 8px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amenu.small button{flex-direction:row;justify-content:flex-start;gap:14px;padding:13px 8px;font-size:15px;border-radius:12px}
+.amenu.small button:active{background:var(--surface2)}
+.imgview.mview{background:#000;display:block;z-index:255;touch-action:none;user-select:none}
+.mview .mv-bar{position:absolute;left:0;right:0;top:0;z-index:2;display:flex;align-items:center;gap:6px;padding:calc(8px + var(--safe-t)) 8px 10px;color:#fff;background:linear-gradient(rgba(0,0,0,.65),rgba(0,0,0,0));transition:opacity .2s}
+.mview .mv-b{width:44px;height:44px;border-radius:50%;border:0;background:none;color:#fff;display:grid;place-items:center;flex:none}
+.mview .mv-who{flex:1;min-width:0}.mview .mv-who b{display:block;font-size:15.5px}.mview .mv-who small{display:block;font-size:12px;opacity:.75}
+.mview .mv-stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none}
+.mview .mv-stage img{max-width:100%;max-height:100%;object-fit:contain;will-change:transform;transform-origin:center}
+.mview .mv-foot{position:absolute;left:0;right:0;bottom:0;padding:14px 0 calc(16px + var(--safe-b));text-align:center;color:#fff;font-size:13px;opacity:.85;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.5));transition:opacity .2s;pointer-events:none}
+.mview.bare .mv-bar,.mview.bare .mv-foot{opacity:0;pointer-events:none}
+.mview.loading .mv-stage::after{content:"";position:absolute;width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:mspin .8s linear infinite}
+@keyframes mspin{to{transform:rotate(360deg)}}
+/* ---------- report photos ---------- */
+.dract .drcam{position:relative;color:var(--primary)}
+.dract .drcam em{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--primary);color:#fff;font:700 10px/16px inherit;font-family:inherit;font-style:normal}
+.drpics{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 10px 4px}
+.drp{position:relative;width:62px;height:62px;border-radius:11px;overflow:hidden;background:var(--surface2)}
+.drp .drpv{display:block;width:100%;height:100%;padding:0;border:0;background:none}
+.drp img{width:100%;height:100%;object-fit:cover;display:block}
+.drp img:not([src]),.drp img[src=""]{visibility:hidden}
+.drp .drpx{position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:0;padding:0;display:grid;place-items:center;background:rgba(0,0,0,.6);color:#fff}
+.drp.up{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1.5px dashed var(--line2)}
+.drp.up i{width:44px;height:5px;border-radius:99px;background:var(--line);overflow:hidden}
+.drp.up em{display:block;height:100%;background:var(--primary)}
+.drp.up small{font-size:11px;color:var(--muted)}
+.drp.gone,.drpg.gone{opacity:.45}
+.drpnote{flex-basis:100%;font-size:11.5px;color:var(--muted)}
+.drunsaved{margin-top:10px;font-size:12.5px;font-weight:600;color:var(--warn,#b7791f)}
+.drpgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.drpg{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:10px;overflow:hidden;background:var(--surface2)}
+.drpg img{width:100%;height:100%;object-fit:cover;display:block}
+.drpg img[src=""]{visibility:hidden}
+.drpg b{position:absolute;left:4px;bottom:4px;padding:1px 6px;border-radius:99px;background:rgba(0,0,0,.55);color:#fff;font-size:11px}
+.wa-pics{margin-top:10px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.wa-pics.ok{color:var(--ok)}.wa-pics.bad{color:var(--bad)}
+.amenu.two{grid-template-columns:repeat(2,1fr)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 </style>
 </head>
 <body>
@@ -801,7 +876,7 @@ body.overlock #app,body.overlock #drawer,body.overlock #pageHost,body.overlock #
 import * as CFG from "./config.js";
 const { firebaseConfig, ADMIN_EMAIL } = CFG;
 import { BUILD } from "./build-info.js";
-import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport, WEEKDAYS, offDayList, emptyWord } from "./report.js";
+import { MONTHS_SHORT, fmtReportDate, letterAt, sumParts, drPresentParts, DR_TPL, tplGap, tplOf, wingLine, wingOnLeave, peopleLine, compileReport, WEEKDAYS, offDayList, emptyWord, reportPics, PIC_DEFAULTS } from "./report.js";
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, reauthenticateWithCredential, EmailAuthProvider, updatePassword, onAuthStateChanged, signOut }
@@ -897,6 +972,7 @@ const ICONS = {
   doc: "<path d=\"M7 3h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1V4a1 1 0 011-1z\"/><path d=\"M14 3v4h4\"/><path d=\"M9 12.5h6M9 16h6\"/>",
   clip: "<path d=\"M21 11.5l-8.5 8.5a5 5 0 01-7-7L14 4.5a3.5 3.5 0 015 5L10.5 18a2 2 0 01-3-3L15 7.5\"/>",
   image: "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"3\"/><circle cx=\"9\" cy=\"10\" r=\"1.6\"/><path d=\"M4 17l5-4.5 3.5 3 3-2.5 4.5 4\"/>",
+  camera:'<path d="M4 8.5A2.5 2.5 0 0 1 6.5 6h1.6l1.4-2h5l1.4 2h1.6A2.5 2.5 0 0 1 20 8.5v8a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5z"/><circle cx="12" cy="12.5" r="3.6"/>',
   copy:'<rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   bell: "<path d=\"M18 16v-5a6 6 0 10-12 0v5l-2 2.2h16L18 16z\"/><path d=\"M9.5 20.8a2.5 2.5 0 005 0\"/>",
   up: "<path d=\"M5 15l7-7 7 7\"/>",
@@ -1549,6 +1625,7 @@ function render() {
     Object.entries(keepVals).forEach(([id, val]) => { const el = document.getElementById(id); if (el && val !== "" && el.value !== val) el.value = val; });
     if (!newTab && window.scrollY !== y) window.scrollTo(0, y);
   }
+  if (tab === "daily") hydrateReportPics();
   if (newTab) {                                   // the small slide-in plays only when you open a screen
     lastTabRendered = tab; window.scrollTo(0, 0);
     const vw = $("#view"); vw.classList.remove("enter"); void vw.offsetWidth; vw.classList.add("enter");
@@ -1627,78 +1704,356 @@ function unreadOf(t) {
   return (t.updates || []).filter(u => isMsg(u) && u.byEmail !== me && u.at > seen).length;
 }
 
-let chatId = null, chatFile = null, chatSending = false;
-const chatFilesMeta = {};
-const fileCache = new Map();
-const CHUNK = 600000, MAX_FILE = 5 * 1024 * 1024;
+let chatId = null, chatSending = false;
+const fileCache = new Map(), thumbCache = new Map();
+const CHUNK = 600000, MAX_FILE = 5 * 1024 * 1024, MAX_PICK = 10;
 const fmtSize = n => n < 1024 ? n + " B" : n < 1048576 ? Math.round(n / 1024) + " KB" : (n / 1048576).toFixed(1) + " MB";
 const safeName = n => String(n || "file").replace(/[\\/:*?"<>|]+/g, "_");
+const isImg = f => !!f && String(f.type || "").startsWith("image/");
 
-async function compressImage(file) {
-  if (!file.type || !file.type.startsWith("image/") || file.type === "image/gif") return file;
-  try {
-    const bmp = await createImageBitmap(file);
-    const sc = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
-    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
-    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.82));
-    return blob && blob.size < file.size ? blob : file;
-  } catch (e) { return file; }
+/* ======================================================================
+   CHAT MEDIA — photos and files the WhatsApp way
+   · photos show straight in the chat (a small preview first, the full photo on tap)
+   · full-screen viewer: swipe between photos, pinch / double-tap to zoom, share, save
+   · PDF / Word / Excel open straight in the phone's own apps
+   · everything opened once stays on the phone, so it is not downloaded again
+   ====================================================================== */
+const mediaMeta = {};     // file id -> { f, segs, who, at }
+const extOf = n => (String(n || "").split(".").pop() || "").toLowerCase();
+function fileKind(f) {
+  const t = String(f.type || ""), e = extOf(f.name);
+  if (t.startsWith("image/")) return "img";
+  if (t === "application/pdf" || e === "pdf") return "pdf";
+  if (/word|msword/.test(t) || e === "doc" || e === "docx") return "doc";
+  if (/sheet|excel|csv/.test(t) || ["xls", "xlsx", "csv"].includes(e)) return "xls";
+  if (/presentation|powerpoint/.test(t) || e === "ppt" || e === "pptx") return "ppt";
+  return "file";
 }
+const KIND_NAME = { pdf: "PDF", doc: "Word", xls: "Excel", ppt: "PowerPoint", file: "File", img: "Photo" };
+const KIND_TAG = { pdf: "PDF", doc: "DOC", xls: "XLS", ppt: "PPT" };
+const kindTag = f => KIND_TAG[fileKind(f)] || (extOf(f.name).toUpperCase().slice(0, 4) || "FILE");
+
+/* files opened once are kept on the phone (45 days) */
+const MCACHE = "wt-media-v1";
+async function pcGet(k) {
+  try { if (!window.caches) return null; const r = await (await caches.open(MCACHE)).match("/m/" + k); return r ? await r.blob() : null; } catch (e) { return null; }
+}
+function pcPut(k, blob) {
+  try { if (window.caches && blob) caches.open(MCACHE).then(c => c.put("/m/" + k, new Response(blob, { headers: { "x-at": String(Date.now()), "content-type": blob.type || "application/octet-stream" } }))).catch(() => {}); } catch (e) {}
+}
+setTimeout(async () => {
+  try {
+    if (!window.caches) return;
+    const c = await caches.open(MCACHE), old = Date.now() - 45 * 864e5;
+    for (const rq of await c.keys()) { const r = await c.match(rq); if (r && Number(r.headers.get("x-at") || 0) < old) await c.delete(rq); }
+  } catch (e) {}
+}, 20000);
+
 const blobToB64 = blob => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(blob); });
-async function uploadFileTo(segs, file) {
-  const blob = await compressImage(file);
-  if (blob.size > MAX_FILE) throw new Error("This file is too large (maximum 5 MB).");
+function b64ToBlob(b64, type) {
+  const bin = atob(b64), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: type || "application/octet-stream" });
+}
+async function b64Of(v) { if (!v.b64) v.b64 = await blobToB64(v.blob); return v.b64; }
+
+/* photo -> a sharp copy (max 1600 px) + a small preview (max 360 px) */
+async function scaleImage(bmp, px, q) {
+  const sc = Math.min(1, px / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.max(1, Math.round(bmp.width * sc)); c.height = Math.max(1, Math.round(bmp.height * sc));
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return await new Promise(r => c.toBlob(r, "image/jpeg", q));
+}
+async function prepareImage(file) {
+  const bmp = await createImageBitmap(file);
+  const full = await scaleImage(bmp, 1600, 0.82), thumb = await scaleImage(bmp, 360, 0.6);
+  return { full: full && full.size < file.size ? full : file, thumb, w: bmp.width, h: bmp.height };
+}
+async function compressImage(file) {   // kept for older callers
+  if (!isImg(file) || file.type === "image/gif") return file;
+  try { return (await prepareImage(file)).full; } catch (e) { return file; }
+}
+async function uploadFileTo(segs, file, onProgress) {
+  let blob = file, thumb = null, w = 0, h = 0;
+  if (isImg(file) && file.type !== "image/gif") { try { const p = await prepareImage(file); blob = p.full; thumb = p.thumb; w = p.w; h = p.h; } catch (e) {} }
+  if (blob.size > MAX_FILE) throw new Error(`${safeName(file.name)} is too large (maximum 5 MB).`);
   const b64 = await blobToB64(blob);
   const fid = "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-  const n = Math.max(1, Math.ceil(b64.length / CHUNK));
-  for (let i = 0; i < n; i++)
-    await setDoc(doc(db, ...segs, fid + "_" + i), { fid, i, n, data: b64.slice(i * CHUNK, (i + 1) * CHUNK), by: me, at: Date.now() });
-  return { id: fid, name: safeName(file.name), type: blob.type || file.type || "application/octet-stream", size: blob.size, n };
+  const n = Math.max(1, Math.ceil(b64.length / CHUNK)), steps = n + (thumb ? 1 : 0);
+  let done = 0; const tick = () => { done++; try { onProgress && onProgress(done / steps); } catch (e) {} };
+  if (thumb) { await setDoc(doc(db, ...segs, fid + "_t"), { fid, i: -1, n, data: await blobToB64(thumb), by: me, at: Date.now() }); tick(); }
+  for (let i = 0; i < n; i++) { await setDoc(doc(db, ...segs, fid + "_" + i), { fid, i, n, data: b64.slice(i * CHUNK, (i + 1) * CHUNK), by: me, at: Date.now() }); tick(); }
+  const type = blob.type || file.type || "application/octet-stream";
+  fileCache.set(fid, { blob, url: URL.createObjectURL(blob), b64 }); pcPut(fid, blob);
+  if (thumb) { thumbCache.set(fid, URL.createObjectURL(thumb)); pcPut(fid + "_t", thumb); }
+  const meta = { id: fid, name: safeName(file.name), type, size: blob.size, n };
+  if (thumb) Object.assign(meta, { thumb: 1, w, h });
+  return meta;
 }
 async function loadFileFrom(segs, f) {
   if (fileCache.has(f.id)) return fileCache.get(f.id);
-  const parts = [];
-  for (let i = 0; i < f.n; i++) {
-    const s = await getDoc(doc(db, ...segs, f.id + "_" + i));
-    if (!s.exists()) throw new Error("File not found");
-    parts.push(s.data().data);
+  let blob = await pcGet(f.id);
+  if (!blob) {
+    const parts = [];
+    for (let i = 0; i < f.n; i++) {
+      const s = await getDoc(doc(db, ...segs, f.id + "_" + i));
+      if (!s.exists()) throw new Error("This file is no longer available");
+      parts.push(s.data().data);
+    }
+    const b64 = parts.join("");
+    blob = b64ToBlob(b64, f.type);
+    pcPut(f.id, blob);
+    const v = { blob, url: URL.createObjectURL(blob), b64 };
+    fileCache.set(f.id, v); return v;
   }
-  const b64 = parts.join("");
-  const bin = atob(b64), arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  const blob = new Blob([arr], { type: f.type });
-  const v = { blob, url: URL.createObjectURL(blob), b64 };
-  fileCache.set(f.id, v);
-  return v;
+  const v = { blob, url: URL.createObjectURL(blob) };
+  fileCache.set(f.id, v); return v;
+}
+/* the small preview of a photo; older photos without one use the full photo */
+async function loadThumbUrl(segs, f) {
+  if (thumbCache.has(f.id)) return thumbCache.get(f.id);
+  if (fileCache.has(f.id)) return fileCache.get(f.id).url;
+  if (!f.thumb) return (await loadFileFrom(segs, f)).url;
+  let blob = await pcGet(f.id + "_t");
+  if (!blob) {
+    const s = await getDoc(doc(db, ...segs, f.id + "_t"));
+    if (!s.exists()) return (await loadFileFrom(segs, f)).url;
+    blob = b64ToBlob(s.data().data, "image/jpeg"); pcPut(f.id + "_t", blob);
+  }
+  const u = URL.createObjectURL(blob); thumbCache.set(f.id, u); return u;
 }
 async function downloadFileFrom(segs, f) {
   const v = await loadFileFrom(segs, f);
-  if (window.Android && window.Android.save) { window.Android.save(v.b64, f.type, safeName(f.name)); return; }
+  if (window.Android && window.Android.save) { window.Android.save(await b64Of(v), f.type, safeName(f.name)); return; }
   const a = document.createElement("a"); a.href = v.url; a.download = safeName(f.name); document.body.appendChild(a); a.click(); a.remove();
   toast("Download started");
 }
-const uploadChatFile = (taskId, file) => uploadFileTo(["tasks", taskId, "files"], file);
+const uploadChatFile = (taskId, file, p) => uploadFileTo(["tasks", taskId, "files"], file, p);
 const loadChatFile = (taskId, f) => loadFileFrom(["tasks", taskId, "files"], f);
 const downloadChatFile = (taskId, f) => downloadFileFrom(["tasks", taskId, "files"], f);
 async function deleteTaskFiles(t) {
-  for (const u of (t.updates || [])) if (u.file) for (let i = 0; i < (u.file.n || 1); i++)
-    await deleteDoc(doc(db, "tasks", t.id, "files", u.file.id + "_" + i)).catch(() => {});
+  for (const u of (t.updates || [])) if (u.file) {
+    for (let i = 0; i < (u.file.n || 1); i++) await deleteDoc(doc(db, "tasks", t.id, "files", u.file.id + "_" + i)).catch(() => {});
+    if (u.file.thumb) await deleteDoc(doc(db, "tasks", t.id, "files", u.file.id + "_t")).catch(() => {});
+  }
 }
 
-function chatFileHtml(u) {
-  const f = u.file; chatFilesMeta[f.id] = f;
-  if (f.type && f.type.startsWith("image/")) {
-    const cached = fileCache.get(f.id);
-    return `<div class="cimg" data-fid="${f.id}">${cached ? `<img src="${cached.url}" alt="">` : `<div class="cph">${ic("image",28,1.5)}</div>`}
-      <button type="button" class="cdl" data-dl="1" data-fid="${f.id}" aria-label="Download">${ic("download",16)}</button></div>`;
+/* one bubble for a photo or a file */
+function mediaHtml(f, segs, who, at) {
+  mediaMeta[f.id] = { f, segs, who, at };
+  if (fileKind(f) === "img") {
+    const u = thumbCache.get(f.id) || (fileCache.get(f.id) || {}).url;
+    const ar = f.w && f.h ? Math.max(0.78, Math.min(1.8, f.w / f.h)) : 1.3;   // very tall photos are cropped in the chat, like WhatsApp
+    return `<button type="button" class="cimg" data-mfid="${f.id}" style="aspect-ratio:${ar.toFixed(3)}" aria-label="Photo">${u ? `<img src="${u}" alt="">` : `<span class="cph"></span>`}</button>`;
   }
-  return `<button type="button" class="cfile" data-dl="1" data-fid="${f.id}"><span class="cfi">${ic("doc",22)}</span>
-    <span class="cft"><b>${esc(f.name)}</b><small>${fmtSize(f.size)} · Tap to download</small></span>${ic("download",18)}</button>`;
+  const k = fileKind(f);
+  return `<div class="cfile k-${k}" data-mopen="${f.id}" role="button" tabindex="0"><span class="cfi">${esc(kindTag(f))}</span>
+    <span class="cft"><b>${esc(f.name)}</b><small>${fmtSize(f.size)} · ${KIND_NAME[k]} · Tap to open</small></span>
+    <button type="button" class="cfa" data-mshare="${f.id}" aria-label="Share or save">${ic("send", 16)}</button></div>`;
 }
+function hydrateMedia(box) {
+  if (!box) return;
+  box.querySelectorAll(".cimg[data-mfid]:not([data-done])").forEach(el => {
+    el.dataset.done = "1"; if (el.querySelector("img")) return;
+    const m = mediaMeta[el.dataset.mfid]; if (!m) return;
+    loadThumbUrl(m.segs, m.f).then(u => { const ph = el.querySelector(".cph"); if (ph) ph.outerHTML = `<img src="${u}" alt="">`; })
+      .catch(() => { const ph = el.querySelector(".cph"); if (ph) { ph.classList.add("err"); ph.textContent = "Could not load"; } });
+  });
+}
+function mediaClick(e, box) {
+  const sh = e.target.closest("[data-mshare]"); if (sh) { e.stopPropagation(); mediaShareMenu(sh.dataset.mshare); return true; }
+  const op = e.target.closest("[data-mopen]"); if (op) { mediaOpen(op.dataset.mopen, op); return true; }
+  const im = e.target.closest(".cimg[data-mfid]"); if (im) { openViewer(im.dataset.mfid, box); return true; }
+  return false;
+}
+async function mediaOpen(fid, el) {
+  const m = mediaMeta[fid]; if (!m) return;
+  if (el) { if (el.classList.contains("busy")) return; el.classList.add("busy"); }
+  try {
+    const v = await loadFileFrom(m.segs, m.f);
+    if (window.Android && Android.openFile) Android.openFile(await b64Of(v), m.f.type || "application/octet-stream", safeName(m.f.name));
+    else window.open(v.url, "_blank");
+  } catch (e) { toast(String(e.message || e), "err"); }
+  finally { if (el) el.classList.remove("busy"); }
+}
+async function mediaShare(fid) {
+  const m = mediaMeta[fid]; if (!m) return;
+  try {
+    const v = await loadFileFrom(m.segs, m.f);
+    if (window.Android && Android.shareFile) { Android.shareFile(await b64Of(v), m.f.type || "application/octet-stream", safeName(m.f.name)); return; }
+    const file = new File([v.blob], safeName(m.f.name), { type: m.f.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file] });
+    else await downloadFileFrom(m.segs, m.f);
+  } catch (e) { if (e && e.name !== "AbortError") toast(String(e.message || e), "err"); }
+}
+async function mediaSave(fid) {
+  const m = mediaMeta[fid]; if (!m) return;
+  try { await downloadFileFrom(m.segs, m.f); } catch (e) { toast(String(e.message || e), "err"); }
+}
+function mediaShareMenu(fid) {
+  const m = mediaMeta[fid]; if (!m) return;
+  const w = document.createElement("div"); w.className = "amenu-wrap";
+  w.innerHTML = `<div class="amenu small"><div class="am-t">${esc(m.f.name)}</div>
+    <button type="button" data-am="open">${ic("doc", 20)}<span>Open</span></button>
+    <button type="button" data-am="share">${ic("send", 20)}<span>Share</span></button>
+    <button type="button" data-am="save">${ic("download", 20)}<span>Save to phone</span></button></div>`;
+  document.body.appendChild(w);
+  w.onclick = e => {
+    const b = e.target.closest("[data-am]"); w.remove(); if (!b) return;
+    if (b.dataset.am === "open") mediaOpen(fid); else if (b.dataset.am === "share") mediaShare(fid); else mediaSave(fid);
+  };
+}
+
+/* full-screen photo viewer: swipe, pinch / double-tap zoom, share, save */
+function openViewer(fid, box) {
+  const ids = (Array.isArray(box) ? box : [...(box || document).querySelectorAll(".cimg[data-mfid]")].map(x => x.dataset.mfid)).filter(id => mediaMeta[id]);
+  let idx = Math.max(0, ids.indexOf(fid));
+  const host = document.createElement("div"); host.className = "imgview mview";
+  host.innerHTML = `<div class="mv-bar"><button type="button" class="mv-b" data-mv="x" aria-label="Close">${ic("back", 22, 2.2)}</button>
+      <div class="mv-who"><b></b><small></small></div>
+      <button type="button" class="mv-b" data-mv="share" aria-label="Share">${ic("send", 20)}</button>
+      <button type="button" class="mv-b" data-mv="save" aria-label="Save">${ic("download", 21)}</button></div>
+    <div class="mv-stage"><img alt="" draggable="false"></div>
+    <div class="mv-foot"><span class="mv-count"></span></div>`;
+  document.body.appendChild(host);
+  const img = host.querySelector("img"), stage = host.querySelector(".mv-stage");
+  let scale = 1, tx = 0, ty = 0, swipe = 0;
+  const apply = (anim) => { img.style.transition = anim ? "transform .2s" : "none"; img.style.transform = `translate(${tx + swipe}px,${ty}px) scale(${scale})`; };
+  const show = async () => {
+    const id = ids[idx], m = mediaMeta[id]; scale = 1; tx = ty = swipe = 0; apply(false);
+    host.querySelector(".mv-who b").textContent = m.who || "";
+    host.querySelector(".mv-who small").textContent = m.at ? fmtDate(m.at) : "";
+    host.querySelector(".mv-count").textContent = ids.length > 1 ? `${idx + 1} / ${ids.length}` : "";
+    host.classList.add("loading");
+    try { img.src = await loadThumbUrl(m.segs, m.f); } catch (e) {}
+    try { const v = await loadFileFrom(m.segs, m.f); if (ids[idx] === id) img.src = v.url; } catch (e) { toast("Could not load the photo", "err"); }
+    if (ids[idx] === id) host.classList.remove("loading");
+  };
+  const close = () => host.remove();
+  const go = d => { const n = idx + d; if (n < 0 || n >= ids.length) { swipe = 0; apply(true); return; } idx = n; show(); };
+  host.onclick = e => {
+    const b = e.target.closest("[data-mv]");
+    if (b) { const k = b.dataset.mv; if (k === "x") close(); else if (k === "share") mediaShare(ids[idx]); else mediaSave(ids[idx]); return; }
+    if (e.target === host) close();     // the phone's Back button
+  };
+  const pts = new Map(); let start = null, pinch = null, lastTap = 0, moved = false, tapT = null;
+  stage.addEventListener("pointerdown", e => {
+    stage.setPointerCapture && stage.setPointerCapture(e.pointerId);
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false;
+    if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: scale }; }
+    else start = { x: e.clientX, y: e.clientY, tx, ty };
+  });
+  stage.addEventListener("pointermove", e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pts.size === 2 && pinch) { const [a, b] = [...pts.values()]; scale = Math.max(1, Math.min(4, pinch.s * Math.hypot(a.x - b.x, a.y - b.y) / (pinch.d || 1))); if (scale === 1) { tx = ty = 0; } moved = true; apply(false); return; }
+    if (!start) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
+    if (scale > 1) { tx = start.tx + dx; ty = start.ty + dy; } else swipe = dx;
+    apply(false);
+  });
+  const end = e => {
+    pts.delete(e.pointerId);
+    if (pts.size) return;
+    pinch = null;
+    if (scale === 1 && Math.abs(swipe) > 60) { go(swipe < 0 ? 1 : -1); start = null; return; }
+    swipe = 0;
+    if (!moved) {
+      const now = Date.now();
+      if (now - lastTap < 300) { clearTimeout(tapT); tapT = null; if (scale > 1) { scale = 1; tx = ty = 0; } else scale = 2.5; lastTap = 0; }
+      else { lastTap = now; clearTimeout(tapT); tapT = setTimeout(() => { tapT = null; host.classList.toggle("bare"); }, 300); }   // one tap: show / hide the bars
+    }
+    apply(true); start = null;
+  };
+  stage.addEventListener("pointerup", end); stage.addEventListener("pointercancel", end);
+  show();
+}
+
+/* ---------- the composer: Camera / Gallery / Document, several at once, with progress ---------- */
+const DOC_ACCEPT = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,application/pdf";
+function newComposer(box) { return { files: [], box, sending: false }; }
+let chatComp = null, threadComp = null;
+function composerAdd(st, list) {
+  for (const f of list) {
+    if (st.files.length >= MAX_PICK) { toast(`Up to ${MAX_PICK} files at a time`, "err"); break; }
+    if (!isImg(f) && f.size > MAX_FILE) { toast(`${f.name} is too large (maximum 5 MB).`, "err"); continue; }
+    if (f.size > 25 * 1024 * 1024) { toast(`${f.name} is too large.`, "err"); continue; }
+    st.files.push({ file: f, url: isImg(f) ? URL.createObjectURL(f) : "" });
+  }
+  composerRender(st);
+}
+function composerRender(st, prog) {
+  const box = st.box; if (!box) return;
+  if (!st.files.length) { box.classList.add("hidden"); box.innerHTML = ""; return; }
+  box.classList.remove("hidden");
+  box.innerHTML = `<div class="trow">${st.files.map((p, i) => p.url
+      ? `<span class="tp img"><img src="${p.url}" alt=""><button type="button" data-tx="${i}" aria-label="Remove">${ic("x", 13, 2.6)}</button></span>`
+      : `<span class="tp doc"><b class="k-${fileKind(p.file)}">${esc(kindTag(p.file))}</b><i>${esc(p.file.name)}</i><button type="button" data-tx="${i}" aria-label="Remove">${ic("x", 13, 2.6)}</button></span>`).join("")}</div>
+    ${prog ? `<div class="tprog"><span>${esc(prog.text)}</span><i><em style="width:${Math.round(prog.p * 100)}%"></em></i></div>`
+      : `<div class="tnote">${st.files.length} selected · the message you type goes with the first one</div>`}`;
+  box.onclick = e => { const b = e.target.closest("[data-tx]"); if (!b || st.sending) return; st.files.splice(+b.dataset.tx, 1); composerRender(st); };
+}
+let pickTarget = null;
+function pickInputs() {
+  let h = document.getElementById("pickHost");
+  if (h) return h;
+  h = document.createElement("div"); h.id = "pickHost"; h.className = "hidden";
+  h.innerHTML = `<input type="file" data-in="cam" accept="image/*" capture="environment">
+    <input type="file" data-in="gal" accept="image/*" multiple>
+    <input type="file" data-in="doc" accept="${DOC_ACCEPT}" multiple>`;
+  document.body.appendChild(h);
+  h.querySelectorAll("input").forEach(inp => inp.onchange = () => {
+    const l = [...(inp.files || [])]; inp.value = "";
+    if (l.length && pickTarget) pickTarget(l);
+  });
+  return h;
+}
+function attachMenu(st) {
+  pickTarget = l => composerAdd(st, l);
+  const host = pickInputs();
+  const w = document.createElement("div"); w.className = "amenu-wrap";
+  w.innerHTML = `<div class="amenu">
+    <button type="button" data-am="cam"><span class="ai cam">${ic("camera", 23)}</span><span>Camera</span></button>
+    <button type="button" data-am="gal"><span class="ai gal">${ic("image", 22)}</span><span>Gallery</span></button>
+    <button type="button" data-am="doc"><span class="ai doc">${ic("doc", 22)}</span><span>Document</span></button></div>`;
+  document.body.appendChild(w);
+  w.onclick = e => {
+    const b = e.target.closest("[data-am]");
+    w.remove();                                   // the menu closes at once (also when the picker is cancelled)
+    if (b) host.querySelector(`input[data-in="${b.dataset.am}"]`).click();
+  };
+}
+/* Camera / Gallery only (photos for a report activity) */
+function photoMenu(cb) {
+  pickTarget = cb;
+  const host = pickInputs();
+  const w = document.createElement("div"); w.className = "amenu-wrap";
+  w.innerHTML = `<div class="amenu two">
+    <button type="button" data-am="cam"><span class="ai cam">${ic("camera", 23)}</span><span>Camera</span></button>
+    <button type="button" data-am="gal"><span class="ai gal">${ic("image", 22)}</span><span>Gallery</span></button></div>`;
+  document.body.appendChild(w);
+  w.onclick = e => { const b = e.target.closest("[data-am]"); w.remove(); if (b) host.querySelector(`input[data-in="${b.dataset.am}"]`).click(); };
+}
+/* upload everything in the composer; returns the list of file metas (in order) */
+async function composerUpload(st, segs) {
+  const out = [], n = st.files.length;
+  for (let i = 0; i < n; i++) {
+    const p = st.files[i];
+    composerRender(st, { text: n > 1 ? `Sending ${i + 1} of ${n}…` : "Sending…", p: i / n });
+    out.push(await uploadFileTo(segs, p.file, x => composerRender(st, { text: n > 1 ? `Sending ${i + 1} of ${n}…` : "Sending…", p: (i + x) / n })));
+  }
+  return out;
+}
+function composerClear(st) { st.files.forEach(p => { try { p.url && URL.revokeObjectURL(p.url); } catch (e) {} }); st.files = []; composerRender(st); }
+const fileWord = metas => metas.length > 1
+  ? (metas.every(isImg) ? `sent ${metas.length} photos` : `sent ${metas.length} files`)
+  : metas.length ? (isImg(metas[0]) ? "📷 Photo" : "📄 " + metas[0].name) : "";
+
+/* ---------- task chat ---------- */
 function chatMsgsHtml(t) {
   const ups = t.updates || [];
-  if (!ups.length) return `<div class="chat-empty"><b>No messages yet</b><br>Write an update, ask a question or attach a file.</div>`;
+  if (!ups.length) return `<div class="chat-empty"><b>No messages yet</b><br>Write an update, ask a question or attach a photo or file.</div>`;
   let lastDay = "";
   return ups.map(u => {
     const d = new Date(u.at), day = d.toDateString();
@@ -1707,25 +2062,16 @@ function chatMsgsHtml(t) {
     const time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
     if (!isMsg(u)) return sep + `<div class="csys">${esc(u.text)} · ${time}</div>`;
     const mineMsg = u.byEmail ? u.byEmail === me : u.by === myName();
-    return sep + `<div class="cm ${mineMsg ? "me" : "them"}">${mineMsg ? "" : `<span class="cn">${esc(u.by)}</span>`}<div class="cb ${u.file ? "hasfile" : ""}">${u.file ? chatFileHtml(u) : ""}${u.text ? `<div class="ctx">${esc(u.text)}</div>` : ""}</div><span class="ct">${time}</span></div>`;
+    const media = u.file ? mediaHtml(u.file, ["tasks", t.id, "files"], mineMsg ? "You" : u.by, u.at) : "";
+    return sep + `<div class="cm ${mineMsg ? "me" : "them"}">${mineMsg ? "" : `<span class="cn">${esc(u.by)}</span>`}<div class="cb ${u.file ? "hasfile" + (isImg(u.file) ? " isimg" : "") : ""}">${media}${u.text ? `<div class="ctx">${esc(u.text)}</div>` : ""}</div><span class="ct">${time}</span></div>`;
   }).join("");
-}
-function hydrateChatImages() {
-  document.querySelectorAll("#chatList .cimg:not([data-done])").forEach(el => {
-    const f = chatFilesMeta[el.dataset.fid]; if (!f) return;
-    if (el.querySelector("img")) { el.dataset.done = "1"; return; }
-    el.dataset.done = "1";
-    loadChatFile(chatId, f).then(v => {
-      const ph = el.querySelector(".cph"); if (ph) ph.outerHTML = `<img src="${v.url}" alt="">`;
-    }).catch(() => { const ph = el.querySelector(".cph"); if (ph) ph.textContent = "Could not load"; });
-  });
 }
 function refreshChat(force) {
   const box = $("#chatList"); if (!box || !chatId) return false;
   const t = tasks.find(x => x.id === chatId); if (!t) return false;
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 90;
   const html = chatMsgsHtml(t);
-  if (html !== box.dataset.last || force) { box.innerHTML = html; box.dataset.last = html; hydrateChatImages(); }
+  if (html !== box.dataset.last || force) { box.innerHTML = html; box.dataset.last = html; hydrateMedia(box); }
   if (near || force) box.scrollTop = box.scrollHeight;
   markSeen(chatId);
   return true;
@@ -1738,46 +2084,31 @@ function syncActiveConv() {
   activeConvSent = c;
   try { window.Android && Android.setActiveChat && Android.setActiveChat(c); } catch (e) {}
 }
-function closeChat() { chatId = null; chatFile = null; $("#sheetHost").innerHTML = ""; syncActiveConv(); render(); }
-function renderChatPending() {
-  const box = $("#chatPending"); if (!box) return;
-  if (!chatFile) { box.classList.add("hidden"); box.innerHTML = ""; return; }
-  box.classList.remove("hidden");
-  box.innerHTML = `<span class="pf">Attached: <b>${esc(chatFile.name)}</b> <small>${fmtSize(chatFile.size)}</small></span><button type="button" id="chatPendX" aria-label="Remove">${ic("x",16)}</button>`;
-  $("#chatPendX").onclick = () => { chatFile = null; renderChatPending(); };
-}
-function openImageViewer(fid) {
-  const f = chatFilesMeta[fid], v = fileCache.get(fid); if (!f || !v) return;
-  const host = document.createElement("div"); host.className = "imgview";
-  host.innerHTML = `<div class="iv-bar"><span>${esc(f.name)}</span><button type="button" data-dl="1">${ic("download",22)}</button><button type="button" data-x="1">${ic("x",24)}</button></div><img src="${v.url}" alt="">`;
-  document.body.appendChild(host);
-  host.onclick = e => {
-    if (e.target.closest("[data-dl]")) run(() => downloadChatFile(chatId, f));
-    else host.remove();
-  };
-}
+function closeChat() { chatId = null; if (chatComp) composerClear(chatComp); chatComp = null; $("#sheetHost").innerHTML = ""; syncActiveConv(); render(); }
 async function sendChat() {
   if (chatSending || !chatId) return;
-  const inp = $("#chatIn"); const text = inp.value.trim();
-  if (!text && !chatFile) return;
+  const inp = $("#chatIn"); const text = inp.value.trim(), st = chatComp;
+  if (!text && !(st && st.files.length)) return;
   const t = tasks.find(x => x.id === chatId); if (!t) return;
-  chatSending = true; const sb = $("#chatSend"); sb.disabled = true;
+  const id = chatId;
+  chatSending = true; if (st) st.sending = true; const sb = $("#chatSend"); sb.disabled = true;
   try {
-    let meta = null;
-    if (chatFile) { toast("Uploading file..."); meta = await uploadChatFile(chatId, chatFile); }
-    const entry = { text, by: myName(), byEmail: me, at: Date.now(), kind: "msg" };
-    if (meta) entry.file = meta;
-    await updateDoc(doc(db, "tasks", chatId), { updates: arrayUnion(entry) });
-    inp.value = ""; chatFile = null; renderChatPending();
+    const metas = st && st.files.length ? await composerUpload(st, ["tasks", id, "files"]) : [];
+    const entries = metas.length
+      ? metas.map((m, i) => ({ text: i === 0 ? text : "", by: myName(), byEmail: me, at: Date.now() + i, kind: "msg", file: m }))
+      : [{ text, by: myName(), byEmail: me, at: Date.now(), kind: "msg" }];
+    await updateDoc(doc(db, "tasks", id), { updates: arrayUnion(...entries) });
+    inp.value = ""; if (st) { st.sending = false; composerClear(st); }
+    const what = text || fileWord(metas);
     const who = new Set([t.creatorEmail, t.assigneeEmail]); who.delete(me);
-    const link = { tab: "chat", id: chatId, name: myName(), conv: String(t.title || "Task").slice(0, 80), msg: (text || "sent an attachment").slice(0, 300) };
-    for (const e of who) notify(e, `${myName()} · ${t.title}: ${text || "sent an attachment"}`.slice(0, 160), link).catch(() => {});
-  } catch (e) { onErr(e); toast(String(e.message || e), "err"); }
-  finally { chatSending = false; if ($("#chatSend")) $("#chatSend").disabled = false; }
+    const link = { tab: "chat", id, name: myName(), conv: String(t.title || "Task").slice(0, 80), msg: what.slice(0, 300) };
+    for (const e of who) notify(e, `${myName()} · ${t.title}: ${what}`.slice(0, 160), link).catch(() => {});
+  } catch (e) { onErr(e); toast(String(e.message || e), "err"); if (st) composerRender(st); }
+  finally { chatSending = false; if (st) st.sending = false; if ($("#chatSend")) $("#chatSend").disabled = false; }
 }
 function openChat(id) {
   const t = tasks.find(x => x.id === id); if (!t) return;
-  chatId = id; chatFile = null; markSeen(id); syncActiveConv();
+  chatId = id; markSeen(id); syncActiveConv();
   const self = t.assigneeEmail === me && t.creatorEmail === me;
   const sub = self ? "Your own task" : t.assigneeEmail === me ? "Assigned by " + (t.creatorName || nameOf(t.creatorEmail)) : "Assigned to " + (t.assigneeName || nameOf(t.assigneeEmail));
   const quick = ["Working on it", "Not available right now", "Need more time", "Completed"];
@@ -1787,26 +2118,15 @@ function openChat(id) {
     <div class="chat-list" id="chatList"></div>
     <div class="chat-quick">${quick.map(q => `<button type="button" class="qchip" data-q="${esc(q)}">${q}</button>`).join("")}</div>
     <div class="chat-pending hidden" id="chatPending"></div>
-    <div class="chat-bar"><button type="button" class="attach" id="chatAttach" aria-label="Attach a file">${ic("clip",21)}</button>
+    <div class="chat-bar"><button type="button" class="attach" id="chatAttach" aria-label="Attach a photo or file">${ic("clip",21)}</button>
       <input id="chatIn" placeholder="Write an update or reply..." autocomplete="off"><button class="send" id="chatSend" aria-label="Send">${ic("send",20)}</button></div>
-    <input type="file" id="chatFile" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv">
   </div></div>`;
+  chatComp = newComposer($("#chatPending"));
   $("#ov").onclick = e => { if (e.target.id === "ov") closeChat(); };
   $("#chatX").onclick = closeChat;
   $("#chatSend").onclick = sendChat;
-  $("#chatAttach").onclick = () => $("#chatFile").click();
-  $("#chatFile").onchange = e => {
-    const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
-    if (!(f.type || "").startsWith("image/") && f.size > MAX_FILE) { toast("This file is too large (maximum 5 MB).", "err"); return; }
-    if (f.size > 25 * 1024 * 1024) { toast("This file is too large.", "err"); return; }
-    chatFile = f; renderChatPending();
-  };
-  $("#chatList").onclick = e => {
-    const dl = e.target.closest("[data-dl]");
-    if (dl) { const f = chatFilesMeta[dl.dataset.fid]; if (f) { toast("Preparing download..."); run(() => downloadChatFile(chatId, f)); } return; }
-    const box = e.target.closest(".cimg");
-    if (box && box.querySelector("img")) openImageViewer(box.dataset.fid);
-  };
+  $("#chatAttach").onclick = () => attachMenu(chatComp);
+  $("#chatList").onclick = e => { mediaClick(e, $("#chatList")); };
   $("#chatIn").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); sendChat(); } });
   document.querySelectorAll(".qchip").forEach(b => b.onclick = () => { const i = $("#chatIn"); i.value = b.dataset.q; i.focus(); });
   refreshChat(true);
@@ -2537,20 +2857,79 @@ function drPersonLine(section) {
 }
 function drSaveBtn(section) { return `<button class="btn" style="margin-top:12px" data-act="drsave" data-sec="${section}">Save</button>`; }
 
+/* ---------- photos on the day's activities ---------- */
+const drPicBusy = {};                                   // "section:index" -> upload progress
+const drPicSegs = () => ["dailyReports", drDate, "files"];
+const drPicMax = () => Math.max(1, Number(drConfig.picMax) || PIC_DEFAULTS.picMax);
+const drPicTotal = () => Math.max(1, Number(drConfig.picTotal) || PIC_DEFAULTS.picTotal);
+const drPicKeep = () => Math.max(1, Number(drConfig.picKeepDays) || PIC_DEFAULTS.picKeepDays);
+function drPicsUsed() {
+  let n = 0;
+  for (const k of ["dswActivities", "hallActivities"]) ((drDraftFor(k).items) || []).forEach(it => { n += (it.pics || []).length; });
+  return n;
+}
+function drPicStrip(section, i, it) {
+  const pics = it.pics || [], busy = drPicBusy[section + ":" + i];
+  pics.forEach(p => { mediaMeta[p.id] = { f: p, segs: drPicSegs(), who: SECTION_LABEL[section] || "", at: 0 }; });
+  const gone = drReport && drReport.picsDeleted;
+  return `<div class="drpics">${pics.map((p, k) => `<span class="drp"><button type="button" class="drpv" data-act="drpicview" data-sec="${section}" data-i="${i}" data-k="${k}" aria-label="Photo ${k + 1}"><img data-pfid="${p.id}" src="${thumbCache.get(p.id) || ""}" alt=""></button>
+      <button type="button" class="drpx" data-act="drpicdel" data-sec="${section}" data-i="${i}" data-k="${k}" aria-label="Remove photo">${ic("x", 12, 2.8)}</button></span>`).join("")}
+    ${busy ? `<span class="drp up" id="drpb_${section}_${i}"><i><em style="width:${Math.round(((busy.k + busy.p) / busy.n) * 100)}%"></em></i><small>${busy.k + 1}/${busy.n}</small></span>` : ""}
+    <div class="drpnote">${gone ? `Photos were removed ${drPicKeep()} days after the report.` : `“${esc(drTpl().picAtt || "Pic Att.")}” is added under this activity · photos go after the report on WhatsApp`}</div></div>`;
+}
+function hydrateReportPics() {
+  document.querySelectorAll("#view img[data-pfid]").forEach(img => {
+    if (img.getAttribute("src")) return;
+    const m = mediaMeta[img.dataset.pfid]; if (!m || img.dataset.loading) return;
+    img.dataset.loading = "1";
+    loadThumbUrl(m.segs, m.f).then(u => { img.src = u; }).catch(() => { img.closest(".drp, .drpg")?.classList.add("gone"); });
+  });
+}
+async function drAddPics(section, it, files) {
+  const imgs = files.filter(isImg);
+  if (imgs.length < files.length) toast("Only photos can be added to an activity", "err");
+  const max = drPicMax(), total = drPicTotal();
+  const room = Math.min(max - (it.pics || []).length, total - drPicsUsed());
+  if (room <= 0) { toast((it.pics || []).length >= max ? `Up to ${max} photos for one activity` : `Up to ${total} photos in one report`, "err"); return; }
+  const list = imgs.slice(0, room);
+  if (imgs.length > room) toast(`Only ${room} more photo${room > 1 ? "s" : ""} can be added`, "err");
+  const date = drDate, segs = drPicSegs();
+  const keyOf = () => { const i = (drDraftFor(section).items || []).indexOf(it); return section + ":" + i; };
+  let key = keyOf();
+  try {
+    for (let k = 0; k < list.length; k++) {
+      key = keyOf(); drPicBusy[key] = { n: list.length, k, p: 0 }; render();
+      const meta = await uploadFileTo(segs, list[k], x => {
+        const b = drPicBusy[key]; if (!b) return; b.p = x;
+        const el = document.querySelector(`#drpb_${key.replace(":", "_")} em`); if (el) el.style.width = Math.round(((b.k + x) / b.n) * 100) + "%";
+      });
+      delete drPicBusy[key];
+      if (drDate !== date) break;
+      (it.pics = it.pics || []).push(meta);
+      drDirty.add(section);
+    }
+  } catch (e) { toast(String(e.message || e), "err"); }
+  delete drPicBusy[key]; render();
+  if (drDate === date && (it.pics || []).length) toast("Photo added — tap Save to keep it in the report");
+}
 function drActivityCard(section, title, hint) {
   if (!drCan(section)) return "";
   const d = drDraftFor(section);
   const items = d.items || [];
+  const withPics = section === "dswActivities" || section === "hallActivities";
   const rows = items.length ? items.map((it, i) => `<div class="dract">
       <span>${esc(it.text)}</span>
+      ${withPics ? `<button type="button" class="drcam ${(it.pics || []).length ? "has" : ""}" data-act="drpic" data-sec="${section}" data-i="${i}" aria-label="Add photos">${ic("camera", 17)}${(it.pics || []).length ? `<em>${it.pics.length}</em>` : ""}</button>` : ""}
       <button type="button" data-act="dractmove" data-sec="${section}" data-i="${i}" data-dir="-1" ${i===0?"disabled":""}>${ic("up",16)}</button>
       <button type="button" data-act="dractmove" data-sec="${section}" data-i="${i}" data-dir="1" ${i===items.length-1?"disabled":""}>${ic("down",16)}</button>
       <button type="button" data-act="dractdel" data-sec="${section}" data-i="${i}">${ic("x",16)}</button>
-    </div>`).join("") : `<div class="muted" style="font-size:13px">No activities added yet — leave empty for ${esc(emptyWord(drDate, drTpl()))}</div>`;
+    </div>${withPics && ((it.pics || []).length || drPicBusy[section + ":" + i]) ? drPicStrip(section, i, it) : ""}`).join("") : `<div class="muted" style="font-size:13px">No activities added yet — leave empty for ${esc(emptyWord(drDate, drTpl()))}</div>`;
   return `<div class="glass drcard"><h4>${title}</h4>
     <div class="muted" style="font-size:12px;margin-bottom:6px">${hint}</div>
     ${rows}
     <div class="addrow" style="margin-top:8px"><input id="dr_new_${section}" placeholder="Add an activity"><button class="btn ghost" type="button" data-act="dractadd" data-sec="${section}">Add</button></div>
+    ${withPics && items.length ? `<div class="muted" style="font-size:12px;margin-top:6px">${ic("camera", 13)} Tap the camera on an activity to add photos (up to ${drPicMax()} each).</div>` : ""}
+    ${drDirty.has(section) ? `<div class="drunsaved">Not saved yet — tap Save</div>` : ""}
     ${drSaveBtn(section)}${drPersonLine(section)}</div>`;
 }
 function drWingCard(section, label, parts) {
@@ -2633,6 +3012,10 @@ function viewDailyFormat() {
       ${f("offWord", "Word on these days")}
     </div>
     <div class="glass drcard">
+      <h4>Photos</h4>
+      ${f("picAtt", "Word under an activity with photos", "Written on the line under the activity, e.g. “Pic Att.”")}
+    </div>
+    <div class="glass drcard">
       <h4>Wing names</h4>
       ${f("maleLabel", "Male wing")}${f("femaleLabel", "Female wing")}${f("hostelLabel", "Student-run hostel")}
     </div>
@@ -2645,6 +3028,16 @@ function viewDailyFormat() {
       <h4>Closing</h4>
       <label>Closing lines (one per line)</label>
       <textarea data-tpl="closing" rows="3" spellcheck="false">${esc(String(T.closing))}</textarea>
+    </div>
+    <div class="sec">Photo limits</div>
+    <div class="glass drcard wa-set">
+      <div class="grid3">
+        <div><label style="margin-top:0">Per activity</label><input id="picMax" type="number" inputmode="numeric" min="1" max="20" value="${drPicMax()}" ${isAdmin ? "" : "disabled"}></div>
+        <div><label style="margin-top:0">Per report</label><input id="picTotal" type="number" inputmode="numeric" min="1" max="60" value="${drPicTotal()}" ${isAdmin ? "" : "disabled"}></div>
+        <div><label style="margin-top:0">Keep (days)</label><input id="picKeep" type="number" inputmode="numeric" min="1" max="365" value="${drPicKeep()}" ${isAdmin ? "" : "disabled"}></div>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:8px">Photos are removed this many days after their report, to keep the free storage from filling up. The report text always stays.</div>
+      ${isAdmin ? `<button class="btn ghost" data-act="drpicsave" style="width:100%;margin-top:12px">Save photo limits</button>` : `<div class="muted" style="font-size:12px;margin-top:8px">Only the Admin can change these.</div>`}
     </div>
     <div class="sec">Preview</div>
     <div class="drpaper" id="tplPreview">${esc(drCompile(drDate, drSections, T))}</div>
@@ -2686,6 +3079,7 @@ function viewDailyPreview() {
     ${warnings.map(w => `<div class="drwarn">${esc(w)}</div>`).join("")}
     ${edited ? `<div class="drwarn">This text was edited by hand, so changes in the sections will not update it. ${canFinal ? `<button class="link" data-act="drtextreset">Reset to automatic</button>` : ""}</div>` : ""}
     ${paper}
+    ${drEditText ? "" : drPhotosHtml()}
     ${drEditText ? "" : `${fin && canFinal && drWaNumber() ? `<button class="btn" data-act="drwa" style="width:100%;margin-top:12px">Send to WhatsApp</button>` : ""}<div class="row">
       <button class="btn ${fin && canFinal && drWaNumber() ? "ghost" : ""}" data-act="drcopy">Copy report</button>
       ${canFinal ? `<button class="btn ghost" data-act="drtextedit">Edit text</button>` : ""}
@@ -2695,6 +3089,20 @@ function viewDailyPreview() {
     ${canFinal && !drWaNumber() ? `<div class="muted" style="font-size:12px;margin-top:10px">To send the report to WhatsApp, the Admin saves the number under Daily Reports › WhatsApp.</div>` : ""}
     ${canFinal && waAuto() && !(drReport && drReport.wa && drReport.wa.sentAt) ? `<div class="muted" style="font-size:12px;margin-top:10px">This report goes to WhatsApp by itself at ${esc(waTimeTxt())}. See Daily Reports › WhatsApp.</div>` : ""}
     <div class="muted" style="font-size:12px;margin-top:10px">The copied text keeps the asterisks WhatsApp uses for bold, so paste it directly into the chat.</div>`}`;
+}
+/* the day's photos under the report (in the app only) */
+function drPhotosHtml() {
+  const pics = reportPics(drSections); if (!pics.length) return "";
+  const all = [];
+  for (const k of ["dswActivities", "hallActivities"]) ((drSections[k] && drSections[k].items) || []).forEach((a, i) => { if (a && String(a.text || "").trim()) all.push(k + ":" + i); });
+  const letter = p => all.length > 1 ? "(" + letterAt(all.indexOf(p.sec + ":" + p.item)) + ")" : "";
+  pics.forEach(p => { mediaMeta[p.id] = { f: p, segs: drPicSegs(), who: letter(p), at: 0 }; });
+  const gone = drReport && drReport.picsDeleted;
+  return `<div class="sec">Photos · ${pics.length}</div>
+    ${gone ? `<div class="muted" style="font-size:12.5px;margin:-4px 2px 8px">The photos were removed ${drPicKeep()} days after the report, to save space. The text stays.</div>` : ""}
+    <div class="drpgrid">${pics.map(p => `<button type="button" class="drpg" data-act="drpicgrid" data-id="${p.id}"><img data-pfid="${p.id}" src="${thumbCache.get(p.id) || ""}" alt="">${letter(p) ? `<b>${letter(p)}</b>` : ""}</button>`).join("")}</div>
+    ${gone ? "" : `<button class="btn ghost" data-act="drpicshare" style="width:100%;margin-top:10px">${ic("send", 16)} Share photos</button>
+    <div class="muted" style="font-size:12px;margin:6px 2px 0">They go to WhatsApp by themselves right after the report, in this order, without captions.</div>`}`;
 }
 /* the report text with small "not submitted yet" notes next to the parts still missing.
    Only on screen: Copy and WhatsApp always use the clean text. */
@@ -2773,9 +3181,12 @@ function waStatusBlock() {
   else { title = "Sending in a moment…"; }
   const meta = waSrv && waSrv.provider === "meta";
   const steps = [["All sections in", !missing.length], ["Sent", w.status === "sent" || w.status === "waiting"], ["Delivered", !!w.deliveredAt], ["Read", !!w.readAt], [meta ? "OK pressed" : "Replied", !!w.okAt]];
+  const pl = Array.isArray(w.picList) ? w.picList.length : 0, pd = Math.min(pl, Number(w.picsDone) || 0);
+  const picsLine = w.status === "sent" && pl ? `<div class="wa-pics ${w.picsError ? "bad" : pd >= pl ? "ok" : ""}">${ic("image", 14)} ${pd >= pl ? `${pl} photo${pl > 1 ? "s" : ""} sent after the report` : `Sending photos… ${pd} of ${pl}`}${w.picsError ? ` · ${esc(w.picsError)}` : ""}</div>` : "";
   return `<div class="glass drcard wa-st ${tone}">
       <div class="wa-h"><span class="wa-dot"></span><div><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div></div>
       <div class="wa-steps">${steps.map(([l, on]) => `<span class="${on ? "on" : ""}"><i>${on ? ic("check", 12, 3.2) : ""}</i>${l}</span>`).join("")}</div>
+      ${picsLine}
     </div>`;
 }
 function viewDailyWhatsApp() {
@@ -2916,6 +3327,8 @@ async function drDeleteReport(dateStr) {
   await run(async () => {
     const secs = await getDocs(collection(db, "dailyReports", dateStr, "sections"));
     for (const s of secs.docs) await deleteDoc(doc(db, "dailyReports", dateStr, "sections", s.id));
+    const files = await getDocs(collection(db, "dailyReports", dateStr, "files"));
+    for (const f of files.docs) await deleteDoc(doc(db, "dailyReports", dateStr, "files", f.id));
     await deleteDoc(doc(db, "dailyReports", dateStr));
   });
   toast("Report deleted");
@@ -3270,7 +3683,7 @@ function taskDetailHtml(t) {
   const by = t.creatorEmail === t.assigneeEmail ? (t.giverName ? esc(t.giverName) : "Myself") : esc(t.creatorName || nameOf(t.creatorEmail));
   const steps = t.steps || [], sd = steps.filter(s => s.done).length, canTick = t.assigneeEmail === me;
   const files = (t.updates || []).filter(u => u.file);
-  files.forEach(u => chatFilesMeta[u.file.id] = u.file);
+  files.forEach(u => { mediaMeta[u.file.id] = { f: u.file, segs: ["tasks", t.id, "files"], who: u.byEmail === me ? "You" : u.by, at: u.at }; });
   const acts = (t.updates || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0));
   const msgs = (t.updates || []).filter(isMsg).length, un = unreadOf(t);
   const mine = t.assigneeEmail === me;
@@ -3292,7 +3705,7 @@ function taskDetailHtml(t) {
         <div class="prog" style="margin:0 0 6px"><i style="width:${Math.round(sd / steps.length * 100)}%"></i></div>
         ${steps.map((s, i) => `<div class="step ${s.done ? "on" : ""}" ${canTick ? `data-act="togglestep" data-id="${t.id}" data-i="${i}"` : ""}><b>${s.done ? ic("check", 12, 3) : ""}</b><span>${esc(s.text)}</span></div>`).join("")}
       </div>` : ""}
-      ${files.length ? `<div class="sec">Files · ${files.length}</div><div class="glass dcard2">${files.map(u => `<div class="frow"><div><b>${esc(u.file.name)}</b><small>${fmtSize(u.file.size)} · ${esc(u.by || "")}</small></div><button class="btn ghost" data-act="dfile" data-id="${t.id}" data-fid="${u.file.id}">Download</button></div>`).join("")}</div>` : ""}
+      ${files.length ? `<div class="sec">Files · ${files.length}</div><div class="glass dcard2">${files.map(u => `<div class="frow"><div><b>${esc(u.file.name)}</b><small>${fmtSize(u.file.size)} · ${esc(u.by || "")}</small></div><button class="btn ghost" data-act="dfile" data-id="${t.id}" data-fid="${u.file.id}">Open</button></div>`).join("")}</div>` : ""}
       <div class="sec">Activity</div>
       <div class="glass dcard2">${acts.length ? acts.map(u => `<div class="arow"><i></i><div><b>${esc(u.by || "")}</b> <span>${isMsg(u) ? esc(u.text || (u.file ? "sent " + u.file.name : "")) : esc(u.text)}</span><small>${fmtDate(u.at)}</small></div></div>`).join("") : `<div class="muted">No activity yet.</div>`}</div>
     </div>
@@ -3372,7 +3785,7 @@ function viewChats() {
 function openThread(id) {
   if (detailId) detailId = null;
   if (threadUnsub) { threadUnsub(); threadUnsub = null; }
-  threadId = id; threadMsgs = []; threadFile = null; document.body.classList.add("paged"); syncActiveConv();
+  threadId = id; threadMsgs = []; if (threadComp) composerClear(threadComp); document.body.classList.add("paged"); syncActiveConv();
   const group = id === "wing", peer = group ? null : members.find(m => m.email === dmPeer(id));
   const name = group ? "DSW Wing" : (peer ? peer.name : nameOf(dmPeer(id)));
   const sub = group ? `${activeMembers().length} members` : (peer && peer.designation) || "";
@@ -3384,24 +3797,14 @@ function openThread(id) {
       ${group ? "" : `<button class="pg-icon" data-act="callmenu" aria-label="Call">${ic("phone", 20, 2)}</button>`}</div>
     <div class="chat-list" id="thList"><div class="chat-empty">Loading…</div></div>
     <div class="chat-pending hidden" id="thPending"></div>
-    <div class="chat-bar"><button type="button" class="attach" id="thAttach" aria-label="Attach a file">${ic("clip", 21)}</button>
+    <div class="chat-bar"><button type="button" class="attach" id="thAttach" aria-label="Attach a photo or file">${ic("clip", 21)}</button>
       <input id="thIn" placeholder="Message" autocomplete="off"><button class="send" id="thSend" aria-label="Send">${ic("send", 20)}</button></div>
-    <input type="file" id="thFileIn" class="hidden" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv">
   </div>`;
+  threadComp = newComposer($("#thPending"));
   $("#thSend").onclick = sendThread;
   $("#thIn").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); sendThread(); } });
-  $("#thAttach").onclick = () => $("#thFileIn").click();
-  $("#thFileIn").onchange = e => {
-    const f = e.target.files && e.target.files[0]; e.target.value = ""; if (!f) return;
-    if (!(f.type || "").startsWith("image/") && f.size > MAX_FILE) { toast("This file is too large (maximum 5 MB).", "err"); return; }
-    threadFile = f; const b = $("#thPending"); b.classList.remove("hidden");
-    b.innerHTML = `<span class="pf">Attached: <b>${esc(f.name)}</b> <small>${fmtSize(f.size)}</small></span><button type="button" id="thPendX" aria-label="Remove">${ic("x", 16)}</button>`;
-    $("#thPendX").onclick = () => { threadFile = null; b.classList.add("hidden"); };
-  };
-  $("#thList").onclick = e => {
-    const dl = e.target.closest("[data-tdl]");
-    if (dl) { const f = threadFileMeta[dl.dataset.tdl]; if (f) run(() => downloadFileFrom(["chats", threadId, "files"], f)); }
-  };
+  $("#thAttach").onclick = () => attachMenu(threadComp);
+  $("#thList").onclick = e => { mediaClick(e, $("#thList")); };
   threadUnsub = onSnapshot(collection(db, "chats", id, "messages"), s => {
     if (threadId !== id) return;
     threadMsgs = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-300);
@@ -3411,9 +3814,8 @@ function openThread(id) {
 }
 function closeThread() {
   if (threadUnsub) { threadUnsub(); threadUnsub = null; }
-  threadId = null; threadMsgs = []; threadFile = null; syncActiveConv();
+  threadId = null; threadMsgs = []; if (threadComp) composerClear(threadComp); threadComp = null; syncActiveConv();
 }
-const threadFileMeta = {};
 function threadMsgsHtml() {
   const group = threadId === "wing";
   if (!threadMsgs.length) return `<div class="chat-empty"><b>Say hello</b><br>${group ? "Messages here go to everyone in the wing." : "Only the two of you can see these messages."}</div>`;
@@ -3425,17 +3827,10 @@ function threadMsgsHtml() {
     let sep = "";
     if (day !== lastDay) { lastDay = day; sep = `<div class="cday">${d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}</div>`; }
     const mine = m.by === me, time = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    let file = "";
-    if (m.file) {
-      threadFileMeta[m.file.id] = m.file;
-      const cached = fileCache.get(m.file.id);
-      file = m.file.type && m.file.type.startsWith("image/")
-        ? `<div class="cimg" data-tfid="${m.file.id}">${cached ? `<img src="${cached.url}" alt="">` : `<div class="cph">Loading image…</div>`}<button type="button" class="cdl" data-tdl="${m.file.id}" aria-label="Download">${ic("download", 16)}</button></div>`
-        : `<button type="button" class="cfile" data-tdl="${m.file.id}"><span class="cfi">${ic("doc", 22)}</span><span class="cft"><b>${esc(m.file.name)}</b><small>${fmtSize(m.file.size)} · Tap to download</small></span></button>`;
-    }
+    const file = m.file ? mediaHtml(m.file, ["chats", threadId, "files"], mine ? "You" : (m.byName || nameOf(m.by)), m.at) : "";
     const seen = !group && mine && i === lastMine && peerRead >= (m.at || 0) ? `<span class="ct">Seen</span>` : "";
     if (m.kind === "call") return sep + callBubble(m, mine, time) + seen;
-    return sep + `<div class="cm ${mine ? "me" : "them"}">${!mine && group ? `<span class="cn">${esc(m.byName || nameOf(m.by))}</span>` : ""}<div class="cb ${m.file ? "hasfile" : ""}">${file}${m.text ? `<div class="ctx">${esc(m.text)}</div>` : ""}</div><span class="ct">${time}</span>${seen}</div>`;
+    return sep + `<div class="cm ${mine ? "me" : "them"}">${!mine && group ? `<span class="cn">${esc(m.byName || nameOf(m.by))}</span>` : ""}<div class="cb ${m.file ? "hasfile" + (isImg(m.file) ? " isimg" : "") : ""}">${file}${m.text ? `<div class="ctx">${esc(m.text)}</div>` : ""}</div><span class="ct">${time}</span>${seen}</div>`;
   }).join("");
 }
 function callLen(secs) {
@@ -3470,12 +3865,7 @@ function refreshThread() {
   const near = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
   const html = threadMsgsHtml();
   if (html !== box.dataset.last) { box.innerHTML = html; box.dataset.last = html; if (near || !box.dataset.scrolled) { box.scrollTop = box.scrollHeight; box.dataset.scrolled = "1"; } }
-  box.querySelectorAll(".cimg:not([data-done])").forEach(el => {
-    const f = threadFileMeta[el.dataset.tfid]; if (!f) return; el.dataset.done = "1";
-    if (el.querySelector("img")) return;
-    loadFileFrom(["chats", threadId, "files"], f).then(v => { const ph = el.querySelector(".cph"); if (ph) ph.outerHTML = `<img src="${v.url}" alt="">`; })
-      .catch(() => { const ph = el.querySelector(".cph"); if (ph) ph.textContent = "Could not load"; });
-  });
+  hydrateMedia(box);
 }
 function markThreadRead() {
   if (!threadId) return;
@@ -3487,26 +3877,25 @@ function markThreadRead() {
 }
 async function sendThread() {
   if (threadSending || !threadId) return;
-  const inp = $("#thIn"), text = inp.value.trim();
-  if (!text && !threadFile) return;
-  const id = threadId, group = id === "wing", at = Date.now();
-  threadSending = true; $("#thSend").disabled = true;
+  const inp = $("#thIn"), text = inp.value.trim(), st = threadComp;
+  if (!text && !(st && st.files.length)) return;
+  const id = threadId, group = id === "wing";
+  threadSending = true; if (st) st.sending = true; $("#thSend").disabled = true;
   try {
-    const base = { type: group ? "group" : "dm", lastText: (text || (threadFile ? "Sent a file" : "")).slice(0, 120), lastAt: at, lastBy: me, lastByName: myName(), reads: { [me]: at } };
+    const metas = st && st.files.length ? await composerUpload(st, ["chats", id, "files"]) : [];
+    const what = text || fileWord(metas), at = Date.now();
+    const base = { type: group ? "group" : "dm", lastText: what.slice(0, 120), lastAt: at, lastBy: me, lastByName: myName(), reads: { [me]: at } };
     if (!group) base.members = [me, dmPeer(id)].sort();
     await setDoc(doc(db, "chats", id), base, { merge: true });
-    let meta = null;
-    if (threadFile) { toast("Uploading file..."); meta = await uploadFileTo(["chats", id, "files"], threadFile); }
-    const msg = { text, by: me, byName: myName(), at };
-    if (meta) msg.file = meta;
-    await addDoc(collection(db, "chats", id, "messages"), msg);
-    inp.value = ""; threadFile = null; const b = $("#thPending"); if (b) b.classList.add("hidden");
-    const body = `${group ? "DSW Wing · " : ""}${myName()}: ${text || "sent a file"}`.slice(0, 160);
+    if (metas.length) for (let i = 0; i < metas.length; i++) await addDoc(collection(db, "chats", id, "messages"), { text: i === 0 ? text : "", by: me, byName: myName(), at: at + i, file: metas[i] });
+    else await addDoc(collection(db, "chats", id, "messages"), { text, by: me, byName: myName(), at });
+    inp.value = ""; if (st) { st.sending = false; composerClear(st); }
+    const body = `${group ? "DSW Wing · " : ""}${myName()}: ${what}`.slice(0, 160);
     const targets = group ? activeMembers().map(m => m.email).filter(e => e !== me) : [dmPeer(id)];
-    const link = { tab: "dm", id, name: myName(), conv: group ? "DSW Wing" : "", msg: (text || "sent a file").slice(0, 300) };
+    const link = { tab: "dm", id, name: myName(), conv: group ? "DSW Wing" : "", msg: what.slice(0, 300) };
     targets.forEach(e => notify(e, body, link, { bell: false }).catch(() => {}));
-  } catch (e) { onErr(e); toast(String(e.message || e), "err"); }
-  finally { threadSending = false; const sb = $("#thSend"); if (sb) sb.disabled = false; }
+  } catch (e) { onErr(e); toast(String(e.message || e), "err"); if (st) composerRender(st); }
+  finally { threadSending = false; if (st) st.sending = false; const sb = $("#thSend"); if (sb) sb.disabled = false; }
 }
 
 /* ---------- call options: in-app, phone, WhatsApp ---------- */
@@ -3750,7 +4139,11 @@ $("#pageHost").addEventListener("click", e => run(async () => {
   else if (act === "chat" && t) openChat(t.id);
   else if (act === "toggle" && t) await toggleTaskDone(t);
   else if (act === "togglestep" && t) await toggleTaskStep(t, +el.dataset.i);
-  else if (act === "dfile" && t) { const f = chatFilesMeta[el.dataset.fid]; if (f) { toast("Preparing download..."); await downloadChatFile(t.id, f); } }
+  else if (act === "dfile" && t) {
+    const m = mediaMeta[el.dataset.fid]; if (!m) return;
+    if (isImg(m.f)) openViewer(el.dataset.fid, (t.updates || []).filter(u => u.file && isImg(u.file)).map(u => u.file.id));
+    else await mediaOpen(el.dataset.fid, el);
+  }
   else if (act === "callmenu" && threadId) openCallMenu(dmPeer(threadId));
 }));
 
@@ -4034,6 +4427,36 @@ $("#view").addEventListener("click", e => run(async () => {
     const sec = el.dataset.sec; const inp = $("#dr_new_" + sec); const text = inp.value.trim(); if (!text) return;
     const d = drEdit(sec); d.items = d.items || []; d.items.push({ text }); inp.value = ""; render();
   }
+  else if (act === "drpic") {
+    const sec = el.dataset.sec, it = (drEdit(sec).items || [])[+el.dataset.i]; if (!it) return;
+    if ((it.pics || []).length >= drPicMax()) { toast(`Up to ${drPicMax()} photos for one activity`, "err"); return; }
+    photoMenu(l => drAddPics(sec, it, l));
+  }
+  else if (act === "drpicdel") {
+    const it = (drEdit(el.dataset.sec).items || [])[+el.dataset.i]; if (!it || !it.pics) return;
+    it.pics.splice(+el.dataset.k, 1); render();
+  }
+  else if (act === "drpicview") {
+    const it = (drDraftFor(el.dataset.sec).items || [])[+el.dataset.i]; if (!it || !it.pics) return;
+    openViewer(it.pics[+el.dataset.k].id, it.pics.map(p => p.id));
+  }
+  else if (act === "drpicgrid") {
+    const ids = reportPics(drSections).map(p => p.id); openViewer(el.dataset.id, ids);
+  }
+  else if (act === "drpicshare") {
+    const pics = reportPics(drSections); if (!pics.length) return;
+    toast("Preparing the photos…");
+    const files = [];
+    for (let k = 0; k < pics.length; k++) { const v = await loadFileFrom(drPicSegs(), pics[k]); files.push({ b64: await b64Of(v), mime: pics[k].type || "image/jpeg", name: `photo-${k + 1}.jpg` }); }
+    if (window.Android && Android.shareFiles) Android.shareFiles(JSON.stringify(files));
+    else if (navigator.canShare) { const fl = files.map((f, k) => new File([b64ToBlob(f.b64, f.mime)], f.name, { type: f.mime })); if (navigator.canShare({ files: fl })) await navigator.share({ files: fl }).catch(() => {}); }
+  }
+  else if (act === "drpicsave") {
+    const g = id => Math.round(Number(($("#" + id) || {}).value) || 0);
+    const v = { picMax: Math.min(20, Math.max(1, g("picMax"))), picTotal: Math.min(60, Math.max(1, g("picTotal"))), picKeepDays: Math.min(365, Math.max(1, g("picKeep"))) };
+    await setDoc(doc(db, "config", "dailyReport"), v, { merge: true });
+    drConfig = { ...drConfig, ...v }; toast("Photo settings saved");
+  }
   else if (act === "dractdel") { const sec = el.dataset.sec; const d = drEdit(sec); d.items.splice(+el.dataset.i, 1); render(); }
   else if (act === "dractmove") {
     const sec = el.dataset.sec; const d = drEdit(sec); const i = +el.dataset.i, j = i + +el.dataset.dir;
@@ -4098,7 +4521,8 @@ $("#view").addEventListener("click", e => run(async () => {
   else if (act === "wasend") {
     const sent = !!(drReport && drReport.wa && drReport.wa.sentAt);
     const missing = REQ_SECS.filter(k => drSections[k] === undefined);
-    const msg = (sent ? "Send this report to WhatsApp again?" : "Send this report to WhatsApp now?") + (missing.length ? ` ${missing.length} section${missing.length > 1 ? "s are" : " is"} still missing.` : "");
+    const np = reportPics(drSections).length;
+    const msg = (sent ? "Send this report to WhatsApp again?" : "Send this report to WhatsApp now?") + (np ? ` It sends the report and ${np} photo${np > 1 ? "s" : ""}.` : "") + (missing.length ? ` ${missing.length} section${missing.length > 1 ? "s are" : " is"} still missing.` : "");
     if (!(await uiConfirm(msg, sent ? "Send again" : "Send now"))) return;
     await setDoc(doc(db, "dailyReports", drDate), { date: drDate, sendNowAt: Date.now(), sendNowBy: myName() }, { merge: true });
     const u = pushUrl(); if (u) fetch(u + "/wa/kick", { method: "POST" }).catch(() => {});

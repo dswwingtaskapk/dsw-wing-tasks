@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.KeyguardManager;
+import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -51,6 +52,8 @@ public class MainActivity extends Activity {
     private static final int REQ_MIC = 78;
     private PermissionRequest pendingMic;
     private ValueCallback<Uri[]> filePathCallback;
+    private Uri cameraUri;
+    private static final int REQ_CAMERA = 4712;
     static volatile boolean visible = false;
     static volatile String activeConv = "";   // the chat open on screen right now ("dm:<id>" / "chat:<taskId>")
     static String pushToken = null;
@@ -117,6 +120,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         instance = this;
         PushService.ensureChannel(this);
+        new Thread(this::cleanCache).start();
         try {
             FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult() != null) {
@@ -188,7 +192,42 @@ public class MainActivity extends Activity {
                 if (filePathCallback != null) filePathCallback.onReceiveValue(null);
                 filePathCallback = callback;
                 try {
-                    startActivityForResult(params.createIntent(), REQ_FILE);
+                    String[] types = params.getAcceptTypes();
+                    boolean images = types != null && types.length > 0;
+                    if (types != null) for (String t : types) if (t == null || !t.startsWith("image/")) images = false;
+                    boolean multi = params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE;
+                    if (images && params.isCaptureEnabled()) {
+                        // Camera: the phone's own camera app takes the photo (no extra permission needed)
+                        File dir = new File(getCacheDir(), "camera"); dir.mkdirs();
+                        File f = new File(dir, "IMG_" + System.currentTimeMillis() + ".jpg");
+                        cameraUri = androidx.core.content.FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".files", f);
+                        Intent cam = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        cam.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+                        cam.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        startActivityForResult(cam, REQ_CAMERA);
+                    } else if (images) {
+                        // Gallery: pick one or several photos
+                        Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                        pick.setType("image/*");
+                        pick.addCategory(Intent.CATEGORY_OPENABLE);
+                        pick.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, multi);
+                        startActivityForResult(Intent.createChooser(pick, "Choose photos"), REQ_FILE);
+                    } else {
+                        // Document: only the kinds the chat accepts (PDF, Word, Excel, PowerPoint, text)
+                        java.util.ArrayList<String> mimes = new java.util.ArrayList<>();
+                        if (types != null) for (String t : types) {
+                            if (t == null) continue;
+                            String m = t.trim();
+                            if (!m.contains("/")) m = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(m.replace(".", "").toLowerCase(Locale.ROOT));
+                            if (m != null && !m.isEmpty() && !mimes.contains(m)) mimes.add(m);
+                        }
+                        Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                        pick.setType("*/*");
+                        pick.addCategory(Intent.CATEGORY_OPENABLE);
+                        if (!mimes.isEmpty()) pick.putExtra(Intent.EXTRA_MIME_TYPES, mimes.toArray(new String[0]));
+                        pick.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, multi);
+                        startActivityForResult(pick, REQ_FILE);
+                    }
                 } catch (Exception e) {
                     filePathCallback = null;
                     return false;
@@ -275,6 +314,24 @@ public class MainActivity extends Activity {
     }
 
     @SuppressWarnings("deprecation")
+    /* ---------- chat files handed to other apps (open / share) live in the app's cache for a day ---------- */
+    private Uri sharedFile(String base64, String name) throws Exception {
+        byte[] data = Base64.decode(base64, Base64.DEFAULT);
+        File dir = new File(getCacheDir(), "shared"); dir.mkdirs();
+        String safe = (name == null || name.isEmpty() ? "file" : name).replaceAll("[\\\\/:*?\"<>|]+", "_");
+        File f = new File(dir, safe);
+        try (FileOutputStream os = new FileOutputStream(f)) { os.write(data); }
+        return androidx.core.content.FileProvider.getUriForFile(this, getPackageName() + ".files", f);
+    }
+
+    private void cleanCache() {
+        long old = System.currentTimeMillis() - 24L * 3600 * 1000;
+        for (String sub : new String[]{"shared", "camera"}) {
+            File[] list = new File(getCacheDir(), sub).listFiles();
+            if (list != null) for (File f : list) if (f.lastModified() < old) { try { f.delete(); } catch (Exception ignored) {} }
+        }
+    }
+
     /* ---------- over the lock screen: only for a call or an alarm, never the rest of the app ---------- */
     private boolean overLock = false;
 
@@ -389,6 +446,68 @@ public class MainActivity extends Activity {
 
     /** Called from the page: saves a file into the phone's Downloads folder. */
     private class Bridge {
+
+        /** open a chat file (PDF, Word, Excel...) straight in the phone's own app */
+        @JavascriptInterface
+        public void openFile(String base64, String mime, String name) {
+            try {
+                Uri uri = sharedFile(base64, name);
+                Intent v = new Intent(Intent.ACTION_VIEW);
+                v.setDataAndType(uri, mime == null || mime.isEmpty() ? "*/*" : mime);
+                v.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                runOnUiThread(() -> {
+                    try { startActivity(Intent.createChooser(v, "Open with").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)); }
+                    catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "No app on this phone can open this file. Saving it to Downloads.", Toast.LENGTH_LONG).show();
+                        save(base64, mime, name);
+                    }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not open the file", Toast.LENGTH_LONG).show());
+            }
+        }
+
+        /** share a chat photo or file to WhatsApp, email... */
+        @JavascriptInterface
+        public void shareFile(String base64, String mime, String name) {
+            try {
+                Uri uri = sharedFile(base64, name);
+                Intent s = new Intent(Intent.ACTION_SEND);
+                s.setType(mime == null || mime.isEmpty() ? "*/*" : mime);
+                s.putExtra(Intent.EXTRA_STREAM, uri);
+                s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                runOnUiThread(() -> {
+                    try { startActivity(Intent.createChooser(s, "Share").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)); }
+                    catch (Exception e) { Toast.makeText(MainActivity.this, "Could not share the file", Toast.LENGTH_LONG).show(); }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not share the file", Toast.LENGTH_LONG).show());
+            }
+        }
+
+        /** share several photos at once (the report's photos), e.g. to WhatsApp */
+        @JavascriptInterface
+        public void shareFiles(String json) {
+            try {
+                org.json.JSONArray a = new org.json.JSONArray(json);
+                java.util.ArrayList<Uri> uris = new java.util.ArrayList<>();
+                for (int i = 0; i < a.length(); i++) {
+                    org.json.JSONObject o = a.getJSONObject(i);
+                    uris.add(sharedFile(o.getString("b64"), o.optString("name", "photo-" + (i + 1) + ".jpg")));
+                }
+                if (uris.isEmpty()) return;
+                Intent s = new Intent(Intent.ACTION_SEND_MULTIPLE);
+                s.setType("image/*");
+                s.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+                s.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                runOnUiThread(() -> {
+                    try { startActivity(Intent.createChooser(s, "Share photos").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)); }
+                    catch (Exception e) { Toast.makeText(MainActivity.this, "Could not share the photos", Toast.LENGTH_LONG).show(); }
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not share the photos", Toast.LENGTH_LONG).show());
+            }
+        }
 
         /** ring with the phone's own ringtone on the ring volume (incoming) or the call tone (outgoing) */
         @JavascriptInterface
@@ -612,6 +731,18 @@ public class MainActivity extends Activity {
         public void save(String base64, String mime, String name) {
             try {
                 byte[] data = Base64.decode(base64, Base64.DEFAULT);
+                boolean photo = mime != null && mime.startsWith("image/");
+                if (Build.VERSION.SDK_INT >= 29 && photo) {
+                    ContentValues cv = new ContentValues();
+                    cv.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+                    cv.put(MediaStore.Images.Media.MIME_TYPE, mime);
+                    cv.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/Wing Tasks");
+                    Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv);
+                    if (uri == null) throw new Exception("no uri");
+                    try (OutputStream os = getContentResolver().openOutputStream(uri)) { os.write(data); }
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to the Gallery (Pictures › Wing Tasks)", Toast.LENGTH_LONG).show());
+                    return;
+                }
                 if (Build.VERSION.SDK_INT >= 29) {
                     ContentValues cv = new ContentValues();
                     cv.put(MediaStore.Downloads.DISPLAY_NAME, name);
@@ -642,7 +773,7 @@ public class MainActivity extends Activity {
     public void onBackPressed() {
         // 1) close an open popup  2) let the app go to Home / the parent screen  3) on Home: leave the app
         web.evaluateJavascript(
-                "(function(){if(window.__lockBack&&window.__lockBack())return 1;var d=document.querySelector('.dlg-wrap,.imgview');if(d){d.click();return 1;}var o=document.getElementById('ov');if(o){o.click();return 1;}if(document.body.classList.contains('navopen')){document.body.classList.remove('navopen');return 1;}if(window.__appBack&&window.__appBack())return 1;return 0;})()",
+                "(function(){if(window.__lockBack&&window.__lockBack())return 1;var d=document.querySelector('.amenu-wrap,.dlg-wrap,.imgview');if(d){d.click();return 1;}var o=document.getElementById('ov');if(o){o.click();return 1;}if(document.body.classList.contains('navopen')){document.body.classList.remove('navopen');return 1;}if(window.__appBack&&window.__appBack())return 1;return 0;})()",
                 value -> {
                     if ("1".equals(value)) return;
                     finish();
@@ -652,9 +783,25 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQ_CAMERA) {
+            if (filePathCallback != null) {
+                filePathCallback.onReceiveValue(resultCode == RESULT_OK && cameraUri != null ? new Uri[]{cameraUri} : null);
+                filePathCallback = null;
+            }
+            cameraUri = null;
+            return;
+        }
         if (requestCode == REQ_FILE) {
             if (filePathCallback != null) {
-                filePathCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, data));
+                Uri[] res = null;
+                if (resultCode == RESULT_OK && data != null) {
+                    ClipData clip = data.getClipData();
+                    if (clip != null && clip.getItemCount() > 0) {
+                        res = new Uri[clip.getItemCount()];
+                        for (int i = 0; i < res.length; i++) res[i] = clip.getItemAt(i).getUri();
+                    } else if (data.getData() != null) res = new Uri[]{data.getData()};
+                }
+                filePathCallback.onReceiveValue(res);
                 filePathCallback = null;
             }
             return;

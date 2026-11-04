@@ -20,7 +20,7 @@
        WA_TOKEN, WA_PHONE_ID, WA_WABA_ID
      WA_VERIFY      a secret word the app's setup command uses; also guards the webhook
    ===================================================================== */
-import { compileReport, fmtReportDate, REQUIRED_SECTIONS } from "../app/src/main/assets/report.js";
+import { compileReport, fmtReportDate, REQUIRED_SECTIONS, reportPics, PIC_DEFAULTS } from "../app/src/main/assets/report.js";
 
 const SCOPES = "https://www.googleapis.com/auth/datastore https://www.googleapis.com/auth/firebase.messaging";
 const DHK = 6 * 3600000;
@@ -40,7 +40,9 @@ export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { headers: CORS });
+    rememberOrigin(env, ctx, url.origin);
     try {
+      if (url.pathname.startsWith("/wapic/")) return await servePic(env, url.pathname);
       if (url.pathname === "/diag") return json(await diag(env));
       if (url.pathname === "/wa") return await waWebhook(req, env, ctx, url);
       if (url.pathname === "/wa/status") return json(await waStatus(env));
@@ -63,6 +65,9 @@ export default {
       try { await deadlineReminders(env); } catch (e) { console.log("reminders failed", e); }
       try { await dailyFlow(env); } catch (e) { console.log("daily flow failed", e); }
       try { await cmdtFlow(env); } catch (e) { console.log("commandant reminder failed", e); }
+      let busy = false;
+      try { busy = await picsFlow(env); } catch (e) { console.log("report photos failed", e); }
+      if (!busy) try { await picCleanup(env); } catch (e) { console.log("photo clean-up failed", e); }
     })());
   },
 };
@@ -161,6 +166,7 @@ async function patchPaths(env, path, obj, cond) {
   }
   let q = Object.keys(obj).map(k => "updateMask.fieldPaths=" + encodeURIComponent(k)).join("&");
   if (cond === "exists=false") q += "&currentDocument.exists=false";
+  else if (cond === "exists=true") q += "&currentDocument.exists=true";
   else if (cond) q += "&currentDocument.updateTime=" + encodeURIComponent(cond);
   return fs(env, `${path}?${q}`, { method: "PATCH", body: JSON.stringify({ fields: encFields(root) }) });
 }
@@ -411,8 +417,12 @@ async function sendDaily(env, date, rep, secs, wa, who) {
         { type: "button", sub_type: "quick_reply", index: "0", parameters: [{ type: "payload", payload: "show:" + date }] }] } });
       ids = [r.messages[0].id]; await remember(env, ids[0], date);
     }
+    // the day's photos follow the text, a few each minute (see picsFlow), in report order
+    const secMap = {}; secs.forEach(x => { secMap[x._id] = x; });
+    const picList = provider(env) === "green" ? reportPics(secMap).map(p => p.id) : [];
     await patchPaths(env, path, { ...fin, "wa.status": via === "text" ? "sent" : "waiting", "wa.via": via, "wa.sentAt": Date.now(), "wa.to": to, "wa.by": who || "Auto",
-      "wa.error": null, "wa.deliveredAt": null, "wa.readAt": null, "wa.okAt": null, "wa.ids": ids, "sendNowAt": null });
+      "wa.error": null, "wa.deliveredAt": null, "wa.readAt": null, "wa.okAt": null, "wa.ids": ids, "sendNowAt": null,
+      "wa.picList": picList, "wa.picsDone": 0, "wa.picsError": null, "wa.picsBusy": null });
     return { ok: true, via };
   } catch (e) {
     await patchPaths(env, path, { "wa.status": "failed", "wa.error": String(e.message || e).slice(0, 300), "wa.failedAt": Date.now(), "sendNowAt": null }).catch(() => {});
@@ -477,6 +487,90 @@ async function dailyFlow(env) {
     if (last >= sendAt && now - last < GRACE) continue;      // a late section just came in: give 2-3 minutes for corrections
     await sendDaily(env, date, rep, secs, wa, "Auto");
   }
+}
+
+/* ---------- report photos: sent after the text, without captions, in report order ----------
+   Green-API fetches each photo from a secret link on this server: /wapic/<date>/<file id>/<key>.
+   A few go each minute so the free plan's request limit is never reached; a failed one is skipped. */
+let selfOrigin = "";
+function rememberOrigin(env, ctx, origin) {
+  try {                                           // never let this get in the way of the real request
+    if (!origin || !/^https:\/\//.test(origin) || /localhost|127\.0\.0\.1/.test(origin) || origin === selfOrigin) return;
+    selfOrigin = origin;
+    if (!env.SERVICE_ACCOUNT) return;
+    const job = setDocFields(env, "/config/waState", { selfUrl: origin }).catch(() => {});
+    if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(job);
+  } catch (e) {}
+}
+async function myOrigin(env) {
+  if (env.WORKER_URL) return String(env.WORKER_URL).replace(/\/+$/, "");
+  if (selfOrigin) return selfOrigin;
+  const st = (await getDoc(env, "/config/waState")) || {};
+  if (st.selfUrl) return (selfOrigin = st.selfUrl);
+  const pc = (await getDoc(env, "/config/push")) || {};
+  return pc.workerUrl ? (selfOrigin = String(pc.workerUrl).replace(/\/+$/, "")) : "";
+}
+async function picKey(env, date, fid) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode("wapic:" + (env.WA_VERIFY || env.GREEN_TOKEN || "")), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(date + "/" + fid)));
+  return [...mac].slice(0, 16).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+async function servePic(env, pathname) {
+  const m = pathname.match(/^\/wapic\/(\d{4}-\d{2}-\d{2})\/([a-z0-9]{2,40})\/([0-9a-f]{32})$/);
+  if (!m || !(env.WA_VERIFY || env.GREEN_TOKEN)) return new Response("not found", { status: 404 });
+  if (m[3] !== await picKey(env, m[1], m[2])) return new Response("not found", { status: 404 });
+  const first = await getDoc(env, `/dailyReports/${m[1]}/files/${m[2]}_0`);
+  if (!first || !first.data) return new Response("gone", { status: 410 });
+  const parts = [first.data];
+  for (let i = 1; i < (Number(first.n) || 1); i++) { const d = await getDoc(env, `/dailyReports/${m[1]}/files/${m[2]}_${i}`); if (!d) return new Response("gone", { status: 410 }); parts.push(d.data); }
+  const bin = atob(parts.join("")), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return new Response(out, { headers: { "Content-Type": "image/jpeg", "Cache-Control": "private, max-age=600" } });
+}
+const PICS_PER_MINUTE = 6;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function picsFlow(env) {
+  if (!env.SERVICE_ACCOUNT || provider(env) !== "green") return false;
+  const today = dhakaDate(Date.now());
+  for (const date of [prevDate(today), today]) {
+    const rep = await getDoc(env, `/dailyReports/${date}`);
+    const w = (rep && rep.wa) || {}, list = Array.isArray(w.picList) ? w.picList : [];
+    const done = Number(w.picsDone) || 0;
+    if (w.status !== "sent" || done >= list.length) continue;
+    if (w.picsBusy && Date.now() - w.picsBusy < 120000) return true;          // another run is sending them
+    try { await patchPaths(env, `/dailyReports/${date}`, { "wa.picsBusy": Date.now() }, rep._updateTime); }
+    catch (e) { if ([400, 409, 412].includes(e.status)) return true; throw e; }
+    const origin = await myOrigin(env), to = w.to || bdNum(((await getDoc(env, "/config/whatsapp")) || {}).number);
+    let i = done, err = null;
+    if (!origin) err = "The server does not know its own address yet. Open the app once, then tap Send again.";
+    else for (; i < list.length && i < done + PICS_PER_MINUTE; i++) {
+      try {
+        const r = await green(env, "sendFileByUrl", { chatId: to + "@c.us", urlFile: `${origin}/wapic/${date}/${list[i]}/${await picKey(env, date, list[i])}`, fileName: `photo-${i + 1}.jpg` });
+        if (!r.idMessage) throw new Error("WhatsApp did not accept the photo");
+      } catch (e) { err = `Photo ${i + 1}: ` + String(e.message || e).slice(0, 200); }
+      if (i + 1 < list.length) await sleep(700);
+    }
+    await patchPaths(env, `/dailyReports/${date}`, { "wa.picsDone": err && !origin ? done : i, "wa.picsBusy": null, ...(err ? { "wa.picsError": err } : {}) }).catch(() => {});
+    return true;
+  }
+  return false;
+}
+/* photos are removed some days after their report (the text stays forever); a little each minute, 03:00–05:00 Dhaka time */
+async function picCleanup(env) {
+  if (!env.SERVICE_ACCOUNT) return;
+  const now = Date.now(), hour = new Date(now + DHK).getUTCHours();
+  if (hour < 3 || hour >= 5) return;
+  const cfg = (await getDoc(env, "/config/dailyReport")) || {};
+  const keep = Math.max(1, Math.min(365, Number(cfg.picKeepDays) || PIC_DEFAULTS.picKeepDays));
+  const today = dhakaDate(now), addDays = (d, n) => { const x = new Date(d + "T00:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const last = addDays(today, -keep - 1);                       // newest date whose photos may go
+  const log = (await getDoc(env, "/config/picCleanLog")) || {};
+  let cur = log.done && log.done < last ? addDays(log.done, 1) : (log.done ? null : addDays(last, -45));
+  if (!cur || cur > last) return;
+  const files = await listDocs(env, `/dailyReports/${cur}/files`, 25);
+  for (const f of files) await fs(env, `/dailyReports/${cur}/files/${encodeURIComponent(f._id)}`, { method: "DELETE" }).catch(() => {});
+  if (files.length) await patchPaths(env, `/dailyReports/${cur}`, { picsDeleted: true, picsDeletedAt: now }, "exists=true").catch(() => {});
+  if (files.length < 25) await setDocFields(env, "/config/picCleanLog", { done: cur, at: now });
 }
 
 /* ---------- reminder: the report must also be passed on to the Commandant ----------
